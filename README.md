@@ -1,4 +1,4 @@
-# OnePad Community Edition
+# OnePad
 
 <div align="center">
 
