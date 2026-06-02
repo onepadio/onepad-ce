@@ -1,0 +1,25 @@
+.launchpad-tabs .react-tabs__tab{
+    background-color: transparent;
+    color: white;
+    border: none;
+    margin-right: 15px;
+}
+
+.launchpad-tabs .react-tabs__tab:not(.react-tabs__tab--selected):hover{
+    border-bottom: 3px solid gray;
+}
+
+.launchpad-tabs .react-tabs__tab--selected{
+    background-color: transparent;
+    border-bottom: 3px solid dodgerblue;
+}
+
+.launchpad-tabs .react-tabs__tab--selected::after{
+    background-color: transparent;
+    color: white;
+    border: none;
+}
+
+.launchpad-tabs .react-tabs__tab-list{
+    border-bottom: none;
+}

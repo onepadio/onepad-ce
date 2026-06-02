@@ -1,0 +1,13 @@
+.app-menu{
+    position: absolute;
+    left: calc(50% + 240px);
+}
+
+.www-icon{
+    color: white;
+    background-color: white;
+}
+
+.address-bar .btn.disabled{
+    background-color: unset !important;
+}

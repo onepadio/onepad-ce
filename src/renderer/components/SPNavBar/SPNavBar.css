@@ -1,0 +1,238 @@
+.drag-bar{
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 15px;
+    z-index: 110;
+}
+
+.sp-navbar .sp-top{
+    padding-top: unset;
+    padding-bottom: unset;
+    top: 0px;
+    left: 0px;
+    width: calc(100vw);
+    height: 36px;
+    z-index:1997;
+    backdrop-filter: blur(16px);
+    background-color: #292e36;
+}
+
+.sp-navbar .top-menus{
+    margin-right: unset !important;
+    margin-left: unset !important;
+    padding-right: unset !important;
+    padding-left: unset !important;
+}
+
+.sp-top .container-fluid{
+    padding-right: unset;
+    padding-left: unset;
+}
+
+.sp-top .apps{
+    padding-left: 15px;
+    padding-right: 10px;
+    backdrop-filter: blur(16px);
+    background-color: #37415166;
+    border-radius: 10px;
+}
+
+.top-menus .list-group-item{
+    width: 36px !important;
+}
+.sp-top .list-group-horizontal>.list-group-item:last-child:not(:first-child){
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sp-top .list-group-horizontal>.list-group-item:first-child:not(:last-child) {
+    border-radius: 0;
+}
+
+.sp-navbar .bg-dark{
+    --bs-bg-opacity: 0.9;
+    --bs-dark-rgb: 27, 27, 27;
+    background-color: #1b1b1b !important;
+}
+
+.sp-navbar .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.sp-navbar .list-group-item{
+    border:none;
+}
+
+.sp-bottom-navbar{
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    width: calc(100vw);
+    z-index: 998 !important;
+    height: 36px;
+    transition: all 0.5s ease;
+    backdrop-filter: blur(16px);
+    background-color: #37415166;
+}
+
+.sp-bottom-navbar .container-fluid{
+    justify-content: center;
+    min-height: 44px;
+}
+
+.sp-bottom-navbar .col-4{
+    padding-left: 0.4rem;
+}
+
+.sp-navbar .launch-icon{
+    border-radius: 20%;
+    opacity: 1;
+    display: block;
+    width: 24px;
+    height: 24px;
+    transition: .5s ease;
+    backface-visibility: hidden;
+}
+
+.sp-top .container-fluid{
+    height: 100%;
+}
+
+.sp-navbar .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.sp-navbar .row{
+    width: 100%;
+}
+
+.sp-navbar button{
+    background-color: transparent;
+    border: none;
+    outline: none;
+    font-size: small;
+}
+
+.sp-navbar .logo{
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 210;
+}
+
+.sp-navbar .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-top: lightskyblue 1px solid;
+    margin-top:unset !important;
+    border-top-width: 1px !important;
+}
+
+.sp-navbar .nav-item{
+    cursor: pointer;
+}
+
+.sp-navbar .nav-item.dragging {
+    opacity: 0.6;
+}
+.sp-navbar .nav-item.dragging :where(.details, i) {
+    opacity: 0;
+}
+
+.sp-navbar .invisible-dot{
+    opacity: 0;
+}
+
+.sp-navbar .upgrade-button{
+    color: yellowgreen;
+}
+
+.sp-navbar .hide-bar{
+    bottom: -48px !important;
+}
+
+.sp-navbar .hide-button{
+    position: relative;
+    right: -5px;
+    top:-10px;
+    color: aliceblue;
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: none;
+    --bs-btn-active-shadow: none;
+}
+
+.sp-navbar .hide-button:hover{
+    color: white;
+    background-color: transparent;
+}
+
+.sp-navbar .hide-button:focus{
+    color: white;
+    background-color: transparent;
+    border: none;
+}
+
+.sp-navbar .hide-button:active{
+    color: white;
+    background-color: transparent;
+    border: none;
+}
+
+.bottom-show-bar-button{
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    z-index: 1030;
+    height: 20px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+.bottom-show-bar-button svg{
+    vertical-align: top !important;
+}
+
+.shared-apps-menu{
+    margin-bottom: 8px;
+}
+
+.pluss{
+    cursor: pointer;
+    margin-top: 12px;
+    border-radius: 3px;
+}
+
+.pluss:hover{
+    background-color: #3c3d3c;
+}
+
+.sp-navbar .pause-button{
+    margin-top:12px;
+}
+
+.sp-navbar .taskbar-button{
+    margin-top:8px !important;
+}
+
+.sp-navbar .windows-menu{
+    margin-right: 108px;
+}
+
+.toggle-indicator {
+    width: 5px;
+    height: 40px;
+    background-color: #61dafb;
+    border-radius: 3px;
+}

@@ -1,0 +1,90 @@
+.spaceapp-canvas{
+    background-color: #1b1b1b;
+    color: white;
+    position: absolute;
+    top:1px;
+    right: calc(-58vw);
+    z-index: 999;
+    height: calc(100vh - 35px);
+    transition: all 0.25s linear;
+}
+
+.spaceapp-canvas-open{
+    right:0px !important;
+}
+
+.spaceapp-canvas-content{
+    font-size: small;
+}
+
+.spaceapp-canvas-title{
+    color: white;
+}
+
+.spaceapp-offcanvas{
+    z-index: 998;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+}
+
+.spaceapp-sidebar{
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 40px;
+    height: 100%;
+    background-color: #1b1b1b;
+    border-left: 1px solid #2a2b2a;
+    border-right: 1px solid #2a2b2a;
+}
+
+.spaceapp-canvas .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-left: lightskyblue 1px solid;
+}
+
+.spaceapp-canvas .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.spaceapp-canvas .bg-dark{
+    background-color: #252525;
+}
+
+.spaceapp-canvas .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.spaceapp-canvas .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.spaceapp-canvas .list-group-item{
+    border:none;
+}
+
+.spaceapp-canvas .nav-item{
+    border:none;
+    padding-top: 15px !important;
+}
+
+.spaceapp-canvas .close-button{
+    position: absolute;
+    bottom:30px;
+}
+
+.expand-button{
+    position: absolute;
+    bottom:0px;
+}
+
+.spaceapp-canvas .launch-icon svg{
+    color: lightskyblue;
+    cursor: pointer;
+    width: 20px !important;
+    height: 20px !important;
+}

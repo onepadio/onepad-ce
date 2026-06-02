@@ -1,0 +1,37 @@
+.align-left{
+    text-align: left;
+ }
+ 
+ .add-app-modal{
+    width: 500px;
+    --bs-accordion-bg:unset;
+    --bs-accordion-btn-bg:unset;
+    --bs-accordion-active-color:unset;
+    --bs-accordion-btn-color:unset;
+ }
+ 
+ .add-app-modal .amplify-label{
+    color: white;
+    font-weight: bold;
+ }
+ 
+ .add-app-modal .amplify-select{
+    color: white;
+ }
+ 
+ .accordion {
+    border: none;
+    background-color: unset;
+    --bs-accordion-color: unset;
+    --bs-accordion-bg:unset;
+    --bs-accordion-active-bg:unset;
+    --bs-accordion-btn-bg:unset;
+    --bs-accordion-active-color:unset;
+    --bs-accordion-btn-color:white;
+    --bs-accordion-border-color:unset;
+    --bs-accordion-btn-icon: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiBjbGFzcz0iYmkgYmktY2hldnJvbi1kb3duIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTEuNjQ2IDQuNjQ2YS41LjUgMCAwIDEgLjcwOCAwTDggMTAuMjkzbDUuNjQ2LTUuNjQ3YS41LjUgMCAwIDEgLjcwOC43MDhsLTYgNmEuNS41IDAgMCAxLS43MDggMGwtNi02YS41LjUgMCAwIDEgMC0uNzA4eiIvPgo8L3N2Zz4=");
+ }
+
+ .add-app-modal .app-icon{
+   border-radius: 10%;
+ }

@@ -1,0 +1,200 @@
+/* Apps List Header */
+.apps-list-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 56px;
+  height: 30px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.apps-list-header::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* Apps List Container Wrapper */
+.apps-list-container {
+  position: relative;
+  width: 56px;
+  max-height: 330px !important; /* Force max-height with !important */
+  flex-grow: 1; /* Allow growing to fill available space */
+  flex-shrink: 0; /* Prevent shrinking in flex container */
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.3s ease-in-out;
+}
+
+/* Collapsed state - smaller height */
+.apps-list-container.collapsed {
+  max-height: 80px !important; /* Height for 1 icon + chevron button */
+}
+
+/* Expanded state - larger height */
+.apps-list-container.expanded {
+  max-height: 360px !important; /* Height for 7 icons + chevron button */
+}
+
+/* Apps List */
+.apps-list {
+  top: 4px;
+  width: 56px !important;
+  max-height: 330px !important; /* Force max-height with !important */
+  flex-grow: 1; /* Allow growing within container */
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  transition: max-height 0.3s ease-in-out;
+}
+
+/* Apps List in collapsed state */
+.apps-list-container.collapsed .apps-list {
+  max-height: 70px !important; /* Height for 1 icon */
+}
+
+/* Apps List in expanded state */
+.apps-list-container.expanded .apps-list {
+  max-height: 330px !important; /* Height for 7 icons */
+}
+
+.apps-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* More Button Container - Always visible at bottom */
+.more-button-container {
+  position: absolute;
+  bottom: 0;
+  width: 56px;
+  background: linear-gradient(transparent, #292e36 50%);
+  padding-top: 10px;
+  z-index: 10;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Menu Icon Styles */
+.menu-icon {
+  cursor: pointer;
+  margin: unset !important;
+  width: 100% !important;
+  margin-bottom: 15px !important; /* Consistent spacing */
+  min-height: 36px; /* Ensure consistent icon height */
+}
+
+/* Active app indicator - left blue line */
+.menu-icon.active {
+  position: relative;
+  background-color: rgba(233, 234, 251, 0.082);
+}
+
+.menu-icon.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-left: 1px solid #87cefa;
+  border-radius: 0 2px 2px 0;
+}
+
+.appicon {
+  transition: all 0.2s ease-in-out;
+}
+
+.appicon:hover {
+  transform: scale(1.1);
+  opacity: 0.5;
+}
+
+/* Favourite Star */
+.favourite-star {
+  z-index: 10;
+  margin: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+
+/* More Button Styles */
+.menu-icon.more-button {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease-in-out;
+  margin: 0 !important;
+}
+
+.menu-icon.more-button:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.more-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Launch Icon */
+.launch-icon {
+  border-radius: 8px;
+}
+
+.launch-icon.grayscale {
+  filter: grayscale(100%) opacity(0.6);
+}
+
+/* Chevron Button Container */
+.chevron-button-container {
+  position: absolute;
+  bottom: 0;
+  width: 56px;
+  background: linear-gradient(transparent, #292e36 50%);
+  padding-top: 10px;
+  z-index: 10;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chevron Button Styles */
+.menu-icon.chevron-button {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease-in-out;
+}
+
+.menu-icon.chevron-button:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.chevron-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

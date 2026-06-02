@@ -1,0 +1,17 @@
+.login-container{
+    z-index: 9999;
+}
+
+.login{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 300px);
+    min-height: 400px;
+}
+
+.login-container .logo{
+    position: absolute;
+    top: 40px;
+}

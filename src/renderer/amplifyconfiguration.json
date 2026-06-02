@@ -1,0 +1,126 @@
+{
+  "aws_project_region": "us-east-1",
+  "aws_mobile_analytics_app_id": "6580bd10db304d20a6c19f4fd159b97a",
+  "aws_mobile_analytics_app_region": "us-east-1",
+  "Analytics": {
+    "AWSPinpoint": {
+      "appId": "6580bd10db304d20a6c19f4fd159b97a",
+      "region": "us-east-1"
+    }
+  },
+  "aws_cloud_logic_custom": [
+    {
+      "name": "appCatalogApi",
+      "endpoint": "https://xl04jygab1.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "clipboardApi",
+      "endpoint": "https://q0ksc1zugb.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "iconApi",
+      "endpoint": "https://4986pg87u8.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "p2pFileApi",
+      "endpoint": "https://gfhg2fkan5.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "processApi",
+      "endpoint": "https://54pnctpy11.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "profileApi",
+      "endpoint": "https://cafkm1bd69.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "sessionApi",
+      "endpoint": "https://i06eds6yg4.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "stripeApi",
+      "endpoint": "https://k0u9pqkz6k.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "userApi",
+      "endpoint": "https://295an6jcoc.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    },
+    {
+      "name": "workspaceApi",
+      "endpoint": "https://np045x3836.execute-api.us-east-1.amazonaws.com/dev",
+      "region": "us-east-1"
+    }
+  ],
+  "aws_cognito_identity_pool_id": "us-east-1:7349bae6-2463-4aa2-8c3e-3de5893dc4c3",
+  "aws_cognito_region": "us-east-1",
+  "aws_user_pools_id": "us-east-1_201Okzgd9",
+  "aws_user_pools_web_client_id": "2h76bm8nulq0jdb5v60usrk7th",
+  "oauth": {},
+  "aws_cognito_username_attributes": [
+    "EMAIL"
+  ],
+  "aws_cognito_social_providers": [],
+  "aws_cognito_signup_attributes": [],
+  "aws_cognito_mfa_configuration": "OFF",
+  "aws_cognito_mfa_types": [
+    "SMS"
+  ],
+  "aws_cognito_password_protection_settings": {
+    "passwordPolicyMinLength": 8,
+    "passwordPolicyCharacters": [
+      "REQUIRES_LOWERCASE",
+      "REQUIRES_NUMBERS",
+      "REQUIRES_SYMBOLS",
+      "REQUIRES_UPPERCASE"
+    ]
+  },
+  "aws_cognito_verification_mechanisms": [
+    "EMAIL"
+  ],
+  "aws_user_files_s3_bucket": "switchpadappicons154037-dev",
+  "aws_user_files_s3_bucket_region": "us-east-1",
+  "aws_dynamodb_all_tables_region": "us-east-1",
+  "aws_dynamodb_table_schemas": [
+    {
+      "tableName": "switchpad-apps-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "switchpad-appstore-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "onepad-profiles-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "remoteapps-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "onepad-remoteprocess-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "sessions-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "onepad-users-dev",
+      "region": "us-east-1"
+    },
+    {
+      "tableName": "workspaces-dev",
+      "region": "us-east-1"
+    }
+  ]
+}

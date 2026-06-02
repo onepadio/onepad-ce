@@ -1,0 +1,104 @@
+.docker-task-manager {
+    width: 60vw;
+    max-width: 1200px;
+}
+
+.task-table-header {
+    font-weight: bold;
+    padding: 8px;
+    flex: 1;
+    text-align: center;
+}
+
+.task-table-column {
+    padding: 8px;
+    flex: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.task-manager .container-table-body {
+    height: calc(80vh - 250px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.expand-column {
+    width: 40px;
+    flex: 0 0 40px !important;
+}
+
+.container-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.container-details {
+    background-color: rgba(0, 0, 0, 0.2);
+    margin: 8px 40px;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.detail-row {
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+}
+
+.detail-row strong {
+    margin-right: 8px;
+    min-width: 80px;
+}
+
+/* Format port mappings */
+.detail-row .port-mapping {
+    font-family: monospace;
+}
+
+/* Button styles */
+.docker-task-manager .btn-link {
+    color: inherit;
+}
+
+.docker-task-manager .btn-link:hover {
+    color: inherit;
+    opacity: 0.8;
+}
+
+.docker-task-manager .btn-primary {
+    margin-right: 1rem;
+}
+
+.docker-task-manager .btn-primary svg {
+    margin-right: 0.5rem;
+}
+
+.collapse {
+    display: none;
+}
+
+.collapse.show {
+    display: block;
+    visibility: visible !important;
+}
+
+.container-details {
+    background-color: rgba(0, 0, 0, 0.2);
+    margin: 8px 40px;
+    border-radius: 4px;
+}
+
+/* Add these styles */
+.form-switch {
+  padding-left: 2.5em;
+}
+
+.form-switch .form-check-input {
+  cursor: pointer;
+}
+
+.form-switch .form-check-label {
+  cursor: pointer;
+  user-select: none;
+}

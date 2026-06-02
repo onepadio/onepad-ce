@@ -1,0 +1,163 @@
+.space-selection {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+  color: white;
+  margin-top: 3rem !important;
+}
+
+.spaces-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.space-card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.space-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 280px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.space-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.space-card-header {
+  margin-bottom: 1rem;
+}
+
+.space-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.space-icon-image {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.space-icon-color {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.space-icon-add {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+.space-card-body {
+  text-align: center;
+}
+
+.space-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.space-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0;
+  opacity: 0.8;
+}
+
+.add-space-card {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.add-space-card:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.add-space-card .space-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .spaces-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .space-card {
+    max-width: 100%;
+    padding: 1.25rem;
+  }
+
+  .space-selection {
+    padding: 1rem 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .spaces-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .space-card {
+    margin: 0 auto;
+  }
+}
+
+/* Loading state */
+.space-selection .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Button styles */
+.space-selection .btn-outline-secondary {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.space-selection .btn-outline-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}

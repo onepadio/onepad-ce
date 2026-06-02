@@ -1,0 +1,25 @@
+.task-manager {
+    width: 70vw;
+    height: 80vh;
+    z-index: 2500;
+}
+
+.task-manager .nav-tabs {
+    margin-bottom: 10px;
+    border: none;
+}
+
+.task-manager .nav-tabs .nav-link {
+    border: none;
+    background-color: transparent;
+    color: white;
+    margin-right: 15px;
+}
+
+.task-manager .nav-tabs .nav-link:hover {
+    border-bottom: 3px solid gray;
+}
+
+.task-manager .nav-tabs .nav-link.active {
+    border-bottom: 3px solid dodgerblue;
+}

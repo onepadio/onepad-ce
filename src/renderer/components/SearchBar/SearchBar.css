@@ -1,0 +1,14 @@
+.google-search-button{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.navbar-search{
+    margin-top: 20px !important;
+    width: calc(30vw);
+    z-index: 108;
+}
+
+#searchBar{
+    min-width: 100px;
+  }

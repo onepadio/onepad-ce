@@ -1,0 +1,126 @@
+.bg-selector-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+}
+
+.categories-nav {
+    display: flex;
+    gap: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.category-item {
+    color: #fff;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.category-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.category-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bg-selector-dropdown-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+    width: 100%;
+    height: 100%;
+}
+
+.bg-selector-dropdown-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+    width: 100%;
+    height: 100%;
+}
+
+.bg-selector-dropdown-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+    width: 100%;
+    height: 100%;
+}
+
+.bg-selector-grid-container {
+    padding: 10px;
+    background: rgba(13, 17, 23, 0.95);
+    border-radius: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.query-field-container {
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.bg-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 10px;
+    height: calc(50vh - 230px);
+    overflow-y: auto;
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Webkit scrollbar styling */
+.bg-selector-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bg-selector-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.bg-selector-grid::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.bg-selector-grid-item {
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+    aspect-ratio: 16/9;
+}
+
+.bg-selector-grid-item:hover {
+    transform: scale(1.02);
+}
+
+.bg-selector-grid-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h5 {
+    color: white;
+    margin-bottom: 15px;
+    font-weight: 500;
+}

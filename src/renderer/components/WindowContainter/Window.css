@@ -1,0 +1,391 @@
+.app-window{
+    position: absolute;
+    top: 70px;
+    left: 0px;
+    transition: all 0.5s ease;
+    z-index: 988;
+}
+
+.app-window.remote{
+    top: 36px !important;
+}
+
+.app-window.hidden-tab {
+    display: none;
+    transition: all 0.5s ease;
+    z-index: 989;
+}
+
+.app-window .webview-container.full-screen {
+    position: absolute;
+    top: 108px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: calc(100vh - 144px);
+    z-index: 107;
+    opacity: 0;
+}
+
+.app-window .webview-container {
+    position: absolute;
+    top: 160px;
+    width: calc(100vw);
+    height: calc(100vh - 210px);
+    z-index: 107;
+    background-color: #292e36;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.app-window .webview-container.remote{
+    left: 0px !important;
+    width: 100vw !important;
+    height: calc(100vh - 36px) !important;
+}
+
+.app-window .webview-container.extended {
+    top: 48px;
+    height: calc(100vh - 92px);
+}
+
+.app-window .webview-container.tabs-mode{
+    top: 0px;
+    height: calc(100vh - 70px);
+}
+
+.app-window.hidden-tab .webview-container.tabs-mode{
+    opacity: 0;
+}
+
+.app-window .webview-container.space-mode{
+    top:100px;
+    height: calc(100vh - 144px);
+    left : 32vw;
+    width: calc(68vw - 5px);
+}
+
+/* Webview container resizing when chat assistant is open */
+.app-window .webview-container.chat-assistant-open {
+    width: calc(60vw) !important;
+    transition: width 0.1s ease;
+}
+
+/* Webview container with left bar and chat assistant */
+.app-window .webview-container.with-left-bar.chat-assistant-open {
+    width: calc(60vw - 42px) !important; /* 42px left bar + 400px chat width */
+    transition: width 0.1s ease;
+}
+
+.app-window .activate-effects{
+    transition: all 0.5s ease;
+}
+
+.app-window .with-left-bar{
+    left: 42px !important;
+    width: calc(100vw - 42px) !important;
+}
+
+.show-tab {
+    opacity: 1 !important;
+}
+
+.app-window .resized-webview-container{
+    left: 276px !important;
+    width: calc(100vw - 276px) !important;
+}
+
+.no-tab-bar{
+    opacity: 1 !important;
+    top: 36px !important;
+    height: calc(100vh - 70px) !important;
+}
+
+.no-bottom-bar{
+    opacity: 1 !important;
+    top:72px !important;
+    height: calc(100vh - 72px) !important;
+}
+
+.no-tab-and-bottom-bar{
+    opacity: 1 !important;
+    top: 34px !important;
+    height: calc(100vh - 34px) !important;
+}
+
+
+.app-window .window-navbar{
+    position: absolute;
+    top: 72px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 36px;
+    background-color: #292e36 !important;
+    z-index: 212;
+    border-bottom: 1px solid #3c3d3c;
+}
+
+.app-window .window-new-navbar{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 36px;
+    background-color: transparent !important;
+    z-index: 212;
+    border-bottom: 1px solid #3c3d3c;
+}
+
+.app-window .tabs-navbar{
+    position: absolute;
+    top: 36px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 36px;
+    background-color: #292e36 !important;
+    z-index: 109;
+    overflow-x: auto;
+    padding: 0px;
+    transition: all 0.5s ease;
+}
+
+.app-window .tabs-navbar .list-group {
+    --bs-list-group-bg: : #292e36;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+    --bs-list-group-item-padding-y: unset;
+    --bs-list-group-border-radius: unset;
+    height: 100%;
+}
+
+.app-window .tabs-navbar .list-group-item{
+    border:none;
+    border-right: 1px solid #3c3d3c;
+    padding-left: 3px;
+    border-top: #252525 0px solid;
+    border-radius: unset;
+    margin-top: 10px;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+    border: 1px solid #3c3d3c;
+}
+
+.app-window .tabs-navbar .list-group-item:last-child{
+    border-top-right-radius: 10px;
+}
+
+.app-window .tabs-navbar .list-group-item:last-child{
+    border-top-right-radius: 10px;
+}
+
+.app-window .list-group-horizontal>.list-group-item:first-child:not(:last-child) {
+    border-top-right-radius: 10px;
+}
+
+.app-window .tabs-navbar .list-group-item.active{
+    background-color: #292e36;
+    color: white;
+    border-top: rgb(9, 111, 174) 1px solid;
+}
+
+.app-window .tabs-navbar .list-group-item.inactive {
+    background-color: #1b1b1b;
+    color: white;
+}
+
+.app-window .tabs-navbar .list-group-item.inactive:hover{
+    background-color: #424649;
+    color: white;
+    border-top: #424649 1px solid;
+}
+
+.app-window .tab-bar-item{
+    padding-right: 0px;
+    cursor: pointer;
+}
+
+.app-window .tab-bar-item .close-button{
+    position: absolute;
+    right: 5px;
+    top: 8px;
+    width: 24px !important;
+    opacity: 1;
+}
+
+.app-window .tab-bar-item:hover .close-button{
+    opacity: 1;
+}
+
+.app-window .tab-bar-item .move-to-external-button{
+    position: absolute;
+    right: 30px;
+    top: 8px;
+    width: 24px !important;
+    opacity: 0;
+}
+
+.app-window .list-group-item.active .tab-bar-item .move-to-external-button{
+    opacity: 1;
+}
+
+.app-window .tabs-navbar .container-fluid{
+    padding-left: 10px;
+    padding-right: 0px;
+}
+
+.app-window .tabs-navbar .row{
+    padding: 0px;
+    margin: 0px;
+}
+
+.app-window .address-bar {
+    background-color: #252525;
+    color: white;
+    border:none;
+    text-align: center;
+    min-width: 300px;
+    transition: all 0.5s linear;
+    height: 24px;
+}
+
+.app-window .address-bar:disabled {
+    background-color: #252525;
+    color: white;
+    border-color: black;
+    text-align: center;
+    min-width: 300px;
+}
+
+.app-window .address-bar:focus{
+    background-color: black;
+    border-color: black;
+    color: white;
+    text-align: left;
+}
+
+.app-window .clipboard-button{
+    margin-right: 25%;
+}
+
+.app-window #controls {
+    padding: 5px;
+    background-color: #1b1b1b;
+    opacity: 0.8;
+}
+
+.app-window .window-corner-menu{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 213;
+}
+
+.app-window .window-corner-menu .list-group{
+    --bs-list-group-border-width: 0px;
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.app-window .window-bottom-bar{
+    position: absolute;
+    bottom: 0px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 20px;
+    z-index: 108;
+}
+
+.app-window .new-tab-button{
+    margin-left: 15vw;
+}
+
+.app-window.tab-dd-item{
+    width: 100%;
+}
+
+.app-window .tab-icon-dd{
+    max-width: unset;
+}
+
+.app-window .tabs-drop-down{
+    margin-left: 15vw;
+}
+
+.app-window .tabs-drop-down .dropdown-menu.show {
+    width: 42vw;
+}
+
+.app-window .tabs-drop-down .dropdown-item.active{
+    background-color: #424649 !important;
+}
+
+.app-window .darken-image{
+    filter: brightness(0.3) blur(8px);
+}
+
+.app-window button{
+    border: none !important;
+}
+
+.app-window button:focus{
+    background-color: #252525 !important;
+    border: none !important;
+}
+
+.app-window button:hover{
+    background-color: #252525 !important;
+    border: none !important;
+}
+
+.app-window .show-tabs-bar-button{
+    position: absolute;
+    right: 0px;
+    top: 36px;
+    z-index: 1030;
+    height: 20px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+}
+
+.app-window .show-tabs-bar-button svg{
+    vertical-align: top !important;
+}
+
+.app-window .hide-tabs-bar-button{
+    position: relative;
+    right: 0px;
+    bottom: -8px;
+    color: aliceblue;
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: none;
+    --bs-btn-active-shadow: none;
+    transition: all 0.5s ease;
+}
+
+.app-window .hide-tabs-bar-button:hover{
+    background-color: #3c3d3c;
+}
+
+.app-window .hide-tabs-bar{
+    top: 0px !important;
+}
+
+.app-window .tab-items{
+    width: calc(100vw - 48px);
+    display: flex !important;
+    flex-direction: row;
+}
+
+.loading-bar-container{
+    position: fixed;
+    top: 36px !important;
+    left: 0px !important;
+    height: 2px !important;
+    width: 100% !important;
+    z-index: 1999 !important;
+}

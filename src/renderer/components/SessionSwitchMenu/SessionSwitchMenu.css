@@ -1,0 +1,9 @@
+.sessionTopMenu button{
+    font-size: 0.7em;
+    --bs-btn-padding-x: 0.25rem;
+    --bs-btn-padding-y: 0.05rem;
+}
+
+.recentTasks{
+    margin-left: 12px;
+}

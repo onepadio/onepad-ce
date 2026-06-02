@@ -1,0 +1,184 @@
+.widget-overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0.1;
+    border-radius: 15px;
+    z-index: 105;
+}
+
+.widget{    
+    z-index: 100;
+    border-radius: 15px;
+    background-color: #37415166;
+    backdrop-filter: blur(16px);
+    height: calc(25vh);
+    transition: all 0.5s ease;
+    cursor: pointer;
+    opacity:1.0;
+    transform:
+        perspective(300px)
+        rotateX(0deg) 
+        scale(0.9)
+        translateY(0px)
+        translateX(0px);
+    transition:0.7s ease all;
+}
+
+.widget:hover{
+    background-color: #82848966;
+    backdrop-filter: blur(16px);
+}
+
+.widget.hover{
+    transform:
+            rotate(0deg)
+            translateY(18vh)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget.hover-left{
+    transform:
+            rotate(0deg)
+            translateY(18vh)
+            translateX(25vw)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget.hover-right{
+    transform:
+            rotate(0deg)
+            translateY(18vh)
+            translateX(-25vw)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget.hover-bottom{
+    transform:
+            rotate(0deg)
+            translateY(-25vh)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget.hover-bottom-left{
+    transform:
+            rotate(0deg)
+            translateX(25vw)
+            translateY(-25vh)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget.hover-bottom-right{
+    transform:
+            rotate(0deg)
+            translateX(-25vw)
+            translateY(-25vh)
+            scale(2.0);
+    transition:0.5s ease all;
+    z-index: 1000;
+}
+
+.widget .widget-header{
+    transform:
+        translateY(-1vh) 
+}
+
+.widget.selected .widget-header{
+    transform:
+        translateY(-31vh) 
+        scale(1.0) !important;
+    
+}
+
+.widget.selected{
+   background-color: transparent;
+   backdrop-filter: blur(0px);
+   transition:0.7s ease all;
+   height: calc(85vh) !important;
+   width: 100% !important;
+   transform:
+        rotate(0deg)
+        scale(1) !important;
+}
+
+.widget-backdrop{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1b1b1b;
+    backdrop-filter: blur(1px);
+    display: none;
+    border-radius: 15px;
+    transition:0.5s ease all;
+    cursor: pointer;
+}
+
+.widget-backdrop.active{
+    display: block;
+    opacity: 0.5;
+    transition:0.5s ease all;
+}
+
+
+.widget-zoom{
+    display: none;
+}
+
+.widget.selected .widget-zoom{
+    display: none;
+}
+
+.widget-webview{
+    margin-left: 25%;
+    background-color: white;
+    width: calc(83vw);
+    height: calc(83vh);
+    transform:
+        translateY(-1vh)
+        translateX(-2vw)
+        scale(0.25);
+    transform-origin: 0 0;
+    transition: all 0.5s ease;
+    border: 1px solid #252525; 
+    border-radius: 10px; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.widget-webview.selected{
+    transition: all 0.5s ease;
+    transform:
+        translateX(-17vw)
+        translateY(-31vh) 
+        scale(1.0) !important;
+}
+
+.widget-body{
+    width: 100%;
+    height: 20vh;
+    z-index: 100;
+}
+
+.widget-header-favicon{
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+}
+
+.widget-header-title{
+    font-size: 0.8rem;
+}

@@ -1,0 +1,64 @@
+.address-bar{
+    background-color: transparent;
+    position: absolute;
+    width: calc(100%);
+    top: 36px;
+    left: 0px;
+    backdrop-filter: blur(16px);
+    background-color: #292e36;
+    padding-right: 4px;
+    z-index: 999;
+}
+.address-bar .address-bar-new{
+    margin-top: 8px;
+    background-color: #37415166;
+    color: white;
+    border: 0px solid rgb(113, 111, 111);
+    text-align: center;
+    transition: all 0.5s ease;
+    height: 24px;
+}
+
+.address-bar .address-bar-new:disabled {
+    background-color: #252525;
+    color: white;
+    border-color: black;
+    text-align: center;
+}
+
+.address-bar .address-bar-new:focus{
+    background-color: black;
+    border-color: black;
+    color: white;
+    text-align: left !important;
+}
+.address-bar.with-left-bar{
+    left: 42px !important;
+    width: calc(100% - 42px) !important;
+}
+
+/* Address bar resizing when chat assistant is open */
+.address-bar.chat-assistant-open {
+    width: calc(60vw) !important;
+    transition: width 0.1s ease;
+}
+
+/* Address bar with both left bar and chat assistant */
+.address-bar.with-left-bar.chat-assistant-open {
+    width: calc(60vw - 42px) !important; /* 42px left bar + 400px chat width */
+    transition: width 0.1s ease;
+}
+
+.address-bar .btn{
+    margin-top: 4px;
+}
+
+.address-bar .btn-dark{
+    background-color: transparent !important;
+    color: white !important;
+}
+
+.address-bar .btn-dark:hover{
+    background-color: #37415166 !important;
+    color: #007bff !important;
+}

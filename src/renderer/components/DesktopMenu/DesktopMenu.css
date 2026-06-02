@@ -1,0 +1,16 @@
+.desktopMenu{
+    position: fixed;
+    bottom: 12px;
+    right: 4px;
+    z-index: 108;
+
+}
+
+.desktopMenu.chat-assistant-open {
+    right: calc(40% + 4px); /* 400px chat width + 4px original right margin */
+}
+
+.desktopMenu button{
+    background-color: transparent;
+    border: none;
+}

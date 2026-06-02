@@ -1,0 +1,18 @@
+.app-store-modal{
+    top: 48px;
+    width: calc(67vw);
+    min-width: 900px;
+    height: calc(100vh - 112px);
+    overflow-y: auto;
+ }
+
+ .store-body{
+    height: calc(100vh - 222px);
+    overflow-y: auto;
+ }
+
+ .app-store-modal .add-link-button{
+   position: absolute;
+   left: 0px;
+   bottom: 20px;
+ }

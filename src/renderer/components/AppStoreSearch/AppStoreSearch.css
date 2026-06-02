@@ -1,0 +1,31 @@
+#storeSearchBar {
+    width: 100%;
+    margin-left: 30px;
+}
+
+.store-search{
+    position: absolute;
+    top: 20px;
+    left: 30%;
+    width: 40%;
+}
+
+.store-search .input-group{
+    width: 100%;
+    border-width: 1px;
+    border-color: rgb(182, 180, 180);
+    border-style: groove;
+    border-radius: 8px;
+}
+
+.store-search .form-control:focus {
+    color: white;
+}
+
+.store-search .btn{
+    color: white;
+}
+
+.store-search .form-control{
+    color: white;
+}

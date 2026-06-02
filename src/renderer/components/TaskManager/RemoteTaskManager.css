@@ -1,0 +1,16 @@
+.remote-task-manager{
+    height: 600px;
+    width: 900px;
+}
+
+.remote-task-manager.open{
+    display: flex;
+}
+
+.task-table-header{
+    width: 12%;
+}
+
+.task-table-column{
+    width: 12%;
+}

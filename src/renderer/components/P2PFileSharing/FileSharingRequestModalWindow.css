@@ -1,0 +1,12 @@
+.file-sharing-request-modal{
+    width: 400px;
+}
+
+.expanded-file-sharing-request-modal{
+    height: 640px;
+}
+
+.filesharing-webview{
+    width: 450px;
+    height: 400px;
+}

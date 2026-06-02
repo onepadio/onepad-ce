@@ -1,0 +1,19 @@
+.app-window .webview{
+    position: absolute;
+    top:4px;
+    left: 4px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    background-color: white;
+    transition: all 0.5s ease;
+}
+
+.app-window .webview.full-screen{
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    background-color: white;
+    transition: all 0.5s ease;
+}

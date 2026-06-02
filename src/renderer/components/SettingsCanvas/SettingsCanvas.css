@@ -1,0 +1,64 @@
+.settings{
+    background-color: #1b1b1b;
+    color: white;
+}
+
+.settings .settings-content{
+    font-size: small;
+}
+
+.settings .settings-title{
+    color: white;
+}
+
+.settings .form-switch {
+    padding-left: 1em;
+}
+
+.settings .form-switch .form-check-input {
+    width: 2.5em;
+    height: 1.50em;
+}
+
+.settings .form-switch .form-check-input:checked {
+    background-color: #11a80a;
+    border-color: #11a80a;
+}
+
+.settings label{
+    color: gray;
+}
+
+.settings .sleeping-tabs-form-group{
+    padding-left: 1em;
+}
+
+.version-label{
+    color: gray;
+    font-size: small;
+    position: absolute;
+    right: 5px;
+    bottom: 0px;
+    width: 100%;
+    text-align: center;
+}
+
+.settings .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.settings .list-group-item{
+    border:none;
+}
+
+.upgrade-button{
+    background-color: transparent;
+    border: 1px solid lightblue;
+    outline: none;
+    font-size: small;
+    color: lightblue;
+    border-radius: 5px;
+}

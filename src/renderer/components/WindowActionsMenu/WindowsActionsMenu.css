@@ -1,0 +1,31 @@
+.window-corner-menu-right{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 1999;
+    height: 36px;
+}
+
+.window-corner-menu-right .list-group{
+    --bs-list-group-border-width: 0px;
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+    height: 100%;
+}
+
+.window-corner-menu-right .list-group-item{
+}
+
+.window-corner-menu-right .action-button{
+    width: 36px;
+    height: 100%;
+}
+
+.window-corner-menu-right .action-button:hover{
+    background-color: #3a3a3a;
+}
+
+.window-corner-menu-right .close-button:hover{
+    background-color: #fb2828;
+}

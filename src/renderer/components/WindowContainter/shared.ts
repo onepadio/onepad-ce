@@ -1,0 +1,19 @@
+export const controlsId = "app-window-controls-id";
+export const cornerMenuId = "app-window-cornerMenu-id";
+export const spinnerId = "app-window-spinner-id";
+export const addressBarId = "app-window-addressBar-id";
+export const backButtonId = "app-window-backButton-id";
+export const forwardButtonId = "app-window-forwardButton-id";
+export const reloadButtonId = "app-window-reloadButton-id";
+export const closeTabButtonId = "app-window-closeTabButton-id";
+export const newTabButtonId = "app-window-newTabButton-id";
+export const closeWindowButtonId = "app-window-closeWindowButton-id";
+export const consolebButtonId = "app-window-consoleButton-id";
+export const tabsNavBarId = "app-window-tabsNavBar-id";
+export const showTabsBarButtonId = "app-window-showTabsBarButton-id";
+export const hideTabsBarButtonId = "app-window-hideTabsBarButton-id";
+
+export const settingsButtonId = "app-window-settingsButton-id";
+export const minimizeButtonId = "app-window-minimizeButton-id";
+export const maximizeButtonId = "app-window-maximizeButton-id";
+export const closeButtonId = "app-window-closeButton-id";

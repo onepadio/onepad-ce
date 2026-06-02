@@ -1,0 +1,126 @@
+.musicplayer-canvas{
+    background-color: #1b1b1b;
+    color: white;
+    position: absolute;
+    top:36px;
+    left: 42px;
+    z-index: 1999;
+    height: calc(100vh - 36px) !important;
+    width: 50vw !important;
+    transition: all 0.25s linear;
+    opacity: 0;
+    display: none !important;
+}
+
+.musicplayer-canvas.corner-window{
+    position: absolute;
+    top: calc(50vh - 60px) !important;
+    left: 56px !important;
+    width: calc(30vw - 20px) !important;
+    height: calc(50vh + 16px) !important;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s linear;
+    background-color: #37415166;
+    backdrop-filter: blur(16px);
+}
+
+.musicplayer-canvas-open{
+    opacity: 1;
+    display: block !important;
+}
+
+.musicplayer-canvas-content{
+    font-size: small;
+}
+
+.musicplayer-canvas-title{
+    color: white;
+}
+
+.musicplayer-offcanvas{
+    z-index: 998;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+}
+
+.musicplayer-sidebar{
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 40px;
+    height: 100%;
+    background-color: #1b1b1b;
+    border-left: 1px solid #2a2b2a;
+    border-right: 1px solid #2a2b2a;
+}
+
+.musicplayer-canvas .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-left: lightskyblue 1px solid;
+}
+
+.musicplayer-canvas .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.musicplayer-canvas .bg-dark{
+    background-color: #252525;
+}
+
+.musicplayer-canvas .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.musicplayer-canvas .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.musicplayer-canvas .list-group-item{
+    border:none;
+}
+
+.musicplayer-canvas .nav-item{
+    border:none;
+    padding-top: 15px !important;
+}
+
+.musicplayer-canvas .mp-webview{
+    width: 100%;
+    height: calc(100% - 40px);
+}
+
+.musicplayer-canvas.corner-window .mp-webview{
+    position: relative;
+    top: 25px;
+    left: 5px;
+    width: calc(100% - 10px) !important;
+    height: calc(100% - 30px) !important;
+}
+
+.musicplayer-canvas.corner-window .musicplayer-sidebar{
+    display: none;
+}
+
+.musicplayer-canvas .hide-button{
+    position: absolute;
+    top: 0px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: none;
+}
+
+.musicplayer-canvas.corner-window .hide-button{
+    display: block;
+}
+
+.musicplayer-canvas .hide-button button{
+    background-color: transparent;
+    border: none;
+}

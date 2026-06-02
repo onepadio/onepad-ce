@@ -1,0 +1,223 @@
+.space-container{
+    position: absolute;
+    height: 100%;
+    z-index: 100;
+    width: calc(100vw);
+    transition: width 0.3s ease;
+}
+
+.launchpad-above{
+    width: 100%;
+    height: 125px;
+}
+
+.space-body{
+    transition: all 0.5s ease;
+
+    opacity: 0;
+    margin-top: 0px;
+    width: 100%;
+}
+
+.desktop-left-top{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: calc(30%);
+    z-index: 106;
+}
+
+.space-body.scaled{
+    opacity: 1;
+    height: calc(100vh - 100px);
+}
+
+.space-column{
+    width: 20%;
+}
+
+.space-top{
+    margin-top: 40px;
+    width: calc(100%);
+    transition: width 0.3s ease;
+}
+
+.space-right{
+    margin-top: 15px;
+    left: 64px;
+    width: calc(100% - 84px);
+    height: calc(100vh - 100px);
+    border-radius: 15px;
+    transition: width 0.3s ease;
+}
+
+.space-right.long{
+    height: calc(100vh - 130px);
+}
+
+.space-right.blur{
+    background-color: #37415166;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.space-right .add-button{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 109;
+}
+
+/* Launchpad container styles */
+.launchpad-container {
+    width: 100%;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Ensure all child elements inherit the container width */
+.space-container.chat-assistant-open .launchpad-container,
+.space-container.chat-assistant-open .widget-container,
+.space-container.chat-assistant-open .space-top,
+.space-container.chat-assistant-open .space-body {
+    width: 100% !important;
+}
+
+.space-container.chat-assistant-open .space-right{
+    width: 100% !important;
+}
+
+.widget-container{
+    margin-top: 35px;
+    width: 100% !important;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.widget-column{
+    width: 100%;
+    height: 100%;
+}
+
+.widget-1{
+    margin-top: 0px;
+    margin-left: 0px !important;
+    width: calc(100%);
+    height: calc(50vh - 168px) !important;
+}
+
+.widget-2{
+    margin-top: 0px;
+    margin-left: 20px;
+    width: 100%;
+    height: calc(100vh - 325px);
+}
+
+.widget-3{
+    margin-top: 10px;
+    width: calc(50%);
+    height: calc(100vh - 325px);
+}
+
+.widget-4{
+    margin-top: 10px;
+    margin-left: 10px;
+    width: calc(50%);
+    height: calc(100vh - 325px);
+}
+
+.widget-5{
+    margin-top: 10px;
+    margin-left: 20px;
+    width: 100%;
+    height: calc(100vh - 325px);
+}
+
+.widget-6{
+    margin-top: 10px;
+    margin-left: 0px !important;
+    width: calc(100%);
+    height: calc(50vh - 167px) !important;
+}
+
+.widget-square{
+    height: 100%;
+    width: 100%;
+}
+
+.desktop-name{
+    color: #fff;
+    font-size: 20px;
+}
+
+.desktop-top-controls {
+    position: fixed;
+    top: 39px;
+    right: 4px;
+    z-index: 108;
+    display: flex;
+    gap: 8px;
+}
+
+.desktop-top-controls.chat-assistant-open {
+    right: calc(40% + 4px); /* 400px chat width + 4px original right margin */
+}
+
+.chat-assistant-button {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.chat-assistant-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust space-container width when chat assistant is open */
+.space-container.chat-assistant-open {
+    width: calc(60vw) !important; /* 400px chat width */
+    transition: width 0.3s ease;
+}
+
+.widget-col-1{
+    margin-left:15px;
+    margin-top: 0px;
+    margin-bottom: 10px;
+    width: calc(65% - 10px) !important;
+    height: calc(100% - 45px) !important;
+}
+
+.widget-col-2{
+    margin-right:15px;
+    margin-top: 0px;
+    margin-bottom: 15px;
+    width: calc(35% - 30px) !important;
+}
+
+.mt-25{
+    margin-top: 25px;
+}
+
+.ml-25{
+    margin-left: 25px;
+}
+
+.widgets-row{
+    overflow-y: auto;
+    scrollbar-width: 15px;
+    width: calc(100%) !important;
+    height: calc(100%) !important;
+}
+
+.widgets-row.noscroll{
+    overflow: unset;
+}
+
+.widgets-container{
+    width: 100%;
+    height: 100%;
+    z-index: 108;
+}

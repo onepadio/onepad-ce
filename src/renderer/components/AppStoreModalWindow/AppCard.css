@@ -1,0 +1,34 @@
+.app-card .card{
+    color: white;
+    border: none;
+    border-color: darkgray;
+    min-height: 220px;
+}
+
+.app-description{
+   text-align: left;
+   font-size : 0.85rem;
+   padding-bottom: 25px;
+}
+
+.install-counter{
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    font-size : 0.85rem;
+}
+
+.company-name{
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    font-size : 0.85rem;
+    cursor: pointer;
+    color: #007bff;
+}
+
+.install-button{
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+}

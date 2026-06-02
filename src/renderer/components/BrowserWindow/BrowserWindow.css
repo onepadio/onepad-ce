@@ -1,0 +1,239 @@
+.browser-window .webview-container {
+    position: absolute;
+    top: 108px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: calc(100vh - 144px);
+    z-index: 107;
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.browser-window .resized-webview-container{
+    left: 276px !important;
+    width: calc(100vw - 276px) !important;
+}
+
+.browser-window .webview{
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+}
+
+.browser-window .window-navbar{
+    position: absolute;
+    top: 72px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 36px;
+    background-color: #292e36 !important;
+    z-index: 212;
+    border-bottom: 1px solid #3c3d3c;
+}
+
+.browser-window .tabs-navbar{
+    position: absolute;
+    top: 36px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 36px;
+    background-color: #1b1b1b;
+    z-index: 109;
+    overflow-x: auto;
+    padding: 0px;
+    transition: all 0.5s ease;
+}
+
+.browser-window .tabs-navbar .list-group {
+    --bs-list-group-bg: : #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+    --bs-list-group-item-padding-y: unset;
+    --bs-list-group-border-radius: unset;
+    height: 100%;
+}
+
+.browser-window .tabs-navbar .list-group-item{
+    border:none;
+    border-right: 1px solid #3c3d3c;
+    padding-left: 3px;
+    border-top: #252525 1px solid;
+    border-radius: unset;
+}
+
+.browser-window .tabs-navbar .list-group-item:last-child{
+    border-right: none;
+}
+
+.browser-window .tabs-navbar .list-group-item.active{
+    background-color: #292e36;
+    color: white;
+    border-top: rgb(9, 111, 174) 1px solid;
+}
+
+.browser-window .tabs-navbar .list-group-item:hover{
+    background-color: #424649;
+    color: white;
+    border-top: #424649 1px solid;
+}
+
+.browser-window .tab-bar-item{
+    padding-right: 0px;
+    cursor: pointer;
+}
+
+.browser-window .tab-bar-item .close-button{
+    position: absolute;
+    right: 5px;
+    top: 8px;
+    width: 24px !important;
+    opacity: 0;
+}
+
+.browser-window .tab-bar-item:hover .close-button{
+    opacity: 1;
+    background-color: #424649;
+}
+
+.browser-window .tab-bar-item .move-to-external-button{
+    position: absolute;
+    right: 30px;
+    top: 8px;
+    width: 24px !important;
+    opacity: 0;
+}
+
+.browser-window .tab-bar-item:hover .move-to-external-button{
+    opacity: 1;
+    background-color: #424649;
+}
+
+.browser-window  .address-bar {
+    background-color: #252525; 
+    color: white;
+    border:none;
+    text-align: center;
+    min-width: 300px;
+    transition: all 0.5s linear;
+    height: 24px;
+}
+
+.browser-window  .address-bar:disabled {
+    background-color: #252525; 
+    color: white; 
+    border-color: black;
+    text-align: center;
+    min-width: 300px;
+}
+
+.browser-window  .address-bar:focus{
+    background-color: black;
+    border-color: black;
+    color: white; 
+    text-align: left;
+}
+
+.browser-window  .clipboard-button{
+    margin-right: 25%;
+}
+
+#controls {
+    padding: 5px;
+    background-color: #1b1b1b;
+    opacity: 0.8;
+}
+
+.browser-window .window-corner-menu{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 213;
+}
+
+.browser-window .window-corner-menu .list-group{
+    --bs-list-group-border-width: 0px;
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.window-corner-menu button{
+    background-color: #1b1b1b !important;
+}
+
+.browser-window .window-bottom-bar{
+    position: absolute;
+    bottom: 0px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 20px;
+    z-index: 108;
+}
+
+.browser-window .new-tab-button{
+    margin-left: 15%;
+}
+
+.browser-window .tab-dd-item{
+    width: 100%;
+}
+
+.browser-window .tab-icon-dd{
+    max-width: unset;
+}
+
+.browser-window .tabs-drop-down{
+    margin-left: 15vw;
+}
+
+.tabs-drop-down .dropdown-menu{
+    background-color: #1b1b1b !important;
+}
+
+.browser-window .tabs-drop-down .dropdown-menu.show {
+    width: 44vw;
+}
+
+.browser-window .tabs-drop-down .dropdown-item.active{
+    background-color: #424649 !important;
+}
+
+.browser-window .darken-image{
+    filter: brightness(0.3) blur(8px);
+}
+
+.browser-window button{
+    border: none !important;
+}
+
+.browser-window button:focus{
+    background-color: #252525 !important;
+    border: none !important;
+}
+
+.browser-window button:hover{
+    background-color: #252525 !important;
+    border: none !important;
+}
+
+.window-navbar button{
+    background-color: #292e36 !important;
+}
+
+.tabs-navbar button:hover{
+    background-color: #1b1b1b !important;
+}
+
+.tabs-navbar .new-tab-button{
+    margin-left:10px;
+}
+
+.browser-window .tab-items{
+    width: calc(100vw);
+    display: flex !important;
+    flex-direction: row;
+}

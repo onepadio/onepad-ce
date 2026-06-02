@@ -1,0 +1,6 @@
+.space-icon-container{
+    width: calc(25% - 8px);
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 12px;
+}

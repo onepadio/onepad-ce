@@ -1,0 +1,26 @@
+.stripe-modal{
+    width: 600px;
+    height: 600px;
+}
+
+.checkout-body{
+    width: 550px;
+    height: 500px;
+    overflow-y: auto;
+}
+
+.stripe-modal .spinner{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+.checkout-body{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+}

@@ -1,0 +1,19 @@
+.corner-webview-window{
+    z-index: 1099;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    right:36px !important;
+}
+
+.corner-webview-window-body{
+    transition: opacity .25s ease-in-out;
+    -moz-transition: opacity .25s ease-in-out;
+    -webkit-transition: opacity .25s ease-in-out;
+    opacity: 0;
+    margin-bottom: 40px;
+    margin-top:0px;
+}
+
+.corner-webview-window-opened{
+    opacity: 1;
+}

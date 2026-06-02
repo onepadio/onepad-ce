@@ -1,0 +1,84 @@
+.remote-launch-icon-container{
+    width: calc(25% - 8px);
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+.launchpad-desktop .remote-launch-icon-container{
+    width: calc(18% - 8px);
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+.launch-item .launch-icon{
+    border-radius: 10%;
+    height: auto;
+    backface-visibility: hidden;
+    background-color: transparent;
+}
+
+.icon-middle {
+    transition: .5s ease;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.launch-item:hover {
+    background-color: rgba(255, 255, 255, 0.113);
+      
+}
+
+.appicon:hover .launch-iconxx {
+    opacity: 0.8;
+    transform: scale(1.3 );
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    -ms-transform: scale(1.3);
+    -o-transform: scale(1.3);
+    transform: scale(1.3);
+    transition: opacity 0.2s 0s ease-in-out,  
+                transform 0.3s 0s ease-in-out;
+      
+}
+    
+.appicon:hover .icon-middle {
+    opacity: 0;
+}
+
+.icon-text {
+    color: white !important;
+    font-size: 16px;
+    padding: 16px 32px;
+}
+
+.launch-item .card{
+    background-color: unset;
+    border-width: 0px ;
+}
+
+.launch-item .appicon{
+    text-align: center;
+}
+
+.remote-launch-icon-container .delete-button{
+    z-index: 50;
+}
+
+.remote-launch-icon-container .edit-button{
+    z-index: 50;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #0056b3;
+    border-radius: 50%;
+    margin-top: 4px;
+}

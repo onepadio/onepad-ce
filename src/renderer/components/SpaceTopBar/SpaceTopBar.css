@@ -1,0 +1,173 @@
+.space-topbar{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 400px !important;
+    height: 36px !important;
+    
+    z-index: 1998;
+    transition: all 0.25s linear;
+
+}
+
+.space-topbar-windows{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 400px !important;
+    height: 36px !important;
+    
+    z-index: 1998;
+    transition: all 0.25s linear;
+
+}
+
+.space-topbar.expand{
+    left: 0px !important;
+}
+
+.space-topbar .left-menu{
+    z-index: 110;
+    margin-left: 65px;
+}
+
+.space-topbar .left-menu-windows{
+    z-index: 110;
+}
+
+.space-topbar button{
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+
+.space-topbar .launch-icon{
+    border-radius: 20%;
+    opacity: 1;
+    display: block;
+    height: auto;
+    transition: .5s ease;
+    backface-visibility: hidden;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.space-topbar .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.space-topbar .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-top: lightskyblue 1px solid;
+}
+
+.space-topbar .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.space-topbar .bg-dark{
+    background-color: #252525;
+}
+
+.space-topbar .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.space-topbar .list-group-item{
+    border:none;
+}
+
+.space-topbar .nav-item{
+    border:none;
+    padding-top: 0px !important;
+}
+
+.space-topbar .window-menu{
+    top: 0px;
+    height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+.space-topbar .settings-menu{
+    bottom: 10px;
+    height: 200px;
+}
+
+.space-topbar-offcanvas{
+    z-index: 996;
+}
+
+.space-topbar .workspace-item{
+    width: 100% !important;
+    height: 34px;
+    font-size: 0.85rem;
+    border-radius: unset;
+}
+
+.space-topbar .workspace-item.on{
+    width: 180px !important;
+}
+
+.space-topbar .workspace-item .space-gap{
+    width: 5px;
+}
+
+.space-topbar .workspace-icon{
+    cursor: pointer;
+    width: 34px !important;
+}
+
+.space-topbar .workspace-icon:hover{
+    cursor: pointer;
+    width: 34px !important;
+}
+
+.space-topbar .workspace-icon.active{
+    background-color: #292e36 !important;
+    border-top: lightskyblue 1px solid;
+    width: 34px !important;
+}
+
+.space-topbar .workspace-name{
+    width: 100px;
+    height: 48px;
+    background-color: #292e36;
+    padding-left: 0px;
+    border-radius: 5px;
+}
+
+.space-topbar button{
+    font-size: small;
+}
+
+.workspace-icon .generated-icon{
+    margin-left:2px !important;
+    margin-top:2px !important;
+    margin-right:2px !important;
+    width: 52px;
+}
+
+.workspace-icon.active .generated-icon{
+    margin-left:2px !important;
+    margin-right:2px !important;
+}
+
+.workspace-icon .web-icon{
+    margin-left:10px !important;
+    margin-top:5px !important;
+    margin-bottom:5px;
+    margin-right:8px !important;
+}
+
+.workspace-icon.active .web-icon{
+    margin-left:9px !important;
+    margin-right:7px !important;
+}
+
+.stack-icon{
+    transform: rotate(-90deg);
+}

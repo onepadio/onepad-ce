@@ -1,0 +1,94 @@
+.launch-icon-container{
+    width: calc(25% - 8px);
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 12px;
+}
+
+.launchpad-desktop .launch-icon-container{
+    width: calc(14%);
+    margin-left: 1%;
+    margin-right: 1%;
+    margin-bottom: 1%;
+}
+
+.launchpad-desktop .launch-item{
+    background-color: #5b5e6266;
+
+    backdrop-filter: blur(48px);
+    -webkit-backdrop-filter: blur(48px);
+}
+
+.launch-item .launch-icon{
+    border-radius: 10%;
+    height: auto;
+    backface-visibility: hidden;
+    background-color: transparent;
+}
+
+.icon-middle {
+    transition: .5s ease;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.launch-item{
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+}
+
+.launch-item:hover {
+    background-color: rgba(255, 255, 255, 0.637);
+
+}
+
+.launch-item.active {
+    background-color: rgba(233, 234, 251, 0.082);
+    border-top: rgb(9, 111, 174) 1px solid;
+}
+
+.appicon:hover .launch-iconxx {
+    opacity: 0.8;
+    transform: scale(1.3 );
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    -ms-transform: scale(1.3);
+    -o-transform: scale(1.3);
+    transform: scale(1.3);
+    transition: opacity 0.2s 0s ease-in-out,
+                transform 0.3s 0s ease-in-out;
+
+}
+
+.appicon:hover .icon-middle {
+    opacity: 0;
+}
+
+.icon-text {
+    color: white !important;
+    font-size: 0.7rem !important;
+    padding: unset !important;
+}
+
+.launch-item .card{
+    background-color: unset;
+    border-width: 0px ;
+}
+
+.launch-item .appicon{
+    text-align: center;
+}
+
+.launch-item .delete-button{
+    z-index: 50;
+}
+
+.launch-item .edit-button{
+    z-index: 50;
+}

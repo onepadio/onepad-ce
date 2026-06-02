@@ -1,0 +1,12 @@
+.file-sharing-response-modal{
+    width: 400px;
+}
+
+.expanded-file-sharing-response-modal{
+    height: 520px;
+}
+
+.filesharing-webview{
+    width: 360px !important;
+    height: 450px;
+}

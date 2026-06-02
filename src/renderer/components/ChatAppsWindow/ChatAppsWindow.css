@@ -1,0 +1,37 @@
+.chatview-canvas{
+    background-color: #1b1b1b;
+    color: white;
+    position: absolute;
+    top:36px;
+    left: 56px;
+    z-index: 1999;
+    height: calc(100vh - 36px);
+    transition: all 0.25s linear;
+    opacity: 0;
+    display: none !important;
+}
+
+.chatview-canvas-open{
+    opacity: 1;
+    display: block !important;
+}
+
+.chatview-canvas-content{
+    font-size: small;
+}
+
+.chatview-canvas-title{
+    color: white;
+}
+
+.scope-menu{
+    position:relative;
+    top: 0px;
+    right:0px;
+}
+
+.chatview-offcanvas{
+    z-index: 998;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+}

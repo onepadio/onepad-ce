@@ -1,0 +1,27 @@
+{
+  "name": "OnePad",
+  "version": "2026.6.120-dev",
+  "description": "One app for all your online apps",
+  "license": "AGPL-3.0-or-later",
+  "author": {
+    "name": "Sigma Technologies Ltd",
+    "email": "contact@onepad.io",
+    "url": "https://onepad.io"
+  },
+  "main": "./dist/main/main.js",
+  "scripts": {
+    "rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
+    "postinstall": "npm run rebuild && npm run link-modules",
+    "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts"
+  },
+  "dependencies": {
+    "is-url-http": "^2.3.5",
+    "electron-updater": "^5.3.0",
+    "electron-log": "^4.4.8",
+    "electron-store": "^8.1.0",
+    "electron-util": "^0.17.2",
+    "electron-context-menu": "^3.6.1",
+    "docker-cli-js": "^2.10.0",
+    "uuid": "^10.0.0"
+  }
+}

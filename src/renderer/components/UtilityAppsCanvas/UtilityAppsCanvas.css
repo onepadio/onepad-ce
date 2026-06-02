@@ -1,0 +1,112 @@
+.utility-canvas{
+    background-color: #1b1b1b;
+    color: white;
+    position: absolute;
+    top:36px;
+    left: 56px;
+    z-index: 999;
+    height: calc(100vh - 36px);
+    transition: all 0.25s linear;
+    opacity: 0;
+    display: none !important;
+    flex-direction: row;
+}
+
+.utility-canvas-open{
+    opacity: 1;
+    display: flex !important;
+}
+
+.utility-canvas-content{
+    font-size: small;
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    height: calc(100% - 8px);
+    flex: 1;
+    min-width: 0;
+}
+
+.utility-canvas-title{
+    color: white;
+}
+
+.utility-offcanvas{
+    z-index: 998;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    left: 56px !important;
+    width: calc(100% - 56px) !important;
+}
+
+.utility-sidebar{
+    width: 40px;
+    height: calc(100%);
+    background-color: #1b1b1b;
+    border-left: 1px solid #2a2b2a;
+    border-right: 1px solid #2a2b2a;
+    flex-shrink: 0;
+}
+
+.utility-canvas .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-left: lightskyblue 1px solid;
+}
+
+.utility-canvas .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.utility-canvas .bg-dark{
+    background-color: #252525;
+}
+
+.utility-canvas .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.utility-canvas .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.utility-canvas .list-group-item{
+    border:none;
+}
+
+.utility-canvas .nav-item{
+    border:none;
+    padding-top: 15px !important;
+}
+
+.expand-button{
+    position: absolute;
+    bottom:0px;
+}
+
+.utility-canvas .launch-icon svg{
+    color: lightskyblue;
+    cursor: pointer;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.utility-close-button{
+    --bs-btn-bg: #1b1b1b !important;
+    border-color: unset !important;
+    border: none;
+}
+
+.utility-canvas .nav-menu-bar{
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 36px;
+    background-color: #1b1b1b;
+    margin-bottom: 4px;
+}

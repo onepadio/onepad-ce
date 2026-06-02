@@ -1,0 +1,23 @@
+.spacesTopMenu{
+    margin-top: 2px;
+}
+
+.spacesTopMenu button{
+    --bs-btn-padding-x: 0.25rem;
+}
+
+.sessionTopMenu button{
+    --bs-btn-padding-x: 0.25rem;
+}
+
+.smallLabel{
+    font-size: 0.6em;
+    
+}
+
+.spacesTopMenu button{
+    background-color: transparent;
+    border: none;
+    outline: none;
+    font-size: small;
+}

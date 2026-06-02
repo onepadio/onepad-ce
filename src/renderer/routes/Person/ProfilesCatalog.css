@@ -1,0 +1,63 @@
+.profiles{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    max-width: 1200px;
+    padding: 0 20px;
+    color: white;
+    margin-top: 3rem !important;
+}
+
+.profile-list{
+    height: 450px;
+    overflow-y: auto;
+}
+
+.profiles .card{
+    color: white;
+    background-color: rgba(0,0,0,0.5) !important;
+    border-radius: 10%;
+    cursor: pointer;
+}
+
+.profiles .card:hover{
+    background-color: rgba(0,0,0,0.2) !important;
+    border: none;
+}
+
+.addProfileButton button{
+    border-radius: 10%;
+    background-color: #fff3;
+    color: #1f293766;
+    width: 64px;
+    height: 64px;
+}
+
+.addProfileButton:hover  .addButton{
+    background-color: rgba(245, 245, 245, 0.435);
+    color: #1f293766;
+    transition-property: color,background-color;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+    transition-duration: .30s;
+    width: 64px;
+    height: 64px;
+}
+
+.profiles .list-group{
+    --bs-list-group-bg: unset;
+    --bs-list-group-border-color: unset;
+    width: 180px;
+}
+
+.refreshButtonBar{
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
+
+.updateButton{
+    width: 160px;
+}

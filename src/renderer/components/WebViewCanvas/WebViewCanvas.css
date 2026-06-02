@@ -1,0 +1,18 @@
+.webview-canvas{
+    background-color: #1b1b1b;
+    color: white;
+}
+
+.webview-canvas-content{
+    font-size: small;
+}
+
+.webview-canvas-title{
+    color: white;
+}
+
+.scope-menu{
+    position:relative;
+    top: 0px;
+    right:0px;
+}

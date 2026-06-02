@@ -1,0 +1,19 @@
+.welcome-modal{
+    width: 600px;
+    height: 500px;
+    background-color: whitesmoke !important;
+    color: black !important;
+}
+
+.welcome-modal button{
+    background-color: lightgray !important;
+    
+}
+
+.carousel-control-prev-icon, .carousel-control-next-icon{
+    color: black !important;
+}
+
+.align-left{
+    text-align: left;
+ }

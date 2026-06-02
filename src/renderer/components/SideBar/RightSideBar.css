@@ -1,0 +1,66 @@
+.right-side-bar{
+    position: absolute;
+    top: 36px;
+    right: 0px;
+    width: 36px !important;
+    height: calc(100vh - 36px) !important;
+    min-height: calc(100vh - 200px) !important;
+    z-index: 1997;
+    backdrop-filter: blur(16px);
+    background-color: #37415166;
+    justify-content: center;
+    align-items: center;
+}
+
+.right-side-bar button{
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+
+.right-side-bar .launch-icon{
+    border-radius: 20%;
+    opacity: 1;
+    display: block;
+    height: auto;
+    transition: .5s ease;
+    backface-visibility: hidden;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.right-side-bar .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.right-side-bar .active{
+    opacity: 1;
+    background-color: #292e36  !important;
+    border-left: lightskyblue 1px solid;
+}
+
+.right-side-bar .appicon:hover .launch-icon {
+    opacity: 0.5;
+}
+
+.right-side-bar .bg-dark{
+    background-color: #252525;
+}
+
+.right-side-bar .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.right-side-bar .list-group-item{
+    border:none;
+    align-items: center !important;
+}
+
+.right-side-bar .bottom-menu{
+    position: absolute;
+    bottom: 0px;
+    width: 36px;
+}

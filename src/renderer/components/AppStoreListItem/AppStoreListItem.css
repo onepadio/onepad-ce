@@ -1,0 +1,30 @@
+.store .store-list-item .app-name{
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.store .store-list-item .app-description{
+    font-size: 0.7rem;
+    color: darkgray;
+}
+
+.store .store-list-item .card{
+    --bs-card-bg:#1b1b1b;
+    --bs-card-border-width: 0px;
+}
+
+.store-list-item .store-list-icon{
+    border-radius: 10%;
+}
+
+.store-list-item .ml-10 {
+    margin-left: 10px !important;
+}
+
+.store-list-item .app-name {
+    text-align: start;
+}
+
+.store-list-item .app-description {
+    text-align: start;
+}

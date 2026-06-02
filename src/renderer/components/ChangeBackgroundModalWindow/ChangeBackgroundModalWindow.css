@@ -1,0 +1,46 @@
+.change-background-modal-window {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: 500px;
+    height: calc(50vh) !important;
+    z-index: 1000;
+    min-height: 50vh !important;
+}
+
+.change-background-modal-window .modal-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(13, 17, 23, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.change-background-modal-window .modal-body {
+    height: calc(50vh - 120px);
+    overflow: hidden;
+}
+
+.change-background-modal-window .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    height: 60px;
+}
+
+.change-background-modal-window .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    height: 60px;
+}
+
+.change-background-modal-window label {
+    color: white;
+}
+
+.change-background-modal-window .close {
+    color: white;
+}
+
+

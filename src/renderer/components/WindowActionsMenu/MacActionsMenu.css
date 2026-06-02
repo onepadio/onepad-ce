@@ -1,0 +1,17 @@
+.window-corner-menu-left{
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 1999;
+}
+
+.window-corner-menu-left .list-group{
+    --bs-list-group-border-width: 0px;
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.window-corner-menu-left .list-group-item{
+    margin-top: 5px;
+}

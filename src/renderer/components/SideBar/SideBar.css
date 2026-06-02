@@ -1,0 +1,219 @@
+.globals-modal{
+    z-index: 999;
+
+}
+
+.globals-modal-body{
+    transition: opacity .25s ease-in-out;
+    -moz-transition: opacity .25s ease-in-out;
+    -webkit-transition: opacity .25s ease-in-out;
+    opacity: 0;
+}
+
+.global-apps-menu {
+  position: absolute;
+  display: flex-column;
+  justify-content: space-between;
+  align-items: center;
+  top: 36px;
+  left: 0px;
+  width: 56px !important;
+  height: calc(100vh - 36px) !important;
+  z-index: 999;
+  background-color: #292e36;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.global-apps-menu button {
+  background-color: transparent;
+  border: none;
+  outline: none;
+  font-size: small;
+}
+
+.global-apps-menu-content {
+  height: calc(100vh - 240px);
+  margin-top: 6px;
+}
+
+.global-apps-menu-middle {
+  position: absolute;
+  display: flex-column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 150px;
+  z-index: 1000;
+  background-color: #464c5466;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  top: calc(50vh - 75px) !important;
+  width: calc(100vw - 240px);
+  left: 120px;
+  border-radius: 20px;
+}
+
+
+.global-apps-menu .plus-button{
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 6px;
+    background-color: #3c3d3c;
+}
+
+.global-apps-menu .plus-button:hover{
+    background-color: #636363;
+}
+
+.global-apps-menu .pluss:hover{
+    background-color: #3c3d3c;
+}
+
+.global-apps-menu .list-group{
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-border-color: #3c3d3c;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.global-apps-menu .list-group-item{
+    border:none !important;
+    background-color: unset !important;
+}
+
+.global-apps-menu .menu-icon{
+  cursor: pointer;
+  margin: unset !important;
+  width: 100% !important;
+  margin-bottom: 10px !important;
+}
+
+.global-apps-menu .appicon{
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+.global-apps-menu .launch-icon{
+    border-radius: 10px;
+}
+
+.global-apps-menu .lauhch-icon .grayscale{
+    filter: grayscale(100%);
+}
+
+.globals-opened{
+    opacity: 1 !important;
+}
+
+.context-menu {
+  background: #2c2c2c;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 150px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+  background-color: #404040;
+}
+
+.context-menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.context-menu-item i {
+  font-size: 12px;
+}
+
+.star-icon-container {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.star-icon {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  margin-bottom: 15px;
+}
+
+.global-apps-menu .active {
+  background-color: #404040;
+}
+
+.global-apps-menu .active:focus {
+  background-color: #404040;
+}
+
+.global-apps-menu .active:hover {
+  background-color: #404040;
+}
+
+.global-apps-menu .active:active {
+  background-color: #404040;
+}
+
+/* Favourite star indicator */
+.favourite-star {
+  z-index: 10;
+  margin: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+  width: 100%;
+  margin: 10px 0;
+  padding: 0 10px;
+}
+
+.divider-line {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.938), transparent);
+  margin: 0;
+}
+
+/* NavBar Apps Container */
+.navbar-apps-container {
+  width: 100%;
+  height: calc(100vh - 300px) !important;
+}
+
+.navbar-apps-container::-webkit-scrollbar {
+  display: none;
+}
+

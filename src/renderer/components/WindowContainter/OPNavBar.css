@@ -1,0 +1,29 @@
+.op-navbar .address-bar-new{
+    margin-left: 15vw;
+    background-color: transparent; 
+    color: lightsteelblue;
+    border: 1px solid rgb(113, 111, 111);
+    text-align: center;
+    min-width: 300px;
+    transition: all 0.5s linear;
+    height: 24px;
+}
+
+.op-navbar .app-window .address-bar-new:disabled {
+    background-color: #252525; 
+    color: white; 
+    border-color: black;
+    text-align: center;
+    min-width: 300px;
+}
+
+.op-navbar .app-window .address-bar-new:focus{
+    background-color: black;
+    border-color: black;
+    color: white; 
+    text-align: left;
+}
+
+.op-navbar .btn-dark{
+    background-color: transparent !important;
+}

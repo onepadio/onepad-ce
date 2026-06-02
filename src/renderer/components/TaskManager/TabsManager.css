@@ -1,0 +1,97 @@
+.task-table-header {
+    font-weight: bold;
+    padding: 8px;
+    flex: 1;
+    text-align: center;
+}
+
+.task-table-column {
+    padding: 8px;
+    flex: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tabs-table-body {
+    height: calc(80vh - 250px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.tab-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.container-details {
+    background-color: rgba(0, 0, 0, 0.2);
+    margin: 8px 40px;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.detail-row {
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+}
+
+.detail-row strong {
+    margin-right: 8px;
+    min-width: 80px;
+}
+
+/* Button styles */
+.btn-link {
+    color: inherit;
+    padding: 0 8px;
+}
+
+.btn-link:hover {
+    color: inherit;
+    opacity: 0.8;
+}
+
+.collapse {
+    display: none;
+}
+
+.collapse.show {
+    display: block;
+    visibility: visible !important;
+}
+
+/* Ensure the workspace column has space for the chevron */
+.task-table-column:first-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.workspace-select {
+    width: 200px;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.workspace-select:focus {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: inherit;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+}
+
+.workspace-select option {
+    background-color: #2c2c2c;
+    color: inherit;
+}
+
+FormGroup {
+    margin-left: 1rem;
+}
+
+.expand-column {
+    width: 40px;
+    flex: 0 0 40px !important;
+}

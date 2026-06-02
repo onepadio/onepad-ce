@@ -1,0 +1,16 @@
+.modalx{
+    z-index: 1099;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+}
+
+.modal-body-x{
+    transition: opacity .25s ease-in-out;
+    -moz-transition: opacity .25s ease-in-out;
+    -webkit-transition: opacity .25s ease-in-out;
+    opacity: 0;
+}
+
+.opened{
+    opacity: 1;
+}

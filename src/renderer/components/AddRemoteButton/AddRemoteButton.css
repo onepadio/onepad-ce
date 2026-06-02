@@ -1,0 +1,17 @@
+.addLinkButton button{
+    border-radius: 10%;
+    background-color: #fff3;
+    color: #1f293766;
+    width: 64px;
+    height: 64px;
+}
+
+.addLinkButton:hover  .addButton{
+    background-color: rgba(245, 245, 245, 0.435);
+    color: #1f293766;
+    transition-property: color,background-color;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+    transition-duration: .30s;
+    width: 64px;
+    height: 64px;
+}

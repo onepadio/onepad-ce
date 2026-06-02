@@ -1,0 +1,117 @@
+.remote-webview-container {
+    position: absolute;
+    top: 0px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: calc(100vh - 60px);
+    z-index: 107;
+    transition: all 0.5s ease;
+}
+
+.resized-webview-container{
+    left: 276px;
+    width: calc(100vw - 276px);
+}
+
+.remote-webview{
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background-color: white;
+}
+
+
+.window-navbar{
+    position: absolute;
+    top: 0px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 36px;
+    background-color: #1b1b1b;
+    z-index: 110;
+}
+
+.remote-address-bar {
+    background-color: #252525; 
+    color: white;
+    border:none;
+    text-align: center;
+    min-width: 300px;
+    transition: all 0.5s linear;
+}
+
+.remote-address-bar:disabled {
+    background-color: #252525; 
+    color: white; 
+    border-color: black;
+    text-align: center;
+    min-width: 300px;
+}
+
+.remote-address-bar:focus{
+    background-color: black;
+    border-color: black;
+    color: white; 
+    text-align: left;
+}
+
+.clipboard-button{
+    margin-right: 25%;
+}
+
+#controls {
+    padding: 5px;
+    background-color: #1b1b1b;
+    opacity: 0.8;
+}
+
+.window-corner-menu{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 111;
+}
+
+.window-corner-menu .list-group{
+    --bs-list-group-border-width: 0px;
+    --bs-list-group-bg:: #252525;
+    --bs-list-group-color: white;
+    --bs-list-group-item-padding-x: unset;
+}
+
+.window-bottom-bar{
+    position: absolute;
+    bottom: 0px;
+    left: 48px;
+    width: calc(100vw - 48px);
+    height: 20px;
+    z-index: 108;
+}
+
+.new-tab-button{
+    margin-left: 15%;
+}
+
+.tab-dd-item{
+    width: 100%;
+}
+
+.tab-icon-dd{
+    max-width: unset;
+}
+
+.tabs-drop-down .dropdown-menu.show {
+    width: 40vw;
+}
+
+.spinner{
+    position: absolute;
+    top: 30%;
+}
+
+.spinner-text{
+    position: absolute;
+    top: 35%;
+}

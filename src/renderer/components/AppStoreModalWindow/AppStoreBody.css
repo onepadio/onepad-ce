@@ -1,0 +1,32 @@
+.store .category-title{
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+}
+
+.store .category-title{
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  padding-left: 10px;
+}
+
+.store-category a{
+  font-size: 0.8rem;
+}
+
+.store-category .see-all{
+  visibility: hidden;
+}
+
+.store-category .error{
+  color: white;
+  padding-left: 10px;
+  font-size: 0.8rem;
+}
+
+.store-category .card{
+  background-color: unset;
+  border-width: 0px;
+  color: white;
+}

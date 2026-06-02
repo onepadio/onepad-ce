@@ -1,0 +1,17 @@
+.upgrade-modal{
+    width: 800px;
+    background-color: whitesmoke !important;
+    color: black !important;
+}
+
+.upgrade-modal .feature-item{
+    width: 90%;
+}
+
+.upgrade-modal .close-button{
+    background-color: lightgray !important;
+}
+
+.upgrade-modal .external-link{
+    cursor: pointer;
+}

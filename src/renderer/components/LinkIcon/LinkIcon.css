@@ -1,0 +1,22 @@
+.linkIcon button{
+    border-radius: 10%;
+    background-color: #fff3;
+    color: #1f293766;
+    width: 48px;
+    height: 48px;
+}
+
+.linkIcon:hover  .linkButton{
+    background-color: rgba(245, 245, 245, 0.435);
+    color: #1f293766;
+    transition-property: color,background-color;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+    transition-duration: .30s;
+    width: 48px;
+    height: 48px;
+}
+
+.linkIcon .favIcon{
+    display: revert;
+    border-radius: 20%;
+}
