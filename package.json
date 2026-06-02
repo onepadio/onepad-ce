@@ -335,8 +335,8 @@
       "bucket": "onepad",
       "endpoint": "https://lon1.digitaloceanspaces.com",
       "region": "lon1",
-      "channel": "dev",
-      "path": "dev",
+      "channel": "beta",
+      "path": "beta",
       "acl": "public-read"
     },
     "generateUpdatesFilesForAllChannels": false

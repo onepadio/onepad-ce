@@ -10,7 +10,7 @@ A powerful, open-source desktop workspace manager that brings the simplicity of 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](https://github.com/sigma-tech/onepad-ce)
 [![Version](https://img.shields.io/badge/version-1.0.0--beta-orange.svg)](https://github.com/sigma-tech/onepad-ce/releases)
 
-[Website](https://onepad.io) • [Documentation](https://docs.onepad.io) • [Community](https://discord.gg/onepad) • [Roadmap](./ROADMAP.md)
+[Website](https://onepad.io) • [Documentation](https://docs.onepad.io) • [Community](https://discord.gg/onepad) • 
 
 </div>
 
@@ -207,17 +207,6 @@ We love contributions! OnePad Community Edition is open source and welcomes impr
 
 ---
 
-## 📚 Documentation
-
-- **[Roadmap](./ROADMAP.md)** - Product vision and development phases
-- **[Marketplace Design](./MARKETPLACE_DESIGN.md)** - Technical architecture for SaaS marketplace
-- **[Project Summary](./PROJECT_SUMMARY.md)** - Complete project overview
-- **[Changelog](./CHANGELOG.md)** - Version history
-- **[User Guide](https://docs.onepad.io)** - End-user documentation
-- **[API Reference](https://docs.onepad.io/api)** - Developer API docs
-
----
-
 ## 🏗️ Architecture
 
 **Frontend:**
@@ -232,24 +221,6 @@ We love contributions! OnePad Community Edition is open source and welcomes impr
 - Electron Store for user preferences
 - Local-first architecture
 
-**Future (Cloud Services):**
-- Cloud sync (Phase 2)
-- Marketplace backend (Phase 3)
-- See [ROADMAP.md](./ROADMAP.md) for details
-
----
-
-## 🎯 Roadmap
-
-OnePad follows a phased development approach:
-
-- **Phase 1 (Current):** Community Edition - Local workspace manager
-- **Phase 2 (Months 6-12):** Cloud Sync - Multi-device support
-- **Phase 3 (Months 12-18):** SaaS Marketplace - Distribution platform for indie developers
-- **Phase 4 (Year 2):** Cloud Desktop - Optional cloud computing
-- **Phase 5 (Year 2-3):** Enterprise Features
-
-**See [ROADMAP.md](./ROADMAP.md) for complete details.**
 
 ---
 
@@ -297,20 +268,6 @@ We chose AGPLv3 to:
 - ✅ Support a sustainable dual-licensing business model
 
 **Commercial licensing** is available for organizations that cannot comply with AGPLv3. Contact us at [contact@onepad.io](mailto:contact@onepad.io).
-
----
-
-## 💰 Commercial Services
-
-While OnePad Community Edition is free and open source, we offer commercial services:
-
-- **OnePad Cloud** ($8-20/mo) - Cloud sync, backup, and multi-device access
-- **OnePad Pro** ($20/mo) - Premium features and priority support
-- **Enterprise Licensing** - Custom licensing, SSO, admin controls, and SLA
-
-**Revenue from commercial services funds ongoing development of the community edition.**
-
-[Learn more about commercial options →](https://onepad.io/pricing)
 
 ---
 
