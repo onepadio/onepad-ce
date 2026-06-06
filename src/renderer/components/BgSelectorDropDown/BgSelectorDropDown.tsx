@@ -19,44 +19,105 @@ import beach_3 from '../../images/tso_5.jpg';
 
 import './BgSelectorDropDown.css';
 
+// Pexels client should be created only once outside component
+const pexelsClient = createClient('4Qpo6sLZ2hjfUkyERXQrQzKbcbew6EQtIr3cPQLnMp26S9urGttwX8rg');
+
+// Base local images for each category
+const LOCAL_IMAGES = {
+    "Beach": [beach_1, beach_2, beach_3],
+    "Nature": [default_bg, tso_2, tso_4, bg1],
+    "Space": [tso_1, tso_3],
+};
+
+// Category to Pexels search query mapping
+const CATEGORY_QUERIES = {
+    "Beach": "beach ocean",
+    "Nature": "nature landscape",
+    "Space": "space galaxy stars",
+};
+
 function BgSelectorDropDown(props: any) {
     const [activeCategory, setActiveCategory] = useState("Beach");
-    const client = createClient('4Qpo6sLZ2hjfUkyERXQrQzKbcbew6EQtIr3cPQLnMp26S9urGttwX8rg');
     const [backgroundCategories, setBackgroundCategories] = useState({
-        "Beach": [beach_1, beach_2, beach_3],
-        "Nature": [default_bg, tso_2, tso_4, bg1],
-        "Space": [tso_1, tso_3],
+        "Beach": LOCAL_IMAGES.Beach,
+        "Nature": LOCAL_IMAGES.Nature,
+        "Space": LOCAL_IMAGES.Space,
         "Search": []
     });
     const [pexelQuery, setPexelQuery] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [searchResults, setSearchResults] = useState([]);
+    const [pexelsCache, setPexelsCache] = useState<Record<string, string[]>>({});
     const [isSearching, setIsSearching] = useState(false);
     const [searchError, setSearchError] = useState(null);
 
 
-    function randomBackgroundImages(query: any) {
+    function fetchPexelsImages(query: string, category: string) {
         if (query === "") return;
+        
+        // Check if already cached
+        if (pexelsCache[category]) {
+            const localImages = LOCAL_IMAGES[category] || [];
+            setBackgroundCategories(prev => ({
+                ...prev,
+                [category]: [...localImages, ...pexelsCache[category]]
+            }));
+            return;
+        }
+
         const orientation = 'landscape';
         let _pexelPhotos: any = [];
         setIsSearching(true);
         setSearchError(null);
-        setSearchResults([]);
-        client.photos.search({ query, orientation, per_page: 20 }).then(photos => {
+        
+        pexelsClient.photos.search({ query, orientation, per_page: 12 }).then(photos => {
             // @ts-expect-error
             photos.photos.forEach((photo: any) => {
                 _pexelPhotos.push(photo.src.original);
             });
-            let _backgroundCategories = {
-                "Beach": [beach_1, beach_2, beach_3],
-                "Nature": [default_bg, tso_2, tso_4, bg1],
-                "Space": [tso_1, tso_3],
-                "Search": _pexelPhotos,
-            };
-            setBackgroundCategories(_backgroundCategories);
+            
+            // Cache the results
+            setPexelsCache(prev => ({
+                ...prev,
+                [category]: _pexelPhotos
+            }));
+            
+            // Combine local + pexels images
+            const localImages = LOCAL_IMAGES[category] || [];
+            setBackgroundCategories(prev => ({
+                ...prev,
+                [category]: [...localImages, ..._pexelPhotos]
+            }));
+            
             setIsSearching(false);
         }).catch(error => {
-          console.error("Error getting background images", error);
+            console.error("Error getting background images", error);
+            setIsSearching(false);
+            setSearchError(error.message);
+        });
+    }
+
+    function fetchSearchResults(query: string) {
+        if (query === "") return;
+        
+        const orientation = 'landscape';
+        let _pexelPhotos: any = [];
+        setIsSearching(true);
+        setSearchError(null);
+        
+        pexelsClient.photos.search({ query, orientation, per_page: 20 }).then(photos => {
+            // @ts-expect-error
+            photos.photos.forEach((photo: any) => {
+                _pexelPhotos.push(photo.src.original);
+            });
+            
+            setBackgroundCategories(prev => ({
+                ...prev,
+                "Search": _pexelPhotos
+            }));
+            
+            setIsSearching(false);
+        }).catch(error => {
+            console.error("Error getting background images", error);
             setIsSearching(false);
             setSearchError(error.message);
         });
@@ -69,12 +130,33 @@ function BgSelectorDropDown(props: any) {
 
     function handleCategoryClick(category: any) {
         setActiveCategory(category);
+        
+        // Fetch Pexels images for predefined categories if not already loaded
+        if (category !== "Search" && CATEGORY_QUERIES[category] && !pexelsCache[category]) {
+            fetchPexelsImages(CATEGORY_QUERIES[category], category);
+        }
     }
 
 
 
+    // Load initial category Pexels images on mount
     useEffect(() => {
-        randomBackgroundImages(searchQuery);
+        if (activeCategory !== "Search" && CATEGORY_QUERIES[activeCategory] && !pexelsCache[activeCategory]) {
+            fetchPexelsImages(CATEGORY_QUERIES[activeCategory], activeCategory);
+        }
+    }, []);
+
+    // Handle custom search
+    useEffect(() => {
+        let isMounted = true;
+        
+        if (searchQuery && isMounted) {
+            fetchSearchResults(searchQuery);
+        }
+        
+        return () => {
+            isMounted = false;
+        };
     }, [searchQuery]);
 
     return (
@@ -110,16 +192,10 @@ function BgSelectorDropDown(props: any) {
                         </Button>
                     </div>
                 )}
-                {isSearching && (
-                        <div className="d-flex flex-fluid justify-content-center mt-2">
-                            <Spinner color="primary" />
-                        </div>
-                )}
                 <div className="bg-selector-grid">
-
                     {searchError && (
                         <div className="d-flex flex-fluid justify-content-center">
-                            <span className="ml-2">Error: {searchError}</span>
+                            <span className="ml-2" style={{ color: '#ff6b6b' }}>Error: {searchError}</span>
                         </div>
                     )}
                     {backgroundCategories[activeCategory].map((bg: any, index: any) => (
@@ -132,11 +208,20 @@ function BgSelectorDropDown(props: any) {
                                 className="bg-selector-grid-image"
                                 src={bg}
                                 alt={`background ${index}`}
+                                loading="lazy"
                                 // @ts-expect-error
                                 value={bg}
                             />
                         </div>
                     ))}
+                    {isSearching && (
+                        <div className="loading-more-indicator">
+                            <Spinner color="primary" size="sm" />
+                            <span style={{ marginLeft: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                                Loading more images...
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

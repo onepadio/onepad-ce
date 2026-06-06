@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 
 import { getRandomImage, BG_IMAGE_STORE_KEY } from "../../services/unsplash";
+import { setItem } from "../../services/persist";
 
 import { modalActions } from "../../store/modal-slice";
 
@@ -14,10 +15,6 @@ import {
 
 import {
   Button,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Form,
   FormGroup,
   Label,
@@ -42,9 +39,9 @@ function ChangeBackgroundModalWindow(props: any) {
   const [bgImage, setBgImage] = useState("");
 
   const isChangeBackgroundModalOpen = useSelector(
-
     (state: any) => state.modal.isChangeBackgroundModalOpen
   );
+  
   const toggleChangeBackgroundModal = () => {
     // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
     dispatch(modalActions.toggleChangeBackgroundModal());
@@ -63,45 +60,46 @@ function ChangeBackgroundModalWindow(props: any) {
     });
   }
 
-  function onOpened() {
-    setName("");
-    setBgImage(default_bg);
-  }
-
   function onBgSelected(value: any) {
-    //setBgImage(value);
     save(value);
   }
 
   useEffect(() => {
-    log.debug("useEffect");
+    if (isChangeBackgroundModalOpen) {
+      setName("");
+      setBgImage(default_bg);
+    }
   }, [isChangeBackgroundModalOpen]);
 
+  if (!isChangeBackgroundModalOpen) {
+    return null;
+  }
+
   return (
-    <div>
-      <Modal
-        onOpened={onOpened}
-        className="change-background-modal-window"
-        isOpen={isChangeBackgroundModalOpen}
-        toggle={toggleChangeBackgroundModal}
-        centered={true}
-        {...props}
-      >
-        <ModalHeader toggle={toggleChangeBackgroundModal}>
-          Background Image
-        </ModalHeader>
-        <ModalBody>
-          <Form>
-            <FormGroup>
-              <BgSelectorDropDown
-                bgImage={bgImage}
-                onClick={(value) => onBgSelected(value)}
-              />
-            </FormGroup>
-          </Form>
-        </ModalBody>
-      </Modal>
-    </div>
+    <>
+      <div 
+        className="sidebar-overlay" 
+        onClick={toggleChangeBackgroundModal}
+      />
+      <div className="background-sidebar">
+        <div className="sidebar-header">
+          <h3>Background Image</h3>
+          <button 
+            className="sidebar-close-btn" 
+            onClick={toggleChangeBackgroundModal}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <div className="sidebar-body">
+          <BgSelectorDropDown
+            bgImage={bgImage}
+            onClick={(value) => onBgSelected(value)}
+          />
+        </div>
+      </div>
+    </>
   );
 }
 
