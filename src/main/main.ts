@@ -983,6 +983,75 @@ ipcMain.handle('convert-to-png', async (event, data) => {
   return img.toPNG();
 });
 
+ipcMain.handle('get-tab-memory-info', async (event, webContentsId) => {
+  try {
+    const wc = webContents.fromId(webContentsId);
+    if (!wc) {
+      return null;
+    }
+    
+    const osProcessId = wc.getOSProcessId();
+    const appMetrics = app.getAppMetrics();
+    
+    // Find the corresponding process in app metrics
+    const processMetrics = appMetrics.find(metric => metric.pid === osProcessId);
+    
+    console.log('Memory info for webContents', webContentsId, ':', processMetrics?.memory);
+    return processMetrics ? processMetrics.memory : null;
+  } catch (error) {
+    log.error('Failed to get memory info for webContents:', webContentsId, error);
+    return null;
+  }
+});
+
+ipcMain.handle('get-all-tabs-memory', async () => {
+  try {
+    const allWebContents = webContents.getAllWebContents();
+    const appMetrics = app.getAppMetrics();
+    
+    console.log('Getting memory for', allWebContents.length, 'webContents');
+    console.log('App metrics:', appMetrics.length, 'processes');
+    
+    const memoryInfos = allWebContents.map((wc) => {
+      try {
+        const osProcessId = wc.getOSProcessId();
+        
+        // Find the corresponding process in app metrics
+        const processMetrics = appMetrics.find(metric => metric.pid === osProcessId);
+        
+        const info = {
+          id: wc.id,
+          url: wc.getURL(),
+          title: wc.getTitle(),
+          memory: processMetrics ? processMetrics.memory : null
+        };
+        
+        if (processMetrics) {
+          console.log('WebContents', wc.id, 'memory:', processMetrics.memory);
+        } else {
+          console.log('WebContents', wc.id, 'no metrics found for PID:', osProcessId);
+        }
+        
+        return info;
+      } catch (error) {
+        console.log('Failed to get memory for webContents', wc.id, ':', error);
+        return {
+          id: wc.id,
+          url: wc.getURL(),
+          title: wc.getTitle(),
+          memory: null
+        };
+      }
+    });
+    
+    console.log('Total memory infos collected:', memoryInfos.length);
+    return memoryInfos;
+  } catch (error) {
+    log.error('Failed to get all tabs memory:', error);
+    return [];
+  }
+});
+
 ipcMain.on('screenshot-get', async (event, val) => {
   const result = screenShots[val];
   console.log('screenshot-get request:', {

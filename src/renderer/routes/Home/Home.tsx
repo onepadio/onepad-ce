@@ -90,6 +90,7 @@ import FavouritesPad from "../../components/FavouritesPad/FavouritesPad";
 import CategoryPad from "../../components/CategoryPad/CategoryPad";
 import RunDockerContainerModal from "../../components/RunDockerContainerModal/RunDockerContainerModal";
 import TaskManager from "../../components/TaskManager/TaskManager";
+import MemoryDashboard from "../../components/MemoryDashboard/MemoryDashboard";
 import ChangeBackgroundModalWindow from "../../components/ChangeBackgroundModalWindow/ChangeBackgroundModalWindow";
 import AIAssistantsCanvas from "renderer/components/AIAssistantsCanvas/AIAssistantsCanvas";
 function Home() {
@@ -160,6 +161,8 @@ function Home() {
   const isDockerTaskManagerOpen = useSelector((state) => state.modal.isDockerTaskManagerOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isTaskManagerOpen = useSelector((state) => state.modal.isTaskManagerOpen);
+  // @ts-expect-error TS(2571): Object is of type 'unknown'.
+  const isMemoryDashboardOpen = useSelector((state) => state.modal.isMemoryDashboardOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isLaunchPadOpen = useSelector((state) => state.modal.isLaunchPadOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -647,6 +650,9 @@ function Home() {
       }
       {
         isTaskManagerOpen ? <TaskManager /> : <></>
+      }
+      {
+        isMemoryDashboardOpen ? <MemoryDashboard /> : <></>
       }
       {
         personId !== "" ? <ChatAppsWindow /> : <></>

@@ -1,0 +1,33 @@
+.memory-indicator-btn {
+  padding: 4px 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  transition: all 0.2s ease;
+}
+
+.memory-indicator-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05);
+}
+
+.memory-text {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}

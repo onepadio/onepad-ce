@@ -39,6 +39,7 @@ import { musicPlayerActions } from "../../store/musicplayer-slice";
 import isElectron from "is-electron";
 import UserMenu from "../UserMenu/UserMenu";
 import { windowServiceActions } from "../../store/window-service-slice";
+import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
 
 function WindowsTopBar() {
   const dispatch = useDispatch();
@@ -388,18 +389,6 @@ function WindowsTopBar() {
         <div className="col-3 d-flex justify-content-start"></div>
         {}
         <div className="col-6 d-flex justify-content-center">
-          {activeWindow?.id !== "launchpad" ? (
-            <>
-
-              <BrowserButton />
-
-              {apps.map((item) => {
-                return navBarItem(item);
-              })}
-            </>
-          ) : (
-            <></>
-          )}
         </div>
         {}
         <div className="col-3 d-flex justify-content-end">
@@ -429,6 +418,9 @@ function WindowsTopBar() {
                     </ListGroupItem>
                 )
             }
+            <ListGroupItem className="d-flex justify-content-center">
+              <MemoryIndicator />
+            </ListGroupItem>
             <ListGroupItem className="d-flex justify-content-center">
               <Button
                 color="dark"

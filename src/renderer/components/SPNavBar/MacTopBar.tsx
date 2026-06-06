@@ -23,6 +23,7 @@ import { musicPlayerActions } from "../../store/musicplayer-slice";
 import isElectron from "is-electron";
 import NavBarApps from "../NavBarApps/NavBarApps";
 import { windowServiceActions } from "../../store/window-service-slice";
+import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
 
 function MacTopBar() {
   const dispatch = useDispatch();
@@ -178,13 +179,16 @@ function MacTopBar() {
                     </ListGroupItem>
                   </>
                 )}
-              {version.includes("dev") && (
+              {version.includes("devx") && (
                 <ListGroupItem className="d-flex justify-content-center">
                   <Button color="dark" onClick={onToggleDevTools}>
                     <Terminal color="white" size={18} />
                   </Button>
                 </ListGroupItem>
               )}
+              <ListGroupItem className="d-flex justify-content-center">
+                <MemoryIndicator />
+              </ListGroupItem>
               <ListGroupItem className="d-flex justify-content-center">
                 <Button
                   color="dark"

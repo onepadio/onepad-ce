@@ -95,7 +95,9 @@ const electronHandler = {
       'stop-docker-container',
       'remove-docker-container',
       'check-docker-status',
-      'resume-docker-container'
+      'resume-docker-container',
+      'get-tab-memory-info',
+      'get-all-tabs-memory'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

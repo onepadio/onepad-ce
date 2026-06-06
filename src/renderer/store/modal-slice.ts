@@ -64,6 +64,7 @@ const modalSlice = createSlice({
     isRunDockerModalOpen: false,
     isDockerTaskManagerOpen: false,
     isTaskManagerOpen: false,
+    isMemoryDashboardOpen: false,
     selectedDockerApp: null,
     cloudPadTab: "apps",
     isCategoryPadOpen: false,
@@ -276,6 +277,9 @@ const modalSlice = createSlice({
     },
     toggleTaskManager(state) {
       state.isTaskManagerOpen = !state.isTaskManagerOpen;
+    },
+    toggleMemoryDashboard(state) {
+      state.isMemoryDashboardOpen = !state.isMemoryDashboardOpen;
     },
     setSelectedDockerApp(state, action) {
       state.selectedDockerApp = action.payload;
