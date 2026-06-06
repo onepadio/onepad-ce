@@ -17,6 +17,7 @@ import * as Icon from 'react-feather';
 import PropTypes from 'prop-types';
 import SingInModalWindow from '../SignInModalWindow/SignInModalWindow';
 import { WorkspaceService } from '../../services/workspace';
+import { SpaceService } from '../../services/space';
 import isElectron from 'is-electron';
 import { sessionActions } from '../../store/session-slice';
 import XAppService from '../../services/xapp';
@@ -267,6 +268,11 @@ function WorkspaceMenu({
         return;
     }
 
+    function pauseCurrentSpace(){
+        SpaceService.pauseSpace(selectedWorkspace.id, openTabs, openWindows, dispatch);
+        toggle();
+    }
+
     function exportWorkspace(){
         ExportService.exportWorkspace(selectedWorkspace.id, (data) => {
             log.debug("exportWorkspace",data);
@@ -460,6 +466,9 @@ function WorkspaceMenu({
                 <DropdownMenu dark>
                     <DropdownItem header>
                         Space
+                    </DropdownItem>
+                    <DropdownItem onClick={() => pauseCurrentSpace()} disabled={isInSession}>
+                        Pause Space
                     </DropdownItem>
                     {
                         // recents()

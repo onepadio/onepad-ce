@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { memoryService, TabMemoryInfo } from "../../services/memory";
+import { SpaceService } from "../../services/space";
 import Modal from "../lib/Modal";
 import { modalActions } from "../../store/modal-slice";
 import { v4 as uuidv4 } from "uuid";
+import { PauseCircle } from "react-bootstrap-icons";
 import "./MemoryDashboard.css";
 
 function MemoryDashboard() {
@@ -109,11 +111,15 @@ function MemoryDashboard() {
     return appMemory;
   };
 
+  const pauseSpace = (workspaceId: string) => {
+    SpaceService.pauseSpace(workspaceId, openTabs, openWindows, dispatch);
+  };
+
   const spaceMemoryUsage = getMemoryBySpace();
   const appMemoryUsage = getMemoryByApp();
 
   // Calculate OnePad system memory (difference between total and tabs)
-  const tabsMemory = allTabs.reduce((sum, tab) => sum + getTabMemory(tab), 0);
+  const tabsMemory = allTabs.reduce((sum: number, tab: any) => sum + getTabMemory(tab), 0);
   const systemMemory = totalMemory - tabsMemory;
 
   const getPercentage = (value: number) => {
@@ -180,14 +186,23 @@ function MemoryDashboard() {
             {activeTab === 'space' && (
               <div className="memory-section">
                 <div className="memory-list">
-                  {workspaces.map((workspace) => {
+                  {workspaces.map((workspace: any) => {
                     const usage = spaceMemoryUsage[workspace.id];
                     if (!usage || usage.memory === 0) return null;
                     
                     return (
                       <div key={workspace.id} className="memory-item">
                         <div className="item-header">
-                          <span className="item-name">{workspace.name}</span>
+                          <div className="item-header-left">
+                            <span className="item-name">{workspace.name}</span>
+                            <button 
+                              className="pause-space-button"
+                              onClick={() => pauseSpace(workspace.id)}
+                              title="Pause all apps in this space"
+                            >
+                              <PauseCircle size={16} />
+                            </button>
+                          </div>
                           <span className="item-value">{memoryService.formatMemory(usage.memory)}</span>
                         </div>
                         <div className="item-meta">

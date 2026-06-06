@@ -200,10 +200,39 @@
   margin-bottom: 8px;
 }
 
+.item-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .item-name {
   font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.pause-space-button {
+  background: rgba(0, 123, 255, 0.2);
+  border: 1px solid rgba(0, 123, 255, 0.4);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #007bff;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pause-space-button:hover {
+  background: rgba(0, 123, 255, 0.3);
+  border-color: rgba(0, 123, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.pause-space-button:active {
+  transform: scale(0.95);
 }
 
 .item-value {
