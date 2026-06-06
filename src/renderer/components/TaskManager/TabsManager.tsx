@@ -39,8 +39,17 @@ function TabsManager() {
 
   // Filter tabs based on selected workspace and app
   const filteredTabs = allTabs.filter((tab: any) => {
-    if (selectedWorkspace !== "all" && tab.workspace !== selectedWorkspace) {
-      return false;
+    // Handle workspace filtering
+    if (selectedWorkspace !== "all") {
+      if (selectedWorkspace === "others") {
+        // For "others", only show xapp tabs
+        if (tab.type !== "xapp") return false;
+      } else {
+        // For regular workspaces, exclude xapp tabs and filter by workspace
+        if (tab.type === "xapp" || tab.workspace !== selectedWorkspace) {
+          return false;
+        }
+      }
     }
     
     if (selectedApp !== "all") {
@@ -151,6 +160,7 @@ function TabsManager() {
               {workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>
                 {workspace.name}
               </option>)}
+              <option value="others">Others</option>
             </Input>
           </FormGroup>
           <FormGroup className="mb-0 d-flex align-items-center">
@@ -205,7 +215,7 @@ function TabsManager() {
                     </Button>
                   </div>
                   <div className="d-flex justify-content-center align-items-center task-table-column">
-                    {workspaceNames[tab.workspace] ? workspaceNames[tab.workspace] : "N/A"}
+                    {tab.type === "xapp" ? "Others" : (workspaceNames[tab.workspace] || "N/A")}
                   </div>
                   <div className="d-flex justify-content-center align-items-center task-table-column">
                     {appName}

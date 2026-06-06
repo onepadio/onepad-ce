@@ -68,7 +68,14 @@ function MemoryDashboard() {
     
     allTabs.forEach((tab: any) => {
       const tabMem = getTabMemory(tab);
-      const workspace = tab.workspace || "unknown";
+      
+      // If tab type is xapp, it doesn't belong to a space
+      let workspace: string;
+      if (tab.type === "xapp") {
+        workspace = "others";
+      } else {
+        workspace = tab.workspace || "unknown";
+      }
       
       if (!spaceMemory[workspace]) {
         spaceMemory[workspace] = { memory: 0, tabs: 0 };
@@ -196,6 +203,25 @@ function MemoryDashboard() {
                       </div>
                     );
                   })}
+                  
+                  {spaceMemoryUsage['others'] && spaceMemoryUsage['others'].memory > 0 && (
+                    <div key="others" className="memory-item">
+                      <div className="item-header">
+                        <span className="item-name">Others</span>
+                        <span className="item-value">{memoryService.formatMemory(spaceMemoryUsage['others'].memory)}</span>
+                      </div>
+                      <div className="item-meta">
+                        <span>{spaceMemoryUsage['others'].tabs} tabs</span>
+                        <span>{getPercentage(spaceMemoryUsage['others'].memory)}%</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div 
+                          className="progress-fill" 
+                          style={{ width: `${getPercentage(spaceMemoryUsage['others'].memory)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
