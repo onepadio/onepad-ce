@@ -6,6 +6,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { v4 as uuidv4 } from "uuid";
 
 import ClipboardApi from "./api/ClipBoardApi";
+import { memoryService } from "./services/memory";
 
 import ProtectedHome from './routes/ProtectedHome/ProtectedHome';
 import { Login } from './routes/Login/Login';
@@ -494,12 +495,18 @@ function App() {
       log.debug("App.js: deviceId", "No deviceId");
       localStorage.setItem("deviceId", uuidv4());
     }
+    
+    // Start memory tracking service
+    memoryService.startTracking();
+    log.debug("App.js: Memory tracking service started");
+    
     const interval = setInterval(() => {
       setCounter((prevCounter) => prevCounter + 1);
     }, sleepingTabsTimerInterval);
 
     return () => {
       clearInterval(interval);
+      memoryService.stopTracking();
     }
   }, []);
 

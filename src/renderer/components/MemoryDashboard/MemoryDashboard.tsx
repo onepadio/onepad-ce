@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { memoryService, TabMemoryInfo } from "../../services/memory";
+import { memoryService, TabMemoryInfo, MemoryDataPoint } from "../../services/memory";
 import { SpaceService } from "../../services/space";
 import Modal from "../lib/Modal";
 import { modalActions } from "../../store/modal-slice";
@@ -19,6 +19,7 @@ function MemoryDashboard() {
   const [totalMemory, setTotalMemory] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'space' | 'app'>('space');
+  const [memoryHistory, setMemoryHistory] = useState<MemoryDataPoint[]>([]);
 
   const allTabs = Object.values(openTabs || {}).filter((tab: any) => tab.id !== undefined);
 
@@ -53,16 +54,158 @@ function MemoryDashboard() {
     }
   };
 
+  const updateMemoryHistory = () => {
+    const history = memoryService.getMemoryHistory();
+    setMemoryHistory(history);
+  };
+
   useEffect(() => {
+    // Fetch current memory data
     fetchMemoryData();
-    const interval = setInterval(fetchMemoryData, 5000);
-    return () => clearInterval(interval);
+    const fetchInterval = setInterval(fetchMemoryData, 5000);
+
+    // Update history from service
+    updateMemoryHistory();
+    const historyInterval = setInterval(updateMemoryHistory, 5000);
+
+    return () => {
+      clearInterval(fetchInterval);
+      clearInterval(historyInterval);
+    };
   }, []);
 
   const getTabMemory = (tab: any): number => {
     const url = tab.state?.url;
     if (!url) return 0;
     return memoryData.get(url) || 0;
+  };
+
+  const renderMemoryGraph = () => {
+    if (memoryHistory.length === 0) {
+      return (
+        <div className="memory-graph-placeholder">
+          <span>Collecting data...</span>
+        </div>
+      );
+    }
+
+    const width = 600;
+    const height = 200;
+    const padding = { top: 20, right: 40, bottom: 30, left: 60 };
+    const graphWidth = width - padding.left - padding.right;
+    const graphHeight = height - padding.top - padding.bottom;
+
+    // Find min and max values for scaling
+    const maxMemory = Math.max(...memoryHistory.map(d => d.totalMemory));
+    const minMemory = 0;
+
+    // Create path for total memory line
+    const createPath = (dataPoints: MemoryDataPoint[], getValue: (d: MemoryDataPoint) => number) => {
+      if (dataPoints.length === 0) return "";
+      
+      const points = dataPoints.map((point, index) => {
+        const x = padding.left + (index / (dataPoints.length - 1 || 1)) * graphWidth;
+        const y = padding.top + graphHeight - ((getValue(point) - minMemory) / (maxMemory - minMemory || 1)) * graphHeight;
+        return `${x},${y}`;
+      });
+
+      return `M ${points.join(" L ")}`;
+    };
+
+    const totalPath = createPath(memoryHistory, d => d.totalMemory);
+    const systemPath = createPath(memoryHistory, d => d.systemMemory);
+    const tabsPath = createPath(memoryHistory, d => d.tabsMemory);
+
+    // Format time labels
+    const formatTime = (timestamp: number) => {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Get labels for x-axis (show first, middle, and last)
+    const timeLabels = memoryHistory.length > 0 ? [
+      { x: padding.left, label: formatTime(memoryHistory[0].timestamp) },
+      { 
+        x: padding.left + graphWidth / 2, 
+        label: memoryHistory.length > 1 ? formatTime(memoryHistory[Math.floor(memoryHistory.length / 2)].timestamp) : "" 
+      },
+      { x: padding.left + graphWidth, label: formatTime(memoryHistory[memoryHistory.length - 1].timestamp) }
+    ] : [];
+
+    return (
+      <div className="memory-graph-container">
+        <div className="memory-graph-header">
+          <h3>Memory Usage (Last 24h)</h3>
+          <div className="memory-graph-legend">
+            <div className="legend-item">
+              <span className="legend-color total"></span>
+              <span>Total</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-color tabs"></span>
+              <span>Tabs</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-color system"></span>
+              <span>System</span>
+            </div>
+          </div>
+        </div>
+        <svg width={width} height={height} className="memory-graph">
+          {/* Y-axis labels */}
+          <text x={padding.left - 10} y={padding.top} textAnchor="end" className="axis-label">
+            {memoryService.formatMemory(maxMemory)}
+          </text>
+          <text x={padding.left - 10} y={padding.top + graphHeight / 2} textAnchor="end" className="axis-label">
+            {memoryService.formatMemory(maxMemory / 2)}
+          </text>
+          <text x={padding.left - 10} y={padding.top + graphHeight} textAnchor="end" className="axis-label">
+            {memoryService.formatMemory(minMemory)}
+          </text>
+
+          {/* Grid lines */}
+          <line 
+            x1={padding.left} 
+            y1={padding.top} 
+            x2={padding.left + graphWidth} 
+            y2={padding.top} 
+            className="grid-line"
+          />
+          <line 
+            x1={padding.left} 
+            y1={padding.top + graphHeight / 2} 
+            x2={padding.left + graphWidth} 
+            y2={padding.top + graphHeight / 2} 
+            className="grid-line"
+          />
+          <line 
+            x1={padding.left} 
+            y1={padding.top + graphHeight} 
+            x2={padding.left + graphWidth} 
+            y2={padding.top + graphHeight} 
+            className="grid-line"
+          />
+
+          {/* Memory lines */}
+          <path d={totalPath} className="memory-line total" fill="none" strokeWidth="2" />
+          <path d={tabsPath} className="memory-line tabs" fill="none" strokeWidth="2" />
+          <path d={systemPath} className="memory-line system" fill="none" strokeWidth="2" />
+
+          {/* X-axis labels */}
+          {timeLabels.map((label, index) => (
+            <text 
+              key={index}
+              x={label.x} 
+              y={height - 10} 
+              textAnchor="middle" 
+              className="axis-label"
+            >
+              {label.label}
+            </text>
+          ))}
+        </svg>
+      </div>
+    );
   };
 
   const getMemoryBySpace = () => {
@@ -164,6 +307,8 @@ function MemoryDashboard() {
           <div className="card-subtitle">{allTabs.length} tabs total</div>
         </div>
       </div>
+
+      {renderMemoryGraph()}
 
       <div className="memory-sections-grid">
         <div className="tabs-container">
