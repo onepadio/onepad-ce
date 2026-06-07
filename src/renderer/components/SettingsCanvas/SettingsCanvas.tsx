@@ -4,6 +4,7 @@ import { modalActions } from "../../store/modal-slice";
 import { settingsActions } from "../../store/settings-slice";
 
 import { ProfilesService } from "../../services/profiles";
+import { UserSettingsService } from "../../services/userSettings";
 
 import {
   Button,
@@ -36,6 +37,8 @@ function SettingsCanvas() {
   const version = useSelector((state: any) => state.app.version);
   
   const profileId = useSelector((state: any) => state.app.profileId);
+  
+  const user = useSelector((state: any) => state.user);
   
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
 
@@ -124,20 +127,101 @@ function SettingsCanvas() {
 
   function updateProfile() {}
 
+  // Load user settings on mount
   useEffect(() => {
-    ProfilesService.updateSettings(profileId, {
-      isSpaceBrowserEnabled: isSpaceBrowserEnabled,
-      isWorkspacesEnabled: isWorkspacesEnabled,
-      isDesktopsEnabled: isDesktopsEnabled,
-      isSharedAppsEnabled: isSharedAppsEnabled,
-      isSessionsEnabled: isSessionsEnabled,
-      isSplitWindowsEnabled: isSplitWindowsEnabled,
-      isEfficiencyModeEnabled: isEfficiencyModeEnabled,
-      isAdvancedBackgroundEnabled: isAdvancedBackgroundEnabled,
-      isExternalWindowMode: isExternalWindowMode,
-      isDeveloperMode: isDeveloperMode,
-    });
+    const loadUserSettings = async () => {
+      if (!user.id) return;
+
+      try {
+        const settings = await UserSettingsService.getUserSettings(user.id);
+        
+        if (settings) {
+          // Update Redux store with loaded settings
+          if (settings.isSpaceBrowserEnabled !== undefined) {
+            dispatch(settingsActions.setSpaceBrowserEnabled(settings.isSpaceBrowserEnabled));
+          }
+          if (settings.isWorkspacesEnabled !== undefined) {
+            dispatch(settingsActions.setWorkspacesEnabled(settings.isWorkspacesEnabled));
+          }
+          if (settings.isDesktopsEnabled !== undefined) {
+            dispatch(settingsActions.setDesktopsEnabled(settings.isDesktopsEnabled));
+          }
+          if (settings.isSharedAppsEnabled !== undefined) {
+            dispatch(settingsActions.setSharedAppsEnabled(settings.isSharedAppsEnabled));
+          }
+          if (settings.isSessionsEnabled !== undefined) {
+            dispatch(settingsActions.setSessionsEnabled(settings.isSessionsEnabled));
+          }
+          if (settings.isSplitWindowsEnabled !== undefined) {
+            dispatch(settingsActions.setSplitWindowsEnabled(settings.isSplitWindowsEnabled));
+          }
+          if (settings.isEfficiencyModeEnabled !== undefined) {
+            dispatch(settingsActions.setEfficiencyModeEnabled(settings.isEfficiencyModeEnabled));
+          }
+          if (settings.isAdvancedBackgroundEnabled !== undefined) {
+            dispatch(settingsActions.setAdvancedBackgroundEnabled(settings.isAdvancedBackgroundEnabled));
+          }
+          if (settings.isExternalWindowMode !== undefined) {
+            dispatch(settingsActions.setExternalWindowMode(settings.isExternalWindowMode));
+          }
+          if (settings.isDeveloperMode !== undefined) {
+            dispatch(settingsActions.setDeveloperMode(settings.isDeveloperMode));
+          }
+          if (settings.isTabGroupsEnabled !== undefined) {
+            dispatch(settingsActions.setTabGroupsEnabled(settings.isTabGroupsEnabled));
+          }
+          if (settings.isSpaceOSEnabled !== undefined) {
+            dispatch(settingsActions.setSpaceOSEnabled(settings.isSpaceOSEnabled));
+          }
+          if (settings.isSleepingTabsEnabled !== undefined) {
+            dispatch(settingsActions.setSleepingTabsEnabled(settings.isSleepingTabsEnabled));
+          }
+          if (settings.sleepingTabsTimeout !== undefined) {
+            dispatch(settingsActions.setSleepingTabsTimeout(settings.sleepingTabsTimeout));
+          }
+          if (settings.isKeepActiveWindowTabsAwake !== undefined) {
+            dispatch(settingsActions.setKeepActiveWindowTabsAwake(settings.isKeepActiveWindowTabsAwake));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load user settings:", error);
+      }
+    };
+
+    loadUserSettings();
+  }, [user.id, dispatch]);
+
+  // Save settings to user-specific storage
+  useEffect(() => {
+    if (!user.id) return;
+
+    const saveSettings = async () => {
+      try {
+        await UserSettingsService.saveUserSettings(user.id, {
+          isSpaceBrowserEnabled,
+          isWorkspacesEnabled,
+          isDesktopsEnabled,
+          isSharedAppsEnabled,
+          isSessionsEnabled,
+          isSplitWindowsEnabled,
+          isEfficiencyModeEnabled,
+          isAdvancedBackgroundEnabled,
+          isExternalWindowMode,
+          isDeveloperMode,
+          isTabGroupsEnabled,
+          isSpaceOSEnabled,
+          isSleepingTabsEnabled,
+          sleepingTabsTimeout,
+          isKeepActiveWindowTabsAwake,
+        });
+      } catch (error) {
+        console.error("Failed to save user settings:", error);
+      }
+    };
+
+    saveSettings();
   }, [
+    user.id,
     isSpaceBrowserEnabled,
     isWorkspacesEnabled,
     isDesktopsEnabled,
@@ -148,6 +232,11 @@ function SettingsCanvas() {
     isAdvancedBackgroundEnabled,
     isExternalWindowMode,
     isDeveloperMode,
+    isTabGroupsEnabled,
+    isSpaceOSEnabled,
+    isSleepingTabsEnabled,
+    sleepingTabsTimeout,
+    isKeepActiveWindowTabsAwake,
   ]);
 
   return (

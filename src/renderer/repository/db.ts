@@ -319,6 +319,26 @@ db.version(23).stores({
   });
 });
 
+db.version(24).stores({
+  users: '$$id, email, name, createdAt, updatedAt, person',
+  profiles: '$$id, name, createdAt, updatedAt, data, uid, user',
+  workspaces: '$$id, profile, name, createdAt, updatedAt, archived, isDefault, state, sync, profileDefault, uid, user',
+  desktops: '$$id, workspace, createdAt, updatedAt, default, state, uid',
+  apps: '$$id, workspace, desktop, createdAt, updatedAt, data, state, uid',
+  categories: '$$id, workspace, name, createdAt, updatedAt, data, uid',
+  links: '$$id, workspace, desktop, category, createdAt, updatedAt, data, state, uid',
+  sessions: '$$id, workspace, createdAt, updatedAt, data, archived, state, sync, uid',
+  sync: '$$id, createdAt, action, table, data',
+  favourites: '$$id, parent , createdAt, updatedAt, data, uid',
+  bookmarks: '$$id, parent , createdAt, updatedAt, data, uid',
+  browsers: '$$id, workspace, uid',
+  xapps:'$$id, createdAt, updatedAt, data, state, profile, uid',
+  persons: '$$id, name, uid',
+  passwords: '$$id, person, hostname, createdAt, updatedAt, username, password, notes, workspace',
+  tversions: '$$id, table, version',
+  userSettings: '$$id, userId, createdAt, updatedAt, settings', // User-specific settings
+});
+
 db.on('changes', function (changes) {
   changes.forEach(function (change) {
     log.debug(change);

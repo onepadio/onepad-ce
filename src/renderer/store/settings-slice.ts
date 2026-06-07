@@ -92,8 +92,14 @@ const settingsSlice = createSlice({
     toggleTabGroups(state, action) {
       state.isTabGroupsEnabled = !state.isTabGroupsEnabled;
     },
+    setTabGroupsEnabled(state, action) {
+      state.isTabGroupsEnabled = action.payload;
+    },
     toggleSpaceOS(state, action) {
       state.isSpaceOSEnabled = !state.isSpaceOSEnabled;
+    },
+    setSpaceOSEnabled(state, action) {
+      state.isSpaceOSEnabled = action.payload;
     },
     setSleepingTabsTimeout(state, action) {
       state.sleepingTabsTimeout = action.payload;
@@ -101,8 +107,14 @@ const settingsSlice = createSlice({
     toggleSleepingTabs(state, action) {
       state.isSleepingTabsEnabled = !state.isSleepingTabsEnabled;
     },
+    setSleepingTabsEnabled(state, action) {
+      state.isSleepingTabsEnabled = action.payload;
+    },
     toggleKeepActiveWindowTabsAwake(state, action) {
       state.isKeepActiveWindowTabsAwake = !state.isKeepActiveWindowTabsAwake;
+    },
+    setKeepActiveWindowTabsAwake(state, action) {
+      state.isKeepActiveWindowTabsAwake = action.payload;
     },
   },
 });
