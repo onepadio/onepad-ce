@@ -7,9 +7,7 @@
 .memory-dashboard {
   padding: 20px;
   color: #fff;
-  max-height: 70vh;
-  overflow-y: auto;
-  min-height: 450px;
+  overflow: visible;
 }
 
 .loading-indicator {
@@ -142,6 +140,10 @@
 
 .tab-content {
   animation: fadeIn 0.2s ease-in;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 @keyframes fadeIn {
@@ -266,21 +268,21 @@
 }
 
 /* Scrollbar styling */
-.memory-dashboard::-webkit-scrollbar {
+.tab-content::-webkit-scrollbar {
   width: 8px;
 }
 
-.memory-dashboard::-webkit-scrollbar-track {
+.tab-content::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 
-.memory-dashboard::-webkit-scrollbar-thumb {
+.tab-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
-.memory-dashboard::-webkit-scrollbar-thumb:hover {
+.tab-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 

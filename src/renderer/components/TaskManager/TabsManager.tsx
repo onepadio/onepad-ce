@@ -37,6 +37,13 @@ function TabsManager() {
     return "Browser";
   })));
 
+  // Helper function to get tab memory
+  const getTabMemory = (tab: any): number => {
+    const url = tab.state?.url;
+    if (!url) return 0;
+    return memoryData.get(url) || 0;
+  };
+
   // Filter tabs based on selected workspace and app
   const filteredTabs = allTabs.filter((tab: any) => {
     // Handle workspace filtering
@@ -63,6 +70,11 @@ function TabsManager() {
     }
 
     return true;
+  }).sort((tabA: any, tabB: any) => {
+    // Sort by memory usage (highest first)
+    const memoryA = getTabMemory(tabA);
+    const memoryB = getTabMemory(tabB);
+    return memoryB - memoryA;
   });
 
   const toggleRow = (tabId) => {
@@ -137,12 +149,6 @@ function TabsManager() {
     
     return () => clearInterval(interval);
   }, []);
-
-  const getTabMemory = (tab: any): number => {
-    const url = tab.state?.url;
-    if (!url) return 0;
-    return memoryData.get(url) || 0;
-  };
 
   return (
     <div className="d-flex flex-column w-100 h-100 mt-2 ml-2 mr-2">
