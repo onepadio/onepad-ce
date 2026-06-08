@@ -501,6 +501,13 @@ function WorkspaceMenu({
 
                 <DropdownMenu dark>
                     <DropdownItem header>
+                        Session
+                    </DropdownItem>
+                    <DropdownItem onClick={() => restartSession()}>
+                        Restart Session
+                    </DropdownItem>
+                    <DropdownItem divider />
+                    <DropdownItem header>
                         Space
                     </DropdownItem>
                     {isSpacePaused ? (
@@ -514,9 +521,6 @@ function WorkspaceMenu({
                     )}
                     <DropdownItem onClick={() => closeCurrentSpace()} disabled={isInSession}>
                         Close Space
-                    </DropdownItem>
-                    <DropdownItem onClick={() => restartSession()}>
-                        Restart Session
                     </DropdownItem>
                     {
                         // recents()
