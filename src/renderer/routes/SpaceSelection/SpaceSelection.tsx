@@ -23,6 +23,7 @@ import {
 import SpaceIcon from "../../components/SpacePad/SpaceIcon";
 
 import logoIcon from '../../images/icon_512x512_transparent.png';
+import spaceBgImage from '../../images/space_bg.jpg';
 import { ProfilesService } from "renderer/services/profiles";
 import DesktopService from "renderer/services/desktop";
 import NewWorkspaceModalWindow from "renderer/components/NewWorkspaceModalWindow/NewWorkspaceModalWindow";
@@ -113,6 +114,21 @@ export default function SpaceSelection() {
 
   return (
     <>
+      <div className="space-selection-background" style={{ backgroundImage: `url(${spaceBgImage})` }} />
+      <Button
+        color="secondary"
+        outline
+        className="back-button-fixed"
+        onClick={() => {
+          dispatch(userActions.setUserId(""));
+          dispatch(appActions.setProfileId(""));
+          dispatch(sessionActions.setLocation("profiles"));
+          navigate('/');
+        }}
+      >
+        <Icon.ArrowLeft size={16} className="me-2" />
+        Back
+      </Button>
       <div className='d-flex justify-content-center mt-3 logo-container'>
             <img width={96} src={logoIcon} alt="logo" />
       </div>
@@ -208,24 +224,6 @@ export default function SpaceSelection() {
               </div>
             </div>
           )}
-
-          <div className="row d-flex justify-content-center mt-4">
-            <div className="col-auto">
-              <Button
-                color="secondary"
-                outline
-                onClick={() => {
-                  dispatch(userActions.setUserId(""));
-                  dispatch(appActions.setProfileId(""));
-                  dispatch(sessionActions.setLocation("profiles"));
-                  navigate('/');
-                }}
-              >
-                <Icon.ArrowLeft size={16} className="me-2" />
-                Back
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </>
