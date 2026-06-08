@@ -18,6 +18,7 @@ import { Robot } from "react-bootstrap-icons";
 import Widget from "./Widget";
 import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
 import { aiAppsActions } from "renderer/store/ai-slice";
+import SpaceStatsWidget from "../SpaceStatsWidget/SpaceStatsWidget";
 
 function Desktop(props) {
   const dispatch = useDispatch();
@@ -297,6 +298,7 @@ function Desktop(props) {
               </div>
             </div>
           </div>
+          <SpaceStatsWidget />
         </div>
       )}
     </>
