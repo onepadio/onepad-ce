@@ -55,6 +55,9 @@ import WindowSideBar from "../../components/WindowSideBar/WindowSideBar";
 import BookmarkSideMenu from "../../components/BookmarkSideMenu/BookmarkSideMenu";
 import NewSessionModalWindow from "../../components/NewSessionModalWindow/NewSessionModalWindow";
 import TerminateSessionModalWindow from "../../components/SessionSwitchMenu/TerminateSessionModalWindow";
+import ResumeSessionModal from "../../components/ResumeSessionModal/ResumeSessionModal";
+import PauseSpaceModal from "../../components/PauseSpaceModal/PauseSpaceModal";
+import RestartSessionModal from "../../components/RestartSessionModal/RestartSessionModal";
 import CreateRemoteModalWindow from "../../components/CreateRemoteWindowModal/CreateRemoteModalWindow";
 import WelcomeModalWindow from "../../components/WelcomeModalWindow/WelcomeModalWindow";
 import FileSharingRequestModalWindow from "../../components/P2PFileSharing/FileSharingRequestModalWindow";
@@ -686,6 +689,9 @@ function Home() {
       <NewDesktopModalWindow />
       <NewSessionModalWindow />
       <TerminateSessionModalWindow />
+      <ResumeSessionModal />
+      <PauseSpaceModal />
+      <RestartSessionModal />
       <EditFavouritesGroupModal />
       {
         isRemoteLaunchModalOpen ? <CreateRemoteModalWindow /> : <></>

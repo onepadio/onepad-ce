@@ -33,8 +33,6 @@ export const ScreenshotService = {
       return;
     }
 
-    log.debug(`ScreenshotService: Capturing screenshot for tab ${tabId} from ${source}`);
-
     // @ts-expect-error - electronAPI is available in Electron context
     window.electronAPI.send('toMain', {
       action: 'screenshot',

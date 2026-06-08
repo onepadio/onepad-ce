@@ -541,7 +541,6 @@ function VerticalTabBar(){
           className={clsx(
             "!m-0 fixed inset-0",
             "items-end justify-end",
-            "bg-black/50",
             "vertical-tab-bar-overlay",
             "flex",
           )}

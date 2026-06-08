@@ -60,28 +60,7 @@ function LinkIcon(props: any) {
   }
 
   function handleCloseWindow(){
-    let _tabIds = Object.assign([], windowTabs[props.id]);
-    let tabs: any = [];
-    _tabIds.forEach((tabId: any) => {
-        let _openTabs = Object.assign({}, openTabs);
-        let _tab = Object.assign({}, _openTabs[tabId]);
-        let _state = Object.assign({}, _tab.state);
-        tabs.push(_state);
-    });
-
-    if(sessionState.isInSession){
-      closeWindow(dispatch, sessionActions, props.id, openWindows, openTabs, activeTabs, windowTabs, desktop, isExternalWindowMode);
-    }else{
-      LinkService.updateState(props.id, {
-        tabs: tabs,
-      }).then((res) => {
-          log.debug("updateState", res);
-          closeWindow(dispatch, sessionActions, props.id, openWindows, openTabs, activeTabs, windowTabs, desktop, isExternalWindowMode);
-      }).catch((err) => {
-          log.error("updateState", err);
-          closeWindow(dispatch, sessionActions, props.id, openWindows, openTabs, activeTabs, windowTabs, desktop, isExternalWindowMode);
-      });
-    }
+    closeWindow(dispatch, sessionActions, props.id, openWindows, openTabs, activeTabs, windowTabs, desktop, isExternalWindowMode);
   }
 
   function newTab(windowId: any, url: any, icon: any, title: any){
@@ -183,21 +162,9 @@ function LinkIcon(props: any) {
             );
             let _tabIds = [];
             // OpenTabs
-
-            if(!sessionState.isInSession && link.state && link.state.tabs && link.state.tabs.length > 0){
-
-                link.state.tabs.forEach((tabState: any) => {
-                    log.debug("tabState:",tabState);
-                    let _tab = newTab(props.id, tabState.url, tabState.icon, tabState.title);
-                    _openTabs[_tab.id] = _tab;
-                    _tabIds.push(_tab.id);
-                });
-            }else{
-
-                let _tab = newTab(props.id, props.url, _result.data.icon, "");
-                _openTabs[_tab.id] = _tab;
-                _tabIds.push(_tab.id);
-            }
+            let _tab = newTab(props.id, props.url, _result.data.icon, "");
+            _openTabs[_tab.id] = _tab;
+            _tabIds.push(_tab.id);
 
             dispatch(
                 sessionActions.setOpenTabs({
@@ -244,13 +211,6 @@ function LinkIcon(props: any) {
         _menu.className = "context-menu";
         _menu.innerHTML = `
           <div class="context-menu-item${isWindowOpen ? '' : ' disabled'}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pause-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M5 6.25a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0zm3.5 0a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0z"/>
-            </svg>
-            <span>Pause</span>
-          </div>
-          <div class="context-menu-item${isWindowOpen ? '' : ' disabled'}">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
@@ -278,16 +238,11 @@ function LinkIcon(props: any) {
         document.body.appendChild(_menu);
 
         _menu.querySelector(".context-menu-item:first-child").addEventListener("click", () => {
-            dispatch(windowServiceActions.sleepWindow(props.id));
-            document.body.removeChild(_menu);
-          });
-
-        _menu.querySelector(".context-menu-item:nth-child(2)").addEventListener("click", () => {
             dispatch(windowServiceActions.closeWindow(props.id));
             document.body.removeChild(_menu);
         });
 
-        _menu.querySelector(".context-menu-item:nth-child(3)").addEventListener("click", () => {
+        _menu.querySelector(".context-menu-item:nth-child(2)").addEventListener("click", () => {
             document.body.removeChild(_menu);
             if(props.isOpen){
                 alert("Please close the window first. After that you can edit the link.");
@@ -296,7 +251,7 @@ function LinkIcon(props: any) {
             edit();
         });
 
-        _menu.querySelector(".context-menu-item:nth-child(4)").addEventListener("click", () => {
+        _menu.querySelector(".context-menu-item:nth-child(3)").addEventListener("click", () => {
             document.body.removeChild(_menu);
             if(props.isOpen){
                 alert("Please close the window first. After that you can remove the link.");

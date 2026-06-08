@@ -1,0 +1,18 @@
+.restart-session-modal {
+  max-width: 500px;
+}
+
+.restart-session-content {
+  padding: 10px 0;
+  text-align: left;
+}
+
+.restart-session-content p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.restart-session-content p strong {
+  color: #28a745;
+  font-weight: 600;
+}

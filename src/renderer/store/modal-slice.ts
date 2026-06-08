@@ -69,6 +69,12 @@ const modalSlice = createSlice({
     cloudPadTab: "apps",
     isCategoryPadOpen: false,
     selectedCategory: "favourites",
+    isResumeSessionModalOpen: false,
+    resumeSessionData: null,
+    isPauseSpaceModalOpen: false,
+    pauseSpaceWorkspaceId: null,
+    pauseSpaceDefaultOption: null,
+    isRestartSessionModalOpen: false,
   },
   reducers: {
     toggleAppStore(state, action) {
@@ -286,6 +292,39 @@ const modalSlice = createSlice({
     },
     clearSelectedDockerApp(state) {
       state.selectedDockerApp = null;
+    },
+    toggleResumeSessionModal(state) {
+      state.isResumeSessionModalOpen = !state.isResumeSessionModalOpen;
+    },
+    openResumeSessionModal(state, action) {
+      state.isResumeSessionModalOpen = true;
+      state.resumeSessionData = action.payload;
+    },
+    closeResumeSessionModal(state) {
+      state.isResumeSessionModalOpen = false;
+      state.resumeSessionData = null;
+    },
+    togglePauseSpaceModal(state) {
+      state.isPauseSpaceModalOpen = !state.isPauseSpaceModalOpen;
+    },
+    openPauseSpaceModal(state, action) {
+      state.isPauseSpaceModalOpen = true;
+      state.pauseSpaceWorkspaceId = action.payload?.workspaceId || null;
+      state.pauseSpaceDefaultOption = action.payload?.defaultOption || null;
+    },
+    closePauseSpaceModal(state) {
+      state.isPauseSpaceModalOpen = false;
+      state.pauseSpaceWorkspaceId = null;
+      state.pauseSpaceDefaultOption = null;
+    },
+    toggleRestartSessionModal(state) {
+      state.isRestartSessionModalOpen = !state.isRestartSessionModalOpen;
+    },
+    openRestartSessionModal(state) {
+      state.isRestartSessionModalOpen = true;
+    },
+    closeRestartSessionModal(state) {
+      state.isRestartSessionModalOpen = false;
     },
   },
 });

@@ -47,7 +47,6 @@ class MemoryService {
   async getAllTabsMemory(): Promise<TabMemoryInfo[]> {
     try {
       const result = await ipcRenderer.invoke('get-all-tabs-memory');
-      console.log('getAllTabsMemory result:', result);
       return result;
     } catch (error) {
       console.error('Failed to get all tabs memory:', error);

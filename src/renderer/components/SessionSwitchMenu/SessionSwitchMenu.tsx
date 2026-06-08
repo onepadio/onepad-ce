@@ -244,18 +244,21 @@ function SessionSwitchMenu({
     // Apply https://www.youtube.com/watch?v=ZdNoyXqzCfw to replace the session with icon
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     function tasks(){
+        // Filter out unnamed paused sessions
+        const namedSessions = sessions.filter((session) => !session.name.startsWith('__paused_'));
+        
         return <>
             {
-                sessions.length > 0 && (
+                namedSessions.length > 0 && (
                                         <Dropdown direction="end"  className='recentTasks' isOpen={isMenuOpen}
                         toggle={() => setIsMenuOpen(!isMenuOpen)} onMouseOver={() => setIsMenuOpen(true)} onMouseLeave={() => setIsMenuOpen(false)}
                     >
                     <DropdownToggle caret>
-                        Tasks &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Tasks &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     </DropdownToggle>
                     <DropdownMenu dark>
                         {
-                            sessions.map((session) => <DropdownItem key={session.id}
+                            namedSessions.map((session) => <DropdownItem key={session.id}
                                 onClick={() => onSessionSelect(session.id)}
                                 value={session.id}
                                 active={session.id === currentSession.id}
@@ -288,16 +291,16 @@ function SessionSwitchMenu({
     return (
         <>
             <DropdownItem header>
-                Tasks - (dev)
+                Tasks
             </DropdownItem>
             {
         
                 isInSession ? 
                 <DropdownItem onClick={pauseSession}>
-                    Pause
+                    Pause Task
                 </DropdownItem> : 
                 <DropdownItem onClick={toggleNewSessionModalWindow}>
-                    New
+                    New Task
                 </DropdownItem>
             
             }
@@ -319,7 +322,7 @@ function SessionSwitchMenu({
                     }, 100);
                 }
                 }>
-                Delete
+                Delete Task
             </DropdownItem> : <></>
     
     }

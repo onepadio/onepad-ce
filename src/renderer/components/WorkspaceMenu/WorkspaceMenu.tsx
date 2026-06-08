@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from 'react-router';
 import log from 'loglevel';
 
 import { modalActions } from '../../store/modal-slice';
@@ -35,6 +36,7 @@ function WorkspaceMenu({
     ...args
 }: any){
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const route = useSelector((state: any) => state.session.route);
 
@@ -97,6 +99,9 @@ function WorkspaceMenu({
     const isInSession = useSelector((state: any) => state.session.isInSession);
 
     const isSessionsEnabled = useSelector((state: any) => state.settings.isSessionsEnabled);
+
+    // Check if space is paused
+    const isSpacePaused = SpaceService.isSpacePaused(selectedWorkspace.id, openTabs, openWindows);
 
     function toggle(){
         setDropdownOpen((prevState) => !prevState);
@@ -269,8 +274,42 @@ function WorkspaceMenu({
     }
 
     function pauseCurrentSpace(){
-        SpaceService.pauseSpace(selectedWorkspace.id, openTabs, openWindows, dispatch);
+        dispatch(modalActions.openPauseSpaceModal({ workspaceId: null, defaultOption: null }));
         toggle();
+    }
+
+    function closeCurrentSpace(){
+        dispatch(modalActions.openPauseSpaceModal({ workspaceId: null, defaultOption: "closeWithoutSaving" }));
+        toggle();
+    }
+
+    function restartSession(){
+        dispatch(modalActions.openRestartSessionModal());
+        toggle();
+    }
+
+    async function resumeCurrentSpace(){
+        try {
+            // Use SpaceService to resume the paused session
+            // This will merge with current state and delete the paused session from DB
+            const resumed = await SpaceService.resumePausedSession(
+                selectedWorkspace.id,
+                sessionStateData,
+                dispatch
+            );
+            
+            if (!resumed) {
+                // Fallback to regular resume if no paused session
+                SpaceService.resumeSpace(selectedWorkspace.id, openTabs, openWindows, dispatch);
+            }
+            
+            toggle();
+        } catch (err) {
+            log.error("Error resuming space:", err);
+            // Fallback to regular resume
+            SpaceService.resumeSpace(selectedWorkspace.id, openTabs, openWindows, dispatch);
+            toggle();
+        }
     }
 
     function exportWorkspace(){
@@ -454,21 +493,30 @@ function WorkspaceMenu({
         <div id="spacesTopMenu" className='spacesTopMenu align-left'>
             <Dropdown className='ml-2' isOpen={dropdownOpen} toggle={toggle} direction={direction ? direction : "down"}>
                 <DropdownToggle caret color="dark">
-                    {
-                        selectedWorkspace.name
-                    }
-
-                    {
-                        isInSession ? " -> "+currentSession.name : ""
-                    }
+                    <span className="workspace-name">{selectedWorkspace.name}</span>
+                    {isInSession && (
+                        <span className="task-badge">{currentSession.name}</span>
+                    )}
                 </DropdownToggle>
 
                 <DropdownMenu dark>
                     <DropdownItem header>
                         Space
                     </DropdownItem>
-                    <DropdownItem onClick={() => pauseCurrentSpace()} disabled={isInSession}>
-                        Pause Space
+                    {isSpacePaused ? (
+                        <DropdownItem onClick={() => resumeCurrentSpace()}>
+                            Resume Space
+                        </DropdownItem>
+                    ) : (
+                        <DropdownItem onClick={() => pauseCurrentSpace()}>
+                            Pause Space
+                        </DropdownItem>
+                    )}
+                    <DropdownItem onClick={() => closeCurrentSpace()} disabled={isInSession}>
+                        Close Space
+                    </DropdownItem>
+                    <DropdownItem onClick={() => restartSession()}>
+                        Restart Session
                     </DropdownItem>
                     {
                         // recents()

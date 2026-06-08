@@ -4,6 +4,7 @@ import log from "loglevel";
 import { addWorkspace as addWorkspaceApi, getWorkspaces, archiveWorkspace } from "../api/WorkspaceApi";
 import { workspaceActions } from '../store/workspace-slice';
 import { sessionActions } from '../store/session-slice';
+import { modalActions } from '../store/modal-slice';
 import { db } from "../repository/db";
 import WorkspaceRepository from "../repository/workspace";
 import DesktopService from './desktop';
@@ -11,6 +12,7 @@ import AppService from './app';
 import BrowserStateService from './browsers';
 import { SessionService } from './session';
 import { LinkService } from './link';
+import { SpaceService } from './space';
 
 import default_bg from "../images/default_bg.jpg";
 import XAppService from './xapp';
@@ -151,8 +153,25 @@ export class WorkspaceService{
         let browserState = await BrowserStateService.getBrowserStateByWorkspaceId(workspace.id);
 
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
-        SessionService.getSessionsByWorkspaceId(workspace.id).then((sessions) => {
+        SessionService.getSessionsByWorkspaceId(workspace.id).then(async (sessions) => {
             dispatch(workspaceActions.setSessions({ data: sessions }));
+            
+            // Check if there's a paused session for this workspace
+            try {
+                // @ts-expect-error TS(2571): Object is of type 'unknown'.
+                const pausedSession = await SpaceService.getPausedSession(workspace.id);
+                if (pausedSession) {
+                    // Show the resume session modal
+                    dispatch(modalActions.openResumeSessionModal({
+                        // @ts-expect-error TS(2571): Object is of type 'unknown'.
+                        workspaceId: workspace.id,
+                        // @ts-expect-error TS(2571): Object is of type 'unknown'.
+                        workspaceName: workspace.name,
+                    }));
+                }
+            } catch (error) {
+                log.error("Error checking for paused session:", error);
+            }
         });
         dispatch(workspaceActions.setCurrentSession({}));
 

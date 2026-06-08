@@ -1,0 +1,82 @@
+.resume-session-modal {
+  max-width: 500px;
+}
+
+.resume-session-content {
+  padding: 20px;
+  color: #fff;
+}
+
+.resume-session-message {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.resume-session-message p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.resume-session-message p:last-child {
+  font-weight: 500;
+  color: #007bff;
+}
+
+.resume-session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resume-session-actions button {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: #fff;
+  border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.primary-button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.tertiary-button {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tertiary-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.resume-session-actions button:active {
+  transform: translateY(0);
+}

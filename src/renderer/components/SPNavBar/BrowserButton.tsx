@@ -14,7 +14,7 @@ import globe_icon from '../../images/globe_icon_96.png';
 import { openInternalWindow, openAppWindow, handleWindowClosed } from "../../services/window";
 
 import { Button, ListGroupItem } from "reactstrap";
-import { Collection, Globe, Globe2, PlusLg, Search, WindowStack } from "react-bootstrap-icons";
+import { Collection, Globe, Layers, PlusLg, Search, WindowStack } from "react-bootstrap-icons";
 import clsx from "clsx";
 
 import { windowServiceActions } from "../../store/window-service-slice";
@@ -268,7 +268,7 @@ function BrowserButton(props) {
             }, 0);
           }}
       >
-                <Globe2 color="white" size={20} />
+                <Layers color="white" size={20} />
       </div>
     </ListGroupItem>
   );

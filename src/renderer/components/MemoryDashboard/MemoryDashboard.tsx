@@ -4,8 +4,10 @@ import { memoryService, TabMemoryInfo, MemoryDataPoint } from "../../services/me
 import { SpaceService } from "../../services/space";
 import Modal from "../lib/Modal";
 import { modalActions } from "../../store/modal-slice";
+import { sessionActions } from "../../store/session-slice";
 import { v4 as uuidv4 } from "uuid";
-import { PauseCircle } from "react-bootstrap-icons";
+import { PauseCircle, ThreeDots } from "react-bootstrap-icons";
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
 import "./MemoryDashboard.css";
 
 function MemoryDashboard() {
@@ -14,12 +16,15 @@ function MemoryDashboard() {
   const workspaces = useSelector((state: any) => state.workspace.workspaces);
   const openTabs = useSelector((state: any) => state.session.openTabs);
   const openWindows = useSelector((state: any) => state.session.openWindows);
+  const selectedWorkspace = useSelector((state: any) => state.workspace.selectedWorkspace);
+  const sessionState = useSelector((state: any) => state.session);
+  const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
 
   const [memoryData, setMemoryData] = useState<Map<string, number>>(new Map());
   const [totalMemory, setTotalMemory] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'space' | 'app'>('space');
   const [memoryHistory, setMemoryHistory] = useState<MemoryDataPoint[]>([]);
+  const [expandedSpaceId, setExpandedSpaceId] = useState<string | null>(null);
 
   const allTabs = Object.values(openTabs || {}).filter((tab: any) => tab.id !== undefined);
 
@@ -232,12 +237,12 @@ function MemoryDashboard() {
     return spaceMemory;
   };
 
-  const getMemoryByApp = () => {
+  const getMemoryByApp = (workspaceId: string) => {
     const appMemory: { [key: string]: { memory: number; tabs: number } } = {};
     
-    allTabs.forEach((tab: any) => {
+    allTabs.filter((tab: any) => tab.workspace === workspaceId).forEach((tab: any) => {
       const tabMem = getTabMemory(tab);
-      let appName = "Browser";
+      let appName = "Space Tabs";
       
       if (tab.type === "app" || tab.type === "remote") {
         const window = openWindows[tab.window];
@@ -254,12 +259,23 @@ function MemoryDashboard() {
     return appMemory;
   };
 
-  const pauseSpace = (workspaceId: string) => {
-    SpaceService.pauseSpace(workspaceId, openTabs, openWindows, dispatch);
+  const pauseSpace = async (workspaceId: string) => {
+    // Close memory dashboard
+    toggle();
+    
+    // Open pause space modal with the workspace ID
+    dispatch(modalActions.openPauseSpaceModal({ workspaceId }));
+  };
+
+  const toggleSpaceExpand = (workspaceId: string) => {
+    if (expandedSpaceId === workspaceId) {
+      setExpandedSpaceId(null);
+    } else {
+      setExpandedSpaceId(workspaceId);
+    }
   };
 
   const spaceMemoryUsage = getMemoryBySpace();
-  const appMemoryUsage = getMemoryByApp();
 
   // Calculate OnePad system memory (difference between total and tabs)
   const tabsMemory = allTabs.reduce((sum: number, tab: any) => sum + getTabMemory(tab), 0);
@@ -311,104 +327,105 @@ function MemoryDashboard() {
       {renderMemoryGraph()}
 
       <div className="memory-sections-grid">
-        <div className="tabs-container">
-          <div className="tabs-header">
-            <button 
-              className={`tab-button ${activeTab === 'space' ? 'active' : ''}`}
-              onClick={() => setActiveTab('space')}
-            >
-              By Space
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'app' ? 'active' : ''}`}
-              onClick={() => setActiveTab('app')}
-            >
-              By App
-            </button>
+        <div className="spaces-container">
+          <div className="section-header">
+            <h3>Spaces</h3>
           </div>
 
-          <div className="tab-content">
-            {activeTab === 'space' && (
-              <div className="memory-section">
-                <div className="memory-list">
-                  {workspaces.map((workspace: any) => {
-                    const usage = spaceMemoryUsage[workspace.id];
-                    if (!usage || usage.memory === 0) return null;
-                    
-                    return (
-                      <div key={workspace.id} className="memory-item">
-                        <div className="item-header">
-                          <div className="item-header-left">
-                            <span className="item-name">{workspace.name}</span>
-                            <button 
-                              className="pause-space-button"
-                              onClick={() => pauseSpace(workspace.id)}
-                              title="Pause all apps in this space"
-                            >
-                              <PauseCircle size={16} />
-                            </button>
+          <div className="memory-list">
+            {workspaces.map((workspace: any) => {
+              const usage = spaceMemoryUsage[workspace.id];
+              if (!usage || usage.memory === 0) return null;
+              
+              const isExpanded = expandedSpaceId === workspace.id;
+              const appMemoryInSpace = isExpanded ? getMemoryByApp(workspace.id) : {};
+              
+              return (
+                <div key={workspace.id} className="memory-item-container">
+                  <div 
+                    className={`memory-item ${isExpanded ? 'expanded' : ''}`}
+                    onClick={() => toggleSpaceExpand(workspace.id)}
+                  >
+                    <div className="item-header">
+                      <div className="item-header-left">
+                        <span className="expand-arrow">{isExpanded ? '▼' : '▶'}</span>
+                        <span className="item-name">{workspace.name}</span>
+                        <UncontrolledDropdown className="space-actions-dropdown" onClick={(e) => e.stopPropagation()}>
+                          <DropdownToggle 
+                            tag="button"
+                            className="space-actions-button"
+                            title="Actions"
+                          >
+                            <ThreeDots size={18} />
+                          </DropdownToggle>
+                          <DropdownMenu end>
+                            <DropdownItem onClick={() => pauseSpace(workspace.id)}>
+                              <PauseCircle size={14} className="me-2" />
+                              Pause Space
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </UncontrolledDropdown>
+                      </div>
+                      <span className="item-value">{memoryService.formatMemory(usage.memory)}</span>
+                    </div>
+                    <div className="item-meta">
+                      <span>{usage.tabs} tabs</span>
+                      <span>{getPercentage(usage.memory)}%</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${getPercentage(usage.memory)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="apps-list">
+                      {Object.entries(appMemoryInSpace)
+                        .sort(([, a], [, b]) => b.memory - a.memory)
+                        .map(([appName, appUsage]) => (
+                          <div key={appName} className="app-item">
+                            <div className="app-header">
+                              <div className="app-left">
+                                <span className="app-name">{appName}</span>
+                                <div className="app-meta">
+                                  <span>{appUsage.tabs} tabs</span>
+                                  <span className="separator">•</span>
+                                  <span>{((appUsage.memory / usage.memory) * 100).toFixed(1)}% of space</span>
+                                </div>
+                              </div>
+                              <span className="app-value">{memoryService.formatMemory(appUsage.memory)}</span>
+                            </div>
+                            <div className="progress-bar small">
+                              <div 
+                                className="progress-fill app" 
+                                style={{ width: `${(appUsage.memory / usage.memory) * 100}%` }}
+                              ></div>
+                            </div>
                           </div>
-                          <span className="item-value">{memoryService.formatMemory(usage.memory)}</span>
-                        </div>
-                        <div className="item-meta">
-                          <span>{usage.tabs} tabs</span>
-                          <span>{getPercentage(usage.memory)}%</span>
-                        </div>
-                        <div className="progress-bar">
-                          <div 
-                            className="progress-fill" 
-                            style={{ width: `${getPercentage(usage.memory)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {spaceMemoryUsage['others'] && spaceMemoryUsage['others'].memory > 0 && (
-                    <div key="others" className="memory-item">
-                      <div className="item-header">
-                        <span className="item-name">Others</span>
-                        <span className="item-value">{memoryService.formatMemory(spaceMemoryUsage['others'].memory)}</span>
-                      </div>
-                      <div className="item-meta">
-                        <span>{spaceMemoryUsage['others'].tabs} tabs</span>
-                        <span>{getPercentage(spaceMemoryUsage['others'].memory)}%</span>
-                      </div>
-                      <div className="progress-bar">
-                        <div 
-                          className="progress-fill" 
-                          style={{ width: `${getPercentage(spaceMemoryUsage['others'].memory)}%` }}
-                        ></div>
-                      </div>
+                        ))}
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'app' && (
-              <div className="memory-section">
-                <div className="memory-list">
-                  {Object.entries(appMemoryUsage)
-                    .sort(([, a], [, b]) => b.memory - a.memory)
-                    .map(([appName, usage]) => (
-                      <div key={appName} className="memory-item">
-                        <div className="item-header">
-                          <span className="item-name">{appName}</span>
-                          <span className="item-value">{memoryService.formatMemory(usage.memory)}</span>
-                        </div>
-                        <div className="item-meta">
-                          <span>{usage.tabs} tabs</span>
-                          <span>{getPercentage(usage.memory)}%</span>
-                        </div>
-                        <div className="progress-bar">
-                          <div 
-                            className="progress-fill" 
-                            style={{ width: `${getPercentage(usage.memory)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
+              );
+            })}
+            
+            {spaceMemoryUsage['others'] && spaceMemoryUsage['others'].memory > 0 && (
+              <div key="others" className="memory-item">
+                <div className="item-header">
+                  <span className="item-name">Others</span>
+                  <span className="item-value">{memoryService.formatMemory(spaceMemoryUsage['others'].memory)}</span>
+                </div>
+                <div className="item-meta">
+                  <span>{spaceMemoryUsage['others'].tabs} tabs</span>
+                  <span>{getPercentage(spaceMemoryUsage['others'].memory)}%</span>
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${getPercentage(spaceMemoryUsage['others'].memory)}%` }}
+                  ></div>
                 </div>
               </div>
             )}

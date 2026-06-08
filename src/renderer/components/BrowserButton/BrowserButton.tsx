@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 
 import { Button } from "reactstrap";
-import { Globe2 } from "react-bootstrap-icons";
+import { Layers } from "react-bootstrap-icons";
 import clsx from "clsx";
 
 import { toggleLaunchPad } from "../LaunchPadLocal/LaunchPadLocal";
@@ -50,12 +50,12 @@ function BrowserButton(props: { showStatusDot?: boolean }) {
             width={48}
             height={48}
             className={clsx("transition-colors")}
-            title="Open Browser"
+            title="Space Tabs"
           >
-            <Globe2 size={24} color="white" />
+            <Layers size={24} color="white" />
           </Button>
           <div className="icon-middle">
-            <div className="icon-text">Open search engine</div>
+            <div className="icon-text">Space Tabs</div>
           </div>
         </div>
         <div className="d-flex justify-content-center flex-column align-items-center mt-1">
@@ -63,7 +63,7 @@ function BrowserButton(props: { showStatusDot?: boolean }) {
             {browserWindows.length > 0 && props.showStatusDot && (
               <span className="status-dot"></span>
             )}
-            <span className={"icon-text ml-1"}>Space Browser</span>
+            <span className={"icon-text ml-1"}>Space Tabs</span>
           </div>
         </div>
       </div>

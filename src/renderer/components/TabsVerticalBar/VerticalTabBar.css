@@ -182,6 +182,11 @@
     margin: 4px !important;
 }
 
+.vertical-tabbar .vertical-tab-item:hover{
+    background-color: rgba(255,255,255,0.1);
+    cursor: pointer;
+}
+
 .vertical-tab-item.active{
     background-color: rgba(255,255,255,0.1);
 }
@@ -208,8 +213,6 @@
     width: 100% !important;
     height: 100% !important;
     z-index: 1065;
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
 }
 
 /* Screenshot Preview on Hover */

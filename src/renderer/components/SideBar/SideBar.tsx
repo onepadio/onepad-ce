@@ -14,7 +14,7 @@ import { ListGroup, ListGroupItem } from "reactstrap";
 // @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
 import defaultIcon from "../../images/default_icon.png";
 
-import { ChatDots, MusicNoteBeamed, Plus, Robot, Star, Globe } from "react-bootstrap-icons";
+import { ChatDots, MusicNoteBeamed, Plus, Robot, Star, Layers } from "react-bootstrap-icons";
 import XAppService from "../../services/xapp";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { Button } from "reactstrap";
@@ -291,33 +291,9 @@ function SideBar() {
             );
             let _tabIds = [];
             // OpenTabs
-            if (
-
-              app.state &&
-
-              app.state.tabs &&
-
-              app.state.tabs.length > 0
-            ) {
-
-              app.state.tabs.forEach((tabState: any) => {
-                log.debug("tabState:", tabState);
-                let _tab = resumeTab(
-                  item.id,
-                  tabState.id,
-                  "xapp",
-                  tabState.url,
-                  tabState.icon,
-                  tabState.title
-                );
-                _openTabs[_tab.id] = _tab;
-                _tabIds.push(_tab.id);
-              });
-            } else {
-              let _tab = newTab(item.id, _url, _result.data.icon, "");
-              _openTabs[_tab.id] = _tab;
-              _tabIds.push(_tab.id);
-            }
+            let _tab = newTab(item.id, _url, _result.data.icon, "");
+            _openTabs[_tab.id] = _tab;
+            _tabIds.push(_tab.id);
 
             dispatch(
               sessionActions.setOpenTabs({
@@ -581,6 +557,25 @@ function SideBar() {
               </div>
             </div>
           </ListGroupItem>
+
+          {/* Space Tabs icon button */}
+          <ListGroupItem
+            key="space-tabs-button"
+            className="d-flex justify-content-center align-items-center m-1 mt-3 menu-icon more-button position-relative"
+            onClick={handleBrowserClick}
+            title="Space Tabs"
+          >
+            <div className="appicon d-flex justify-content-center">
+              <div className="more-icon">
+                <Layers color="white" size={24} />
+              </div>
+            </div>
+            {browserWindows.length > 0 && (
+              <span className="position-absolute top-0 right-0 translate-middle badge rounded-pill bg-primary">
+                {browserWindows.length}
+              </span>
+            )}
+          </ListGroupItem>
         </div>
 
         {(() => {
@@ -611,17 +606,6 @@ function SideBar() {
       </div>
       <div className="star-icon-container">
         <ListGroup className="d-flex">
-          <ListGroupItem className="d-flex justify-content-center flex-column m-0 p-0">
-            <Button
-              color="dark"
-              onClick={handleBrowserClick}
-              title="Browser"
-            >
-              <Globe color="white" size={20} />
-            </Button>
-            <span className="text-white text-xs">Browser</span>
-          </ListGroupItem>
-
           <ListGroupItem className="d-flex justify-content-center flex-column m-0 p-0">
               <Button
                 color="dark"

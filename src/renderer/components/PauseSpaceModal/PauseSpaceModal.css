@@ -1,0 +1,33 @@
+.pause-space-modal {
+    min-width: 400px;
+}
+
+.pause-space-content {
+    text-align: left;
+}
+
+.pause-space-content p {
+    margin-bottom: 1rem;
+}
+
+.close-warning {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left: 3px solid #dc3545;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.close-warning p {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.close-warning strong {
+    color: #dc3545;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+    font-weight: 500;
+}

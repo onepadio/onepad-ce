@@ -150,6 +150,21 @@ function SpaceIcon(props) {
       });
   }
 
+  // Check if this workspace has active tabs/windows
+  function isActiveSpace() {
+    // Check if any tab belongs to this workspace
+    const hasActiveTabs = Object.values(openTabs).some(
+      (tab: any) => tab.workspace === props.id && tab.type !== "xapp"
+    );
+    
+    // Check if any window belongs to this workspace
+    const hasActiveWindows = Object.values(openWindows).some(
+      (window: any) => window.workspace === props.id && window.id !== undefined
+    );
+    
+    return hasActiveTabs || hasActiveWindows;
+  }
+
   function icon() {
     let _workspace = workspaceState.workspaces.find((w) => w.id === props.id);
 
@@ -229,10 +244,13 @@ function SpaceIcon(props) {
         onClick={() => handleOnClick()}
       >
         {}
-        <div className="appicon d-flex justify-content-center">
+        <div className="appicon d-flex justify-content-center position-relative">
           <div className="d-flex justify-content-center align-items-center w-100">
             {icon()}
           </div>
+          {isActiveSpace() && (
+            <div className="active-space-indicator" />
+          )}
           {}
           <div className="icon-middle">
             {}
