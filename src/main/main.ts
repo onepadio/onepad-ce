@@ -57,6 +57,7 @@ import { execSync } from 'child_process';
 // DISABLED: Docker functionality
 // import { dockerService, DockerContainer } from './docker/docker';
 import { createMasterKeyIfNotExists, getMasterKey, encryptFunc, decryptFunc } from './crypto';
+import passwordCrypto from './passwordCrypto';
 import { SPContextMenu, SPShortContextMenu } from './contextMenu';
 
 const store = new Store();
@@ -1113,6 +1114,79 @@ ipcMain.on('decrypt', async (event, data) => {
   } catch (error) {
     console.error('Decryption error:', error);
     event.returnValue = null;
+  }
+});
+
+// Password Manager IPC Handlers
+ipcMain.handle('password-create-person-key', async (event, personId, password) => {
+  try {
+    await passwordCrypto.createPersonKey(personId, password);
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating person key:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('password-authenticate-person', async (event, personId, password) => {
+  try {
+    const authenticated = await passwordCrypto.authenticatePerson(personId, password);
+    return { success: authenticated };
+  } catch (error) {
+    console.error('Error authenticating person:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('password-is-session-active', async (event, personId) => {
+  try {
+    const isActive = passwordCrypto.isPersonSessionActive(personId);
+    return { active: isActive };
+  } catch (error) {
+    console.error('Error checking session:', error);
+    return { active: false };
+  }
+});
+
+ipcMain.handle('password-lock-person', async (event, personId) => {
+  try {
+    passwordCrypto.lockPerson(personId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error locking person:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('password-encrypt', async (event, password, personId) => {
+  try {
+    const personKey = passwordCrypto.getPersonKey(personId);
+    const encrypted = passwordCrypto.encryptPasswordForPerson(password, personKey, personId);
+    return { success: true, encrypted };
+  } catch (error) {
+    console.error('Error encrypting password:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('password-decrypt', async (event, encryptedPassword, personId) => {
+  try {
+    const personKey = passwordCrypto.getPersonKey(personId);
+    const decrypted = passwordCrypto.decryptPasswordForPerson(encryptedPassword, personKey, personId);
+    return { success: true, decrypted };
+  } catch (error) {
+    console.error('Error decrypting password:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('password-check-storage-backend', async (event) => {
+  try {
+    const backend = passwordCrypto.checkSecretStorageBackend();
+    return backend;
+  } catch (error) {
+    console.error('Error checking storage backend:', error);
+    return { backend: 'unknown', isSecure: false, warning: 'Failed to check backend' };
   }
 });
 

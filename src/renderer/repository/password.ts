@@ -5,6 +5,7 @@ const TABLE_NAME = "passwords";
 export class PasswordRepository{
     static save(personId: any, hostname: any, username: any, password: any, notes: any, workspace: any) {
         return new Promise((resolve, reject) => {
+            const now = Date.now();
             // @ts-expect-error
             db.passwords.add({
                 person: personId,
@@ -13,6 +14,8 @@ export class PasswordRepository{
                 password: password,
                 notes: notes,
                 workspace: workspace,
+                createdAt: now,
+                updatedAt: now,
             }).then((id: any) => {
                 VersionRepository.increase(TABLE_NAME).then(() => {
                     resolve(id);
@@ -34,7 +37,8 @@ export class PasswordRepository{
                 username: username,
                 password: password,
                 notes: notes,
-                workspace: workspace
+                workspace: workspace,
+                updatedAt: Date.now(),
             }).then((id: any) => {
                 VersionRepository.increase(TABLE_NAME).then(() => {
                     resolve(id);
@@ -116,6 +120,11 @@ export class PasswordRepository{
                 reject(error);
             });
         });
+    }
+
+    // Alias for compatibility
+    static getByPersonIdAndHostname(personId: any, hostname: any) {
+        return this.getByPersonAndHostname(personId, hostname);
     }
 
     static search(personId: any, search: any) {

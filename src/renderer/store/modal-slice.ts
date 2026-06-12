@@ -53,6 +53,8 @@ const modalSlice = createSlice({
     isWidgetPageConfigurationModalOpen: false,
 
     isPasswordImportModalOpen: false,
+    isPasswordSavePromptOpen: false,
+    passwordSavePromptData: null,
 
     isLaunchPadOpen: false,
     isRemoteTaskManagerOpen: false,
@@ -201,6 +203,14 @@ const modalSlice = createSlice({
     },
     togglePasswordImportModal(state, action) {
       state.isPasswordImportModalOpen = !state.isPasswordImportModalOpen;
+    },
+    showPasswordSavePrompt(state, action) {
+      state.isPasswordSavePromptOpen = true;
+      state.passwordSavePromptData = action.payload;
+    },
+    hidePasswordSavePrompt(state, action) {
+      state.isPasswordSavePromptOpen = false;
+      state.passwordSavePromptData = null;
     },
     toggleRemoteTaskManager(state, action) {
       state.isRemoteTaskManagerOpen = !state.isRemoteTaskManagerOpen;
