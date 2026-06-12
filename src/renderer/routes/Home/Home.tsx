@@ -80,6 +80,7 @@ import WindowBar from "../../components/WindowContainter/WindowBar";
 import TabsPreviewBar from "../../components/TabPreviewBar/TabPreviewBar";
 import PasswordManagerCanvas from "../../components/PasswordManagerCanvas/PasswordManagerCanvas";
 import PasswordImportModal from "../../components/PasswordImportModal/PasswordImportModal";
+import PasswordSavePrompt from "../../components/PasswordSavePrompt/PasswordSavePrompt";
 import LaunchPadLocal from "../../components/LaunchPadLocal/LaunchPadLocal";
 import SpaceTopBar from "../../components/SpaceTopBar/SpaceTopBar";
 import WindowService from "../../hubs/WindowService";
@@ -648,6 +649,7 @@ function Home() {
       <SettingsCanvas />
       <PasswordManagerCanvas />
       <PasswordImportModal />
+      <PasswordSavePrompt />
       {
         isChangeBackgroundModalOpen ? <ChangeBackgroundModalWindow /> : <></>
       }

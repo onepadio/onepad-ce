@@ -9,6 +9,8 @@ import log from "loglevel";
 
 import "./OPWebView.css";
 import { modalActions } from "../../store/modal-slice";
+import { generateFormDetectionScript, parseLoginDetection } from "../../utils/formDetection";
+import PasswordService from "../../services/password";
 
 function OPWebView(props: any) {
   const dispatch = useDispatch();
@@ -34,6 +36,7 @@ function OPWebView(props: any) {
   }, [openTabs]);
   
   const isSessionFullScreen = useSelector((state: any) => state.session.isFullScreen);
+  const personId = useSelector((state: any) => state.app.personId);
 
   const webViewId = "webview-" + props.tabId;
   const [webview, setWebView] = useState(null);
@@ -144,6 +147,113 @@ function OPWebView(props: any) {
     });
   }
 
+  // Password manager: Check for saved passwords and offer auto-fill
+  async function checkAndOfferAutofill(url: string) {
+    try {
+      const hostname = new URL(url).hostname;
+      
+      if (!personId) return;
+      
+      // Check if there are saved passwords for this site
+      const savedPasswords = await PasswordService.getByPersonIdAndHostname(personId, hostname);
+      
+      if (savedPasswords && savedPasswords.length > 0) {
+        log.debug("Found saved passwords for:", hostname);
+        
+        // If only one password, auto-fill immediately
+        if (savedPasswords.length === 1) {
+          const pwd = savedPasswords[0];
+          autofillPassword(pwd.id, pwd.username);
+        } else {
+          // Multiple passwords - show selection UI
+          webview?.executeJavaScript(`
+            window.postMessage({
+              type: 'ONEPAD_SHOW_SUGGESTIONS',
+              data: {
+                passwords: ${JSON.stringify(savedPasswords.map((p: any) => ({
+                  id: p.id,
+                  username: p.username,
+                  hostname: p.hostname
+                })))}
+              }
+            }, '*');
+          `);
+        }
+      }
+    } catch (error) {
+      log.error("Error checking for saved passwords:", error);
+    }
+  }
+
+  // Password manager: Auto-fill password
+  async function autofillPassword(passwordId: string, username: string) {
+    try {
+      if (!personId) return;
+      
+      // Get password from database
+      const savedPassword = await PasswordService.get(passwordId);
+      
+      if (!savedPassword) {
+        log.error("Password not found:", passwordId);
+        return;
+      }
+      
+      // Decrypt password (handled in the service)
+      // @ts-expect-error
+      const decryptedPassword = window.electronAPI.decrypt.get(savedPassword.password);
+      
+      // Send to webview for auto-fill
+      webview?.executeJavaScript(`
+        window.postMessage({
+          type: 'ONEPAD_AUTOFILL',
+          data: {
+            username: '${username.replace(/'/g, "\\'")}',
+            password: '${decryptedPassword.replace(/'/g, "\\'")}'
+          }
+        }, '*');
+      `);
+      
+      log.info("Auto-filled password for:", username);
+    } catch (error) {
+      log.error("Error auto-filling password:", error);
+    }
+  }
+
+  // Password manager: Listen for login detection from webview
+  useEffect(() => {
+    if (!webview) return;
+    
+    const handleConsoleMessage = (event: any) => {
+      // Listen for postMessage from webview content
+      if (event.message && event.message.includes('ONEPAD_LOGIN_DETECTED')) {
+        try {
+          const data = JSON.parse(event.message);
+          const loginData = parseLoginDetection(data);
+          
+          if (loginData) {
+            log.info("Login detected:", loginData.hostname);
+            
+            // Show password save prompt
+            dispatch(modalActions.showPasswordSavePrompt({
+              hostname: loginData.hostname,
+              username: loginData.username,
+              password: loginData.password,
+              url: loginData.url
+            }));
+          }
+        } catch (error) {
+          log.error("Error parsing login detection:", error);
+        }
+      }
+    };
+    
+    webview.addEventListener('console-message', handleConsoleMessage);
+    
+    return () => {
+      webview.removeEventListener('console-message', handleConsoleMessage);
+    };
+  }, [webview, dispatch]);
+
   // Add all webview event listeners
   useEffect(() => {
     if (webview != null) {
@@ -168,6 +278,12 @@ function OPWebView(props: any) {
           dispatch(windowBarActions.setCurrentUrl(webview.getURL()));
           dispatch(windowBarActions.setCurrentTitle(webview.getTitle()));
         }
+
+        // Inject form detection script for password manager
+        webview.executeJavaScript(generateFormDetectionScript());
+        
+        // Check for saved passwords and offer auto-fill
+        checkAndOfferAutofill(webview.getURL());
       };
       
       webview.addEventListener("dom-ready", handleDomReady);

@@ -319,6 +319,7 @@ db.version(23).stores({
   });
 });
 
+// Version 24: Add person authentication and neverSave list for password manager
 db.version(24).stores({
   users: '$$id, email, name, createdAt, updatedAt, person',
   profiles: '$$id, name, createdAt, updatedAt, data, uid, user',
@@ -333,10 +334,18 @@ db.version(24).stores({
   bookmarks: '$$id, parent , createdAt, updatedAt, data, uid',
   browsers: '$$id, workspace, uid',
   xapps:'$$id, createdAt, updatedAt, data, state, profile, uid',
-  persons: '$$id, name, uid',
+  persons: '$$id, name, uid, authType, locked, lastAuthAt', // Added auth fields
   passwords: '$$id, person, hostname, createdAt, updatedAt, username, password, notes, workspace',
+  passwordNeverSave: '$$id, person, hostname', // Sites to never offer password saving
   tversions: '$$id, table, version',
   userSettings: '$$id, userId, createdAt, updatedAt, settings', // User-specific settings
+}).upgrade(trans => {
+  // @ts-expect-error
+  trans.persons.toCollection().modify((person: any) => {
+    person.authType = 'none'; // 'none', 'password', 'biometric'
+    person.locked = false;
+    person.lastAuthAt = null;
+  });
 });
 
 db.on('changes', function (changes) {
