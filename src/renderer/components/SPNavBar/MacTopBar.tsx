@@ -24,6 +24,7 @@ import isElectron from "is-electron";
 import NavBarApps from "../NavBarApps/NavBarApps";
 import { windowServiceActions } from "../../store/window-service-slice";
 import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
+import SpaceSwitcher from "../SpaceSwitcher/SpaceSwitcher";
 
 function MacTopBar() {
   const dispatch = useDispatch();
@@ -159,7 +160,8 @@ function MacTopBar() {
           <div className="col-3 d-flex justify-content-start align-items-center">
             <div className="text-white" style={{ marginLeft: "36px" }}></div>
           </div>
-          <div className="col-6 d-flex justify-content-center">
+          <div className="col-6 d-flex justify-content-center align-items-center">
+            <SpaceSwitcher />
           </div>
           {}
           <div className="col-3 d-flex justify-content-end">

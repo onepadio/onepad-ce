@@ -41,6 +41,7 @@ import isElectron from "is-electron";
 import UserMenu from "../UserMenu/UserMenu";
 import { windowServiceActions } from "../../store/window-service-slice";
 import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
+import SpaceSwitcher from "../SpaceSwitcher/SpaceSwitcher";
 
 function WindowsTopBar() {
   const dispatch = useDispatch();
@@ -391,7 +392,8 @@ function WindowsTopBar() {
         {}
         <div className="col-3 d-flex justify-content-start"></div>
         {}
-        <div className="col-6 d-flex justify-content-center">
+        <div className="col-6 d-flex justify-content-center align-items-center">
+          <SpaceSwitcher />
         </div>
         {}
         <div className="col-3 d-flex justify-content-end">

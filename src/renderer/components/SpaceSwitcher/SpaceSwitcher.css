@@ -1,0 +1,33 @@
+.space-switcher-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.space-switcher-icon {
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  padding: 2px;
+}
+
+.space-switcher-icon:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.space-switcher-icon.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.space-icon-img {
+  border-radius: 4px;
+  object-fit: cover;
+}
