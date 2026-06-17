@@ -541,23 +541,7 @@ function SideBar() {
       className="d-flex flex-column justify-content-start global-apps-menu"
     >
       <div className="global-apps-menu-content d-flex flex-column justify-content-start">
-        {/* Star icon button to open favourites category folder */}
         <div className="apps-list-header">
-          <ListGroupItem
-            key="favourites-button"
-            className="d-flex justify-content-center align-items-center m-1 mt-3 menu-icon more-button"
-            onClick={() => {
-              dispatch(modalActions.showFavouritesPad({}));
-            }}
-            title="Open Favourites"
-          >
-            <div className="appicon d-flex justify-content-center">
-              <div className="more-icon">
-                <Star color="white" size={24} />
-              </div>
-            </div>
-          </ListGroupItem>
-
           {/* Space Tabs icon button */}
           <ListGroupItem
             key="space-tabs-button"
