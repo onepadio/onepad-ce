@@ -42,13 +42,13 @@ const electronHandler = {
   },
   fromMain: (callback: any) => ipcRenderer.on('fromMain', callback),
   receive: (channel: string, callback: any) => {
-    const validChannels = ['fromMain'];
+    const validChannels = ['fromMain', 'download-event'];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, callback);
     }
   },
   removeListener: (channel: string, callback: any) => {
-    const validChannels = ['fromMain'];
+    const validChannels = ['fromMain', 'download-event'];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeListener(channel, callback);
     }

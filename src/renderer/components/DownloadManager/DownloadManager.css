@@ -1,0 +1,239 @@
+/* Position the modal wrapper at top right */
+#download-manager-modal {
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  padding: 20px;
+}
+
+.download-manager-modal {
+  min-width: 600px;
+  max-width: 800px;
+  max-height: calc(100vh - 100px);
+  margin-top: 60px;
+  margin-right: 0;
+  padding: 1rem;
+}
+
+.download-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.download-manager-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.clear-completed-btn {
+  flex-shrink: 0;
+}
+
+.download-manager-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.no-downloads {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+
+.downloads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.downloads-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.downloads-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.downloads-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.downloads-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.download-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.download-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.download-item.completed {
+  border-left: 3px solid #28a745;
+}
+
+.download-item.progressing {
+  border-left: 3px solid #007bff;
+}
+
+.download-item.paused {
+  border-left: 3px solid #ffc107;
+}
+
+.download-item.cancelled,
+.download-item.interrupted {
+  border-left: 3px solid #dc3545;
+  opacity: 0.7;
+}
+
+.download-icon {
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.download-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.download-filename {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.download-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.download-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.download-item.completed .download-progress-fill {
+  background: linear-gradient(90deg, #28a745, #1e7e34);
+}
+
+.download-item.paused .download-progress-fill {
+  background: linear-gradient(90deg, #ffc107, #e0a800);
+}
+
+.download-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.download-separator {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.download-status {
+  font-weight: 500;
+}
+
+.download-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.download-controls .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.5rem;
+  min-width: unset;
+}
+
+.download-controls .btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #download-manager-modal {
+    padding: 10px;
+  }
+
+  .download-manager-modal {
+    min-width: calc(100vw - 20px);
+    margin-top: 10px;
+  }
+
+  .download-manager-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .clear-completed-btn {
+    width: 100%;
+  }
+
+  .download-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .download-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Smooth slide-in animation */
+#download-manager-modal.modalx:not(.hidden) .modal-body-x {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

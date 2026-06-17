@@ -1,0 +1,176 @@
+.download-progress-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 320px;
+  background: rgba(33, 37, 41, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  z-index: 1100;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.download-progress-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.toast-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.status-icon {
+  flex-shrink: 0;
+}
+
+.status-icon.success {
+  color: #28a745;
+}
+
+.status-icon.error {
+  color: #dc3545;
+}
+
+.filename {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.toast-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.percentage {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.separator {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.toast-message {
+  font-size: 0.8rem;
+  padding: 6px 0;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.toast-message.success {
+  color: #28a745;
+}
+
+.toast-message.error {
+  color: #dc3545;
+}
+
+.view-all-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-all-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Adjust position for different screen sizes */
+@media (max-width: 768px) {
+  .download-progress-toast {
+    right: 10px;
+    width: calc(100vw - 20px);
+    max-width: 320px;
+  }
+}
+
+/* Animation for state changes */
+.download-progress-toast .progress-bar-fill {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Remove animation when paused or completed */
+.download-progress-toast.paused .progress-bar-fill,
+.download-progress-toast.completed .progress-bar-fill {
+  animation: none;
+}

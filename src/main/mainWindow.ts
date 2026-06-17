@@ -122,6 +122,25 @@ export default function createMainWindow(
 
   // Open urls in the user's browser
   win.webContents.setWindowOpenHandler((edata) => {
+    // Check if URL is a downloadable file
+    const downloadableExtensions = [
+      '.dmg', '.exe', '.zip', '.rar', '.7z', '.tar', '.gz',
+      '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+      '.iso', '.img', '.apk', '.deb', '.rpm', '.pkg'
+    ];
+    
+    const isDownloadableFile = downloadableExtensions.some(ext => 
+      edata.url.toLowerCase().endsWith(ext)
+    );
+    
+    // If it's a downloadable file, manually trigger download
+    if (isDownloadableFile) {
+      console.log('Detected downloadable file in main window, manually triggering download');
+      win.webContents.session.downloadURL(edata.url);
+      return { action: 'deny' };
+    }
+    
+    // Otherwise open in external browser
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });

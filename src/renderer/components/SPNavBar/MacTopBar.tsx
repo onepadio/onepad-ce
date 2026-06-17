@@ -12,7 +12,7 @@ import log from "loglevel";
 import { modalActions } from "../../store/modal-slice";
 
 import UserMenu from "../UserMenu/UserMenu";
-import { Activity, Terminal } from "react-bootstrap-icons";
+import { Activity, Terminal, Download } from "react-bootstrap-icons";
 import BrowserButton from "./BrowserButton";
 import { spaceSideBarActions } from "../../store/space-sidebar-slice";
 import { viewActions } from "../../store/view-slice";
@@ -65,6 +65,8 @@ function MacTopBar() {
   const isExtendedMode = useSelector((state: any) => state.view.isExtendedMode);
 
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
+
+  const activeDownloadsCount = useSelector((state: any) => state.downloads.activeDownloadsCount);
 
   const activeTab = useSelector((state: any) => state.session.activeTab);
 
@@ -188,6 +190,31 @@ function MacTopBar() {
               )}
               <ListGroupItem className="d-flex justify-content-center">
                 <MemoryIndicator />
+              </ListGroupItem>
+              <ListGroupItem className="d-flex justify-content-center">
+                <Button
+                  color="dark"
+                  onClick={() => {
+                    dispatch(modalActions.toggleDownloadManager());
+                  }}
+                  style={{ position: 'relative' }}
+                >
+                  <Download color="white" size={18} />
+                  {activeDownloadsCount > 0 && (
+                    <span 
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: '#007bff',
+                        border: '2px solid #212529',
+                      }}
+                    />
+                  )}
+                </Button>
               </ListGroupItem>
               <ListGroupItem className="d-flex justify-content-center">
                 <Button

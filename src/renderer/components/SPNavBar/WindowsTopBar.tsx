@@ -21,6 +21,7 @@ import WaffleMenuIcon from "../Icons/WaffleMenuIcon";
 import {
   Activity,
   ChatDots,
+  Download,
   EnvelopeAt,
   Grid3x3GapFill,
   Kanban,
@@ -63,6 +64,8 @@ function WindowsTopBar() {
   const isExtendedMode = useSelector((state: any) => state.view.isExtendedMode);
 
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
+
+  const activeDownloadsCount = useSelector((state: any) => state.downloads.activeDownloadsCount);
 
   const [globalApps, setGlobalApps] = useState([]);
   const [apps, setApps] = useState([]);
@@ -420,6 +423,31 @@ function WindowsTopBar() {
             }
             <ListGroupItem className="d-flex justify-content-center">
               <MemoryIndicator />
+            </ListGroupItem>
+            <ListGroupItem className="d-flex justify-content-center">
+              <Button
+                color="dark"
+                onClick={() => {
+                  dispatch(modalActions.toggleDownloadManager());
+                }}
+                style={{ position: 'relative' }}
+              >
+                <Download color="white" size={18} />
+                {activeDownloadsCount > 0 && (
+                  <span 
+                    style={{
+                      position: 'absolute',
+                      top: '2px',
+                      right: '2px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#007bff',
+                      border: '2px solid #212529',
+                    }}
+                  />
+                )}
+              </Button>
             </ListGroupItem>
             <ListGroupItem className="d-flex justify-content-center">
               <Button

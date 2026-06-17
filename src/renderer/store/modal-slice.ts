@@ -77,6 +77,7 @@ const modalSlice = createSlice({
     pauseSpaceWorkspaceId: null,
     pauseSpaceDefaultOption: null,
     isRestartSessionModalOpen: false,
+    isDownloadManagerOpen: false,
   },
   reducers: {
     toggleAppStore(state, action) {
@@ -335,6 +336,15 @@ const modalSlice = createSlice({
     },
     closeRestartSessionModal(state) {
       state.isRestartSessionModalOpen = false;
+    },
+    toggleDownloadManager(state) {
+      state.isDownloadManagerOpen = !state.isDownloadManagerOpen;
+    },
+    openDownloadManager(state) {
+      state.isDownloadManagerOpen = true;
+    },
+    closeDownloadManager(state) {
+      state.isDownloadManagerOpen = false;
     },
   },
 });

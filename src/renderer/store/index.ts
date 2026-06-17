@@ -26,6 +26,7 @@ import windowServiceSlice from "./window-service-slice";
 import cloudServiceSlice from "./cloud-service-slice";
 import chatAssistantSlice from "./chat-assistant-slice";
 import aiAppsSlice from "./ai-slice";
+import downloadSlice from "./download-slice";
 
 const store = configureStore({
   reducer: {
@@ -56,6 +57,7 @@ const store = configureStore({
     cloudService: cloudServiceSlice.reducer,
     chatAssistant: chatAssistantSlice.reducer,
     ai: aiAppsSlice.reducer,
+    downloads: downloadSlice.reducer,
   },
 });
 

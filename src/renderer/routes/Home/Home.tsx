@@ -97,6 +97,8 @@ import TaskManager from "../../components/TaskManager/TaskManager";
 import MemoryDashboard from "../../components/MemoryDashboard/MemoryDashboard";
 import ChangeBackgroundModalWindow from "../../components/ChangeBackgroundModalWindow/ChangeBackgroundModalWindow";
 import AIAssistantsCanvas from "renderer/components/AIAssistantsCanvas/AIAssistantsCanvas";
+import DownloadManager from "../../components/DownloadManager/DownloadManager";
+import DownloadProgressToast from "../../components/DownloadProgressToast/DownloadProgressToast";
 function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -650,6 +652,8 @@ function Home() {
       <PasswordManagerCanvas />
       <PasswordImportModal />
       <PasswordSavePrompt />
+      <DownloadManager />
+      <DownloadProgressToast />
       {
         isChangeBackgroundModalOpen ? <ChangeBackgroundModalWindow /> : <></>
       }

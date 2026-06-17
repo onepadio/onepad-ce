@@ -59,6 +59,7 @@ import { execSync } from 'child_process';
 import { createMasterKeyIfNotExists, getMasterKey, encryptFunc, decryptFunc } from './crypto';
 import passwordCrypto from './passwordCrypto';
 import { SPContextMenu, SPShortContextMenu } from './contextMenu';
+import downloadManager from './downloadManager';
 
 const store = new Store();
 
@@ -68,6 +69,7 @@ const externalTabs = {};
 const screenShots: { [key: string]: any } = {};
 let activeWindow: BrowserWindow | null = null;
 const sessions: { [key: string]: any } = {};
+const sessionsWithDownloadListeners: Set<string> = new Set();
 let userId: string | null;
 let workspaceId: string | undefined = 'device';
 const profileManager: ProfileManager = new ProfileManager(store);
@@ -223,6 +225,11 @@ function switchSession() {
     sessions[partitionId] = session.fromPartition(partitionId);
   }
   console.log(`Switching session to ${partitionId}`);
+  
+  // Initialize download manager for the current session
+  if (mainWindows['main']) {
+    downloadManager.initialize(mainWindows['main'], partitionId);
+  }
 }
 
 function addWindow(key: string, window: {}) {
@@ -280,8 +287,54 @@ app.on('web-contents-created', (e, contents) => {
   } else {
     SPContextMenu(contents, mainWindow);
 
+    // Set up download handler for this webContents (webview) - only once per session
+    // Use the session object itself as the key by converting to string
+    const sessionKey = contents.session.partition || 'default';
+    if (!sessionsWithDownloadListeners.has(sessionKey)) {
+      console.log(`Setting up will-download listener for session partition: ${sessionKey}`);
+      sessionsWithDownloadListeners.add(sessionKey);
+      
+      contents.session.on('will-download', (event: any, item: any, webContents: any) => {
+        console.log('will-download event triggered for webContents:', item.getFilename());
+        console.log('Calling downloadManager.handleDownload');
+        try {
+          downloadManager.handleDownload(item, webContents);
+          console.log('downloadManager.handleDownload completed');
+        } catch (error) {
+          console.error('Error in downloadManager.handleDownload:', error);
+        }
+      });
+    } else {
+      console.log(`Session ${sessionKey} already has download listener, skipping`);
+    }
+
     contents.setWindowOpenHandler(({ url, disposition }) => {
-      console.log('setWindowOpenHandler...');
+      console.log('setWindowOpenHandler...', url);
+      
+      // Check if URL is a downloadable file
+      const downloadableExtensions = [
+        '.dmg', '.exe', '.zip', '.rar', '.7z', '.tar', '.gz',
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.iso', '.img', '.apk', '.deb', '.rpm', '.pkg',
+        '.mp4', '.avi', '.mkv', '.mov', '.mp3', '.wav',
+        '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp',
+        '.torrent', '.msi', '.bin'
+      ];
+      
+      const isDownloadableFile = downloadableExtensions.some(ext => 
+        url.toLowerCase().endsWith(ext)
+      );
+      
+      // If it's a downloadable file, manually trigger download
+      if (isDownloadableFile) {
+        console.log('Detected downloadable file, manually triggering download');
+        // Use the webContents session to trigger the download
+        contents.session.downloadURL(url);
+        return {
+          action: 'deny',
+        };
+      }
+      
       // get active window
       // send the url back to the active window
       // let the active window handle the url
@@ -509,6 +562,12 @@ app
         true,
         version
       );
+      
+      // Initialize download manager with default session
+      if (mainWindow) {
+        mainWindows['main'] = mainWindow;
+        downloadManager.initialize(mainWindow, partitionId);
+      }
     }
 
     // Register global keyboard shortcut for Ctrl+Tab (app switcher)
@@ -846,6 +905,31 @@ ipcMain.on(
           mainWindow?.webContents.send('fromMain', {
             action: 'clear-cache-error',
           });
+        }
+        break;
+      case 'download-action':
+        // @ts-expect-error
+        const { downloadAction, downloadId } = data;
+        console.log(`Download action: ${downloadAction} for ${downloadId}`);
+        switch (downloadAction) {
+          case 'pause':
+            downloadManager.pauseDownload(downloadId);
+            break;
+          case 'resume':
+            downloadManager.resumeDownload(downloadId);
+            break;
+          case 'cancel':
+            downloadManager.cancelDownload(downloadId);
+            break;
+          case 'open-file':
+            downloadManager.openFile(downloadId);
+            break;
+          case 'show-in-folder':
+            downloadManager.showInFolder(downloadId);
+            break;
+          case 'remove':
+            downloadManager.removeDownload(downloadId);
+            break;
         }
         break;
       case 'toggle-dev-tools':
