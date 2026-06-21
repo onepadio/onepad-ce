@@ -304,6 +304,14 @@ function CategoryPadBody({ category }: CategoryPadBodyProps) {
   function handleRemoveApp(item: any, event: React.MouseEvent) {
     event.stopPropagation(); // Prevent opening the app when clicking remove
 
+    // Show confirmation dialog
+    const appName = item.data?.name || "this app";
+    const confirmed = window.confirm(`Are you sure you want to remove "${appName}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
     if (category === "favourites") {
       // Remove from favourites (localStorage)
       const xappIds = JSON.parse(localStorage.getItem(`xappIds-${profileId}`) || "[]");
@@ -362,7 +370,7 @@ function CategoryPadBody({ category }: CategoryPadBodyProps) {
               title={category === "favourites" ? item.data?.name : item.name}
               data-bs-custom-className="custom-tooltip"
             >
-              {category === "favourites" && (
+              {!openWindows.hasOwnProperty(item.id) && (
                   <button
                     className="remove-app-btn"
                     onClick={(e) => handleRemoveApp(item, e)}

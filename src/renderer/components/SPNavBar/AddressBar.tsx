@@ -102,7 +102,7 @@ import {
 
 import { toggleLaunchPad } from "../LaunchPadLocal/LaunchPadLocal";
 import WaffleMenuIcon from "../Icons/WaffleMenuIcon";
-import { Button, Tooltip } from "reactstrap";
+import { Button, Tooltip, Badge } from "reactstrap";
 import RemoteAppMenu from "../RemoteAppMenu/RemoteAppMenu";
 import { windowServiceActions } from "../../store/window-service-slice";
 import TabsDropDown from "./TabsDropDown";
@@ -138,6 +138,8 @@ function AddressBar(props: any) {
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
 
   const activeWindow = useSelector((state: any) => state.session.activeWindow);
+
+  const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
 
   const activeTabs = useSelector((state: any) => state.session.activeTabs);
 
@@ -829,22 +831,36 @@ function AddressBar(props: any) {
     dispatch(windowActions.toggleShowSidebar({}));
   }
 
+  const activeWindowTabCount = windowTabs[activeWindowId]?.length || 0;
+
   return (
     <div
+      id="address-bar"
       className={`address-bar d-flex ${props.className} ${
         isSharedAppsEnabled ? " with-left-bar" : ""
       } ${isAIAssistantOpen ? "chat-assistant-open" : ""}`}
+
     >
       {activeTab.id !== "launchpad" && (
         <>
 
           <Button
             id={"home-button-" + activeTabId}
-            className="btn btn-dark ml-2"
+            className="btn btn-dark ml-2 position-relative"
             onClick={() => toggleShowSidebar()}
             disabled={disabled}
           >
             <ListTask size={20} />
+            {activeWindowTabCount > 0 && (
+              <Badge
+                color="primary"
+                pill
+                className="position-absolute start-100 translate-middle"
+                style={{ top: '15px' }}
+              >
+                {activeWindowTabCount}
+              </Badge>
+            )}
           </Button>
           <Button
             id={"home-button-" + activeTabId}

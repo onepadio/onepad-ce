@@ -535,6 +535,10 @@ function SideBar() {
     );
   }
 
+  const browserTabsCount = Object.values(openTabs).filter(
+    (tab: any) => tab.type === "browser" && tab.workspace === workspace.id
+  ).length;
+
   return (
     <div
       id="globalAppsMenu"
@@ -554,9 +558,9 @@ function SideBar() {
                 <Layers color="white" size={24} />
               </div>
             </div>
-            {browserWindows.length > 0 && (
+            {browserTabsCount > 0 && (
               <span className="position-absolute top-0 right-0 translate-middle badge rounded-pill bg-primary">
-                {browserWindows.length}
+                {browserTabsCount}
               </span>
             )}
           </ListGroupItem>

@@ -172,9 +172,9 @@ function TabWindow(this, props) {
           }
         }
       } else {
-        setTimeout(() => {
+        //setTimeout(() => {
           container.classList.add("hidden-tab");
-        }, 200);
+        //  }, 200);
       }
     }
   }, [workspace, desktop, activeWindow, activeTabId, webViewContainerId]);

@@ -112,6 +112,11 @@ function SpaceSwitcher() {
       });
   };
 
+  const handleFavouritesClick = () => {
+    dispatch(modalActions.setSelectedCategory("favourites"));
+    dispatch(modalActions.toggleCategoryPad({ category: "favourites" }));
+  };
+
   const renderSpaceIcon = (workspace: any) => {
     const isActive = workspace.id === currentWorkspace.id;
 
@@ -178,17 +183,11 @@ function SpaceSwitcher() {
     }
   };
 
-  if (activeWorkspaces.length === 0) {
-    return null;
-  }
-
   return (
     <div className="space-switcher-container">
       <div
         className="space-switcher-icon favourites-button"
-        onClick={() => {
-          dispatch(modalActions.showFavouritesPad({}));
-        }}
+          onClick={handleFavouritesClick}
         title="Open Favourites"
       >
         <div className="space-switcher-star-icon">

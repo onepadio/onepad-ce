@@ -438,7 +438,6 @@ function LaunchPadBody(props: any) {
               <div className="container-fluid icons-tab">
                 <div className="d-flex flex-row justify-content-center p-4 icons-pad-space">
                   <div className="d-flex flex-row justify-content-start w-100 flex-wrap">
-                    <CategoryFolder category="favourites" showStatusDot={false} />
                     <BrowserButton showStatusDot={false} />
                     {allItems
                       ?.filter((item) => item.workspace !== profileId)

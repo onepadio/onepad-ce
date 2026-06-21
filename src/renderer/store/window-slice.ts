@@ -4,7 +4,7 @@ const windowSlice = createSlice({
   name: "window",
   initialState: {
     windows: {},
-    showSidebar: true,
+    showSidebar: false,
     activeBar: "tabs",
     sideBarSize: "xs",
     tabStyle: "sidebar",
