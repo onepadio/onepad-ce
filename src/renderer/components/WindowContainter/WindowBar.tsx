@@ -185,8 +185,11 @@ function WindowBar(props: any) {
     if (webview != null) {
       log.debug("webview is not null");
       webview.addEventListener("did-navigate", (event: any) => {
-        log.debug("did-navigate, wid",webview.getWebContentsId());
-        didNavigate(event);
+        log.debug("did-navigate, wid",webview.getWebContentsId(), "isMainFrame:", event.isMainFrame);
+        // Only process main frame navigation to avoid capturing iframe URLs (e.g., Google widgets)
+        if (event.isMainFrame) {
+          didNavigate(event);
+        }
       });
       webview.addEventListener("page-favicon-updated",(event: any) => updateTabIcon(event.favicons));
       webview.addEventListener("dom-ready", () => {

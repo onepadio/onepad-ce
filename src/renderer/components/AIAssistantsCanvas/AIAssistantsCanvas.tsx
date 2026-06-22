@@ -87,13 +87,19 @@ function AIAssistantsCanvas(){
           log.debug("did-stop-loading");
           webview?.classList.remove("hidden");
         });
-        webview.addEventListener("did-navigate", () => {
-          log.debug("did-navigate");
-          webview?.classList.remove("hidden");
+        webview.addEventListener("did-navigate", (event: any) => {
+          // Only handle main frame navigation to avoid noise from iframe navigations
+          if (event.isMainFrame) {
+            log.debug("did-navigate (main frame)");
+            webview?.classList.remove("hidden");
+          }
         });
-        webview.addEventListener("did-navigate-in-page", () => {
-          log.debug("did-navigate-in-page");
-          webview?.classList.remove("hidden");
+        webview.addEventListener("did-navigate-in-page", (event: any) => {
+          // Only handle main frame navigation to avoid noise from iframe navigations
+          if (event.isMainFrame) {
+            log.debug("did-navigate-in-page (main frame)");
+            webview?.classList.remove("hidden");
+          }
         });
       }
     }, [webview]);

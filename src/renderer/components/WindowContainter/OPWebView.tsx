@@ -291,13 +291,19 @@ function OPWebView(props: any) {
       webview.addEventListener("page-favicon-updated",(event: any) => updateTabIcon(event.favicons));
       
       webview.addEventListener("did-navigate", (event: any) => {
-        log.debug("did-navigate, wid",webview.getWebContentsId());
-        didNavigate(event.url);
+        log.debug("did-navigate, wid",webview.getWebContentsId(), "isMainFrame:", event.isMainFrame);
+        // Only update URL for main frame navigation to avoid capturing iframe URLs (e.g., Google widgets)
+        if (event.isMainFrame) {
+          didNavigate(event.url);
+        }
       });
 
       webview.addEventListener("did-navigate-in-page", (event: any) => {
-        log.debug("did-navigate-in-page, wid",webview.getWebContentsId());
-        didNavigate(event.url);
+        log.debug("did-navigate-in-page, wid",webview.getWebContentsId(), "isMainFrame:", event.isMainFrame);
+        // Only update URL for main frame navigation to avoid capturing iframe URLs (e.g., Google widgets)
+        if (event.isMainFrame) {
+          didNavigate(event.url);
+        }
       });
 
       if(props.type === "remote"){

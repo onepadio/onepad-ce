@@ -231,8 +231,11 @@ function RemoteTab(props: any) {
     if (webview != null) {
       log.debug("webview is not null");
       webview.addEventListener("did-navigate", (event: any) => {
-        // didNavigate(event);
-        log.debug("wid",webview.getWebContentsId());
+        // Only log main frame navigation to avoid noise from iframe navigations
+        if (event.isMainFrame) {
+          // didNavigate(event);
+          log.debug("did-navigate (main frame), wid",webview.getWebContentsId());
+        }
       });
       webview.addEventListener("page-favicon-updated",(event: any) => updateTabIcon(event.favicons));
       webview.addEventListener("dom-ready", () => {

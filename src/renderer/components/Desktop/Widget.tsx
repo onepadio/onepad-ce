@@ -61,8 +61,11 @@ function Widget(props: any){
             _webview.setZoomLevel(zoomLevel);
         });
 
-        _webview.addEventListener("did-navigate-in-page", () => {
-            _webview.setZoomLevel(zoomLevel);
+        _webview.addEventListener("did-navigate-in-page", (event: any) => {
+            // Only handle main frame navigation for zoom level updates
+            if (event.isMainFrame) {
+                _webview.setZoomLevel(zoomLevel);
+            }
         });
 
         _webview.addEventListener("page-title-updated", (e: any) => {
