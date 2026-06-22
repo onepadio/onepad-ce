@@ -104,6 +104,7 @@ function AppStoreModalWindow(args: any) {
               <Row>
                 <Col md={3} sm={3} xs={4}>
                   <Button id="add-link-button" color="secondary" onClick={() => {
+                    dispatch(modalActions.setLocation("launchpad"));
                     toggleAppStore();
                     toggleAddLinkModal();
                   }}>Add Custom</Button>

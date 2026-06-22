@@ -1081,7 +1081,6 @@ ipcMain.handle('get-tab-memory-info', async (event, webContentsId) => {
     // Find the corresponding process in app metrics
     const processMetrics = appMetrics.find(metric => metric.pid === osProcessId);
     
-    console.log('Memory info for webContents', webContentsId, ':', processMetrics?.memory);
     return processMetrics ? processMetrics.memory : null;
   } catch (error) {
     log.error('Failed to get memory info for webContents:', webContentsId, error);
@@ -1093,9 +1092,6 @@ ipcMain.handle('get-all-tabs-memory', async () => {
   try {
     const allWebContents = webContents.getAllWebContents();
     const appMetrics = app.getAppMetrics();
-    
-    console.log('Getting memory for', allWebContents.length, 'webContents');
-    console.log('App metrics:', appMetrics.length, 'processes');
     
     const memoryInfos = allWebContents.map((wc) => {
       try {
@@ -1112,9 +1108,9 @@ ipcMain.handle('get-all-tabs-memory', async () => {
         };
         
         if (processMetrics) {
-          console.log('WebContents', wc.id, 'memory:', processMetrics.memory);
+          //console.log('WebContents', wc.id, 'memory:', processMetrics.memory);
         } else {
-          console.log('WebContents', wc.id, 'no metrics found for PID:', osProcessId);
+          //console.log('WebContents', wc.id, 'no metrics found for PID:', osProcessId);
         }
         
         return info;
@@ -1129,7 +1125,6 @@ ipcMain.handle('get-all-tabs-memory', async () => {
       }
     });
     
-    console.log('Total memory infos collected:', memoryInfos.length);
     return memoryInfos;
   } catch (error) {
     log.error('Failed to get all tabs memory:', error);
@@ -1271,6 +1266,121 @@ ipcMain.handle('password-check-storage-backend', async (event) => {
   } catch (error) {
     console.error('Error checking storage backend:', error);
     return { backend: 'unknown', isSecure: false, warning: 'Failed to check backend' };
+  }
+});
+
+// Fetch website metadata
+ipcMain.handle('fetch-website-metadata', async (event, url: string) => {
+  try {
+    console.log('Fetching metadata for:', url);
+    
+    const https = require('https');
+    const http = require('http');
+    
+    return new Promise((resolve, reject) => {
+      const fetchWithRedirect = (urlToFetch: string, redirectCount = 0) => {
+        // Prevent infinite redirects
+        if (redirectCount > 5) {
+          resolve({ description: '', siteName: '', success: false, error: 'Too many redirects' });
+          return;
+        }
+        
+        const urlObj = new URL(urlToFetch);
+        const protocol = urlObj.protocol === 'https:' ? https : http;
+        
+        const options = {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5'
+          },
+          timeout: 10000
+        };
+        
+        const req = protocol.get(urlToFetch, options, (res: any) => {
+          // Handle redirects
+          if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) {
+            const redirectUrl = res.headers.location;
+            if (redirectUrl) {
+              console.log(`Following redirect to: ${redirectUrl}`);
+              // Handle relative URLs
+              const newUrl = redirectUrl.startsWith('http') 
+                ? redirectUrl 
+                : new URL(redirectUrl, urlToFetch).toString();
+              fetchWithRedirect(newUrl, redirectCount + 1);
+              return;
+            }
+          }
+          
+          // Handle non-success status codes
+          if (res.statusCode !== 200) {
+            console.log(`Non-200 status code: ${res.statusCode}`);
+            resolve({ description: '', siteName: '', success: false, error: `HTTP ${res.statusCode}` });
+            return;
+          }
+          
+          let data = '';
+          
+          res.on('data', (chunk: any) => {
+            data += chunk;
+            // Stop after receiving enough data (first 100KB should have meta tags)
+            if (data.length > 100000) {
+              req.destroy();
+            }
+          });
+          
+          res.on('end', () => {
+            try {
+              // Extract meta tags using regex (case insensitive)
+              const descriptionMatch = 
+                data.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+name=["']twitter:description["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+content=["']([^"']+)["']\s+name=["']description["']/i);
+                
+              const siteNameMatch = 
+                data.match(/<meta\s+property=["']og:site_name["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+name=["']application-name["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i) ||
+                data.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:site_name["']/i);
+                
+              const titleMatch = data.match(/<title>([^<]+)<\/title>/i);
+              
+              const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+              const siteName = siteNameMatch ? siteNameMatch[1].trim() : (titleMatch ? titleMatch[1].trim() : '');
+              
+              console.log('Extracted metadata:', { description, siteName });
+              
+              resolve({
+                description: description || '',
+                siteName: siteName || '',
+                success: true
+              });
+            } catch (parseError) {
+              console.error('Error parsing HTML:', parseError);
+              resolve({ description: '', siteName: '', success: false, error: 'Parse error' });
+            }
+          });
+        });
+        
+        req.on('error', (error: any) => {
+          console.error('Request error:', error);
+          resolve({ description: '', siteName: '', success: false, error: error.message });
+        });
+        
+        req.on('timeout', () => {
+          req.destroy();
+          resolve({ description: '', siteName: '', success: false, error: 'Timeout' });
+        });
+      };
+      
+      // Start the fetch
+      fetchWithRedirect(url, 0);
+    });
+  } catch (error) {
+    console.error('Error fetching website metadata:', error);
+    return { description: '', siteName: '', success: false, error: 'Failed to fetch' };
   }
 });
 

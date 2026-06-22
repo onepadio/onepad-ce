@@ -43,6 +43,7 @@ import RenameSpaceModalWindow from "../../components/RenameSpaceModalWindow/Rena
 import ArchiveWorkspaceModal from "../../components/ArchiveWorkspaceModal/ArchiveWorkspaceModal";
 import EditLaunchIconModalWindow from "../../components/EditLaunchIconModalWindow/EditLaunchIconModalWindow";
 import AddLinkModalWindow from "../../components/AddLinkModalWindow/AddLinkModalWindow";
+import EditUserAppModalWindow from "../../components/EditUserAppModalWindow/EditUserAppModalWindow";
 import NewDesktopModalWindow from "../../components/NewDesktopModalWindow/NewDesktopModalWindow";
 import AddLaunchIconModalWindow from "../../components/AddLaunchIconModalWindow/AddLaunchIconModalWindow";
 import EditLinkModalWindow from "../../components/EditLinkModalWindow/EditLinkModalWindow";
@@ -688,6 +689,7 @@ function Home() {
       {
         isAddLinkModalOpen ? <AddLinkModalWindow /> : <></>
       }
+      <EditUserAppModalWindow />
       <EditLinkModalWindow />
       {
         isRunDockerModalOpen ? <RunDockerContainerModal /> : <></>

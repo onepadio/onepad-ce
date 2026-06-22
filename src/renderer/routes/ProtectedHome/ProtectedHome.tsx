@@ -32,6 +32,7 @@ import EditLaunchIconModalWindow from "../../components/EditLaunchIconModalWindo
 import RenameSpaceModalWindow from "../../components/RenameSpaceModalWindow/RenameSpaceModalWindow";
 import ArchiveWorkspaceModal from "../../components/ArchiveWorkspaceModal/ArchiveWorkspaceModal";
 import AddLinkModalWindow from "../../components/AddLinkModalWindow/AddLinkModalWindow";
+import EditUserAppModalWindow from "../../components/EditUserAppModalWindow/EditUserAppModalWindow";
 
 function ProtectedHome({
   signOut,
@@ -223,6 +224,7 @@ function ProtectedHome({
               <RenameSpaceModalWindow />
               <ArchiveWorkspaceModal />
               <AddLinkModalWindow />
+              <EditUserAppModalWindow />
               <SettingsCanvas />
               <SideBar />
       </div>

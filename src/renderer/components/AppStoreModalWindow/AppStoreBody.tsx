@@ -16,6 +16,7 @@ import AppStoreSearch from '../AppStoreSearch/AppStoreSearch';
 import AppCard from './AppCard';
 import './AppStoreBody.css';
 import { DockerStore } from '../../data/docker';
+import UserAppService from '../../services/userapp';
 
 
 function AppStoreBody(props){
@@ -27,12 +28,17 @@ function AppStoreBody(props){
 
     const selectedStore = useSelector((state: any) => state.store.selectedStore);
 
+    const profileId = useSelector((state: any) => state.app.profileId);
+
+    const userAppsVersion = useSelector((state: any) => state.app.userAppsVersion);
+
     const [isLoaded, setIsLoaded] = useState(true);
     const [allItemsArray, setAllItemsArray] = useState([]);
     const [items, setItems] = useState([]);
     const [query, setQuery] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [storeItems, setStoreItems] = useState([]);
+    const [userApps, setUserApps] = useState([]);
 
     const [categoriesDict, setCategoriesDict] = useState({});
     const [itemsDb, setItemsDb] = useState({});
@@ -68,23 +74,63 @@ function AppStoreBody(props){
             _all.push(_item);
         });
         setAllItemsArray(_all);
-    }, [selectedStore]);
+
+        // Load user apps
+        if(profileId) {
+            UserAppService.getAllByProfileId(profileId).then((apps: any) => {
+                log.debug("Loaded user apps:", apps);
+                setUserApps(apps || []);
+            }).catch((error) => {
+                log.error("Error loading user apps:", error);
+            });
+        }
+    }, [selectedStore, profileId, userAppsVersion]);
 
     useEffect(() => {
-        if(categoryId === "" || !categoriesDict[categoryId]) return;
-        if(searchQuery.length > 2){
-            try{
-                let _items = allItemsArray.filter((item) => {
-                    return item.name.toLowerCase().includes(searchQuery.toLowerCase());
-                });
-                setStoreItems(_items);
-            }catch(e){
-                log.error(e);
+        if(categoryId === "" || categoryId === undefined) return;
+        
+        // Check if this is MyApps category (id: 999)
+        if(categoryId === 999) {
+            if(searchQuery.length > 2){
+                try{
+                    let _items = userApps.filter((item: any) => {
+                        return item.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    });
+                    // Convert user apps to store items format
+                    let convertedItems = _items.map((app: any) => ({
+                        id: app.id,
+                        name: app.name,
+                        isUserApp: true,
+                    }));
+                    setStoreItems(convertedItems);
+                }catch(e){
+                    log.error(e);
+                }
+            } else {
+                // Convert user apps to store items format
+                let convertedItems = userApps.map((app: any) => ({
+                    id: app.id,
+                    name: app.name,
+                    isUserApp: true,
+                }));
+                setStoreItems(convertedItems);
             }
-        }else{
-            setStoreItems(categoriesDict[categoryId].items);
+        } else {
+            if(!categoriesDict[categoryId]) return;
+            if(searchQuery.length > 2){
+                try{
+                    let _items = allItemsArray.filter((item) => {
+                        return item.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    });
+                    setStoreItems(_items);
+                }catch(e){
+                    log.error(e);
+                }
+            }else{
+                setStoreItems(categoriesDict[categoryId].items);
+            }
         }
-    }, [categoryId, searchQuery, categoriesDict, itemsDb]);
+    }, [categoryId, searchQuery, categoriesDict, itemsDb, userApps]);
 
     function saveIcon(icon){
         let reader = new FileReader();
@@ -175,13 +221,46 @@ function AppStoreBody(props){
                 .sort((a, b) => a.name > b.name ? 1 : -1)
                 .map(
                     item => {
-                        if(item !== undefined && item !== null && itemsDb[item.id] !== undefined && itemsDb[item.id] !== null){
-                            return (
-                                                                <AppCard key={item.id} id={item.id} data={itemsDb[item.id]} name={itemsDb[item.id].name} description={itemsDb[item.id].description} company={itemsDb[item.id].company} website={itemsDb[item.id].website} category={itemsDb[item.id].category} url={itemsDb[item.id].login} icon={itemsDb[item.id].icon} store={selectedStore}/>
-                            )
+                        // Check if this is a user app
+                        if(item.isUserApp) {
+                            const userApp = userApps.find((app: any) => app.id === item.id);
+                            if(userApp) {
+                                return (
+                                    <AppCard 
+                                        key={userApp.id} 
+                                        id={userApp.id} 
+                                        data={{
+                                            name: userApp.name,
+                                            description: userApp.description,
+                                            company: userApp.company,
+                                            website: userApp.url,
+                                            category: 'My Apps',
+                                            login: userApp.url,
+                                            icon: userApp.icon,
+                                        }}
+                                        name={userApp.name} 
+                                        description={userApp.description} 
+                                        company={userApp.company} 
+                                        website={userApp.url} 
+                                        category="My Apps" 
+                                        url={userApp.url} 
+                                        icon={userApp.icon} 
+                                        store={selectedStore}
+                                        isUserApp={true}
+                                    />
+                                )
+                            } else {
+                                return <></>;
+                            }
                         } else {
-                            log.error("AppStoreBody: item is undefined", item);
-                            return <></>;
+                            if(item !== undefined && item !== null && itemsDb[item.id] !== undefined && itemsDb[item.id] !== null){
+                                return (
+                                    <AppCard key={item.id} id={item.id} data={itemsDb[item.id]} name={itemsDb[item.id].name} description={itemsDb[item.id].description} company={itemsDb[item.id].company} website={itemsDb[item.id].website} category={itemsDb[item.id].category} url={itemsDb[item.id].login} icon={itemsDb[item.id].icon} store={selectedStore}/>
+                                )
+                            } else {
+                                log.error("AppStoreBody: item is undefined", item);
+                                return <></>;
+                            }
                         }
                     }
                 )

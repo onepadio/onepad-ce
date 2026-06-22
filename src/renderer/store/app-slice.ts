@@ -19,6 +19,8 @@ const appSlice = createSlice({
     secretPass: "062011OnePad122013",
     xapps: [],
     xappsStore: {},
+    userApps: [],
+    userAppsVersion: 0,
     sync: false,
     workspacesLimit: -1,
     profilesLimit: -1,
@@ -93,6 +95,12 @@ const appSlice = createSlice({
     },
     setXAppsStore(state, action) {
       state.xappsStore = action.payload;
+    },
+    setUserApps(state, action) {
+      state.userApps = action.payload;
+    },
+    refreshUserApps(state) {
+      state.userAppsVersion = state.userAppsVersion + 1;
     },
     setSync(state, action) {
       state.sync = action.payload;

@@ -97,7 +97,8 @@ const electronHandler = {
       'check-docker-status',
       'resume-docker-container',
       'get-tab-memory-info',
-      'get-all-tabs-memory'
+      'get-all-tabs-memory',
+      'fetch-website-metadata'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

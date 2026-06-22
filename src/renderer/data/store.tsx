@@ -10,6 +10,13 @@ export const categoriesArray = [
         visible: true, 
     },
     { 
+        id: 999, 
+        name: 'My Apps',
+        icon: (<Folder size={16} color="white"></Folder>),
+        visible: true,
+        isUserApps: true,
+    },
+    { 
         id: 2, 
         name: 'Featured',
         icon: (<Folder size={16} color="white"></Folder>),

@@ -78,6 +78,8 @@ const modalSlice = createSlice({
     pauseSpaceDefaultOption: null,
     isRestartSessionModalOpen: false,
     isDownloadManagerOpen: false,
+    isEditUserAppModalOpen: false,
+    editUserAppModalData: null,
   },
   reducers: {
     toggleAppStore(state, action) {
@@ -345,6 +347,18 @@ const modalSlice = createSlice({
     },
     closeDownloadManager(state) {
       state.isDownloadManagerOpen = false;
+    },
+    toggleEditUserAppModal(state, action) {
+      state.isEditUserAppModalOpen = !state.isEditUserAppModalOpen;
+      if(action.payload && action.payload.data) {
+        state.editUserAppModalData = action.payload.data;
+      } else {
+        state.editUserAppModalData = null;
+      }
+    },
+    closeEditUserAppModal(state) {
+      state.isEditUserAppModalOpen = false;
+      state.editUserAppModalData = null;
     },
   },
 });

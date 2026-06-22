@@ -13,6 +13,7 @@ import { updateWorkspaces } from "../../services/workspace";
 import { updateWorkspaceItems } from "../../api/WorkspaceApi";
 import { LinkService } from "../../services/link";
 import XAppService from "../../services/xapp";
+import UserAppService from "../../services/userapp";
 import { getGoogleFavicon } from "../../services/favicon";
 
 import {
@@ -85,6 +86,10 @@ function AddLinkModalWindow(props: any) {
   const [windowWidth, setWindowWidth] = useState(800);
   const [windowHeight, setWindowHeight] = useState(600);
   const [showNavbar, setShowNavbar] = useState(true);
+  const [saveToMyApps, setSaveToMyApps] = useState(false);
+  const [appDescription, setAppDescription] = useState("");
+  const [appCompany, setAppCompany] = useState("");
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
 
   const [availableIcons, setAvailableIcons] = useState([]);
 
@@ -94,12 +99,120 @@ function AddLinkModalWindow(props: any) {
   const toggleHints = () => setHintsEnabled(!hintsEnabled);
   const [steps, setSteps] = useState([]);
 
+  async function generateMetadataFromUrl(url: string) {
+    try {
+      setIsFetchingMetadata(true);
+      log.debug("Fetching metadata for:", url);
+      
+      // Check if electronAPI is available
+      if (!window.electronAPI || !window.electronAPI.invoke) {
+        log.error("electronAPI not available!");
+        throw new Error("electronAPI not available");
+      }
+      
+      log.debug("Calling electronAPI.invoke...");
+      
+      // Use Electron IPC to fetch metadata (no CORS issues)
+      const result = await window.electronAPI.invoke('fetch-website-metadata', url);
+      
+      log.debug("Received result from main process:", result);
+      
+      if (result.success && (result.description || result.siteName)) {
+        log.debug("Fetched metadata:", result);
+        
+        if (result.description) {
+          setAppDescription(result.description);
+        }
+        
+        if (result.siteName) {
+          setAppCompany(result.siteName);
+        } else {
+          // Fallback: Extract from domain if no site name
+          const urlObj = new URL(url);
+          const domain = urlObj.hostname.replace('www.', '');
+          const domainParts = domain.split('.');
+          const mainDomain = domainParts[domainParts.length - 2] || domainParts[0];
+          const siteName = mainDomain.charAt(0).toUpperCase() + mainDomain.slice(1);
+          setAppCompany(siteName);
+        }
+      } else {
+        // Fallback: Generate from domain name
+        log.warn("Failed to fetch metadata, using fallback");
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+        const domainParts = domain.split('.');
+        const mainDomain = domainParts[domainParts.length - 2] || domainParts[0];
+        const siteName = mainDomain.charAt(0).toUpperCase() + mainDomain.slice(1);
+        
+        setAppCompany(siteName);
+        setAppDescription(`${siteName} - ${domain}`);
+      }
+      
+    } catch (error) {
+      log.error("Error fetching metadata:", error);
+      // Final fallback
+      try {
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+        setAppCompany(domain);
+        setAppDescription(`Visit ${domain}`);
+      } catch {
+        setAppCompany("Website");
+        setAppDescription("No description available");
+      }
+    } finally {
+      setIsFetchingMetadata(false);
+    }
+  }
+
 
   function save() {
     if (title.length == 0 || startUrl.length == 0) {
       alert("Name or url can not be empty");
       return;
     }
+
+    log.debug("AddLinkModalWindow save - workspace:", workspace);
+    log.debug("AddLinkModalWindow save - desktop:", desktop);
+    log.debug("AddLinkModalWindow save - selectedCategory:", selectedCategory);
+    log.debug("AddLinkModalWindow save - location:", location);
+    log.debug("AddLinkModalWindow save - saveToMyApps:", saveToMyApps);
+
+    // If Save to My Apps is checked, save to user apps
+    if (saveToMyApps) {
+      UserAppService.save(
+        profileId,
+        title,
+        startUrl,
+        icon,
+        appDescription,  // description
+        appCompany   // company
+      ).then((id) => {
+        log.debug("Saved user app with id:" + id);
+        // Dispatch action to refresh user apps list
+        dispatch(appActions.refreshUserApps());
+        alert("App saved to My Apps! You can now add it to any space from the App Store.");
+        toggleAddLinkModal();
+      }).catch((error) => {
+        log.error("Error saving user app", error);
+        alert("Error saving to My Apps: " + error);
+      });
+      return;
+    }
+
+    // Check if workspace and desktop are available
+    if (!workspace || !workspace.id) {
+      alert("No workspace selected. Please select a workspace first.");
+      log.error("Cannot save link: workspace is not defined", workspace);
+      return;
+    }
+
+    if (!desktop || !desktop.id) {
+      alert("No desktop selected. Please select a desktop first.");
+      log.error("Cannot save link: desktop is not defined", desktop);
+      return;
+    }
+
     let window = new Window();
     window.fullScreen = isFullScreen;
     window.enableTabs = withTabs;
@@ -117,6 +230,7 @@ function AddLinkModalWindow(props: any) {
     // Check if we're adding to favourites category AND location is xapps
     // Only save to xapps if explicitly coming from favourites context
     if (selectedCategory === "favourites" && location === "xapps") {
+      log.debug("Saving as xapp (favourite app)");
       // Save as xapp (favourite app)
       XAppService.save(
         title,           // name
@@ -160,6 +274,7 @@ function AddLinkModalWindow(props: any) {
         alert("Error saving favourite app: " + error);
       });
     } else {
+      log.debug("Saving as regular link to workspace:", workspace.id, "desktop:", desktopId);
       // Save as regular link
       LinkService.save(workspace.id, desktopId, "links", title, startUrl, icon, window).then(
         (id) => {
@@ -169,7 +284,10 @@ function AddLinkModalWindow(props: any) {
             toggleAddLinkModal();
           });
         }
-      );
+      ).catch((error) => {
+        log.error("Error saving link:", error);
+        alert("Error saving link: " + error);
+      });
     }
   }
 
@@ -210,6 +328,9 @@ function AddLinkModalWindow(props: any) {
     setIsCustomIconUrl(false);
     setCustomIconUrl("");
     setIconFile(null);
+    setSaveToMyApps(false);
+    setAppDescription("");
+    setAppCompany("");
   }
 
   function validURL(str: any) {
@@ -233,11 +354,16 @@ function AddLinkModalWindow(props: any) {
         }else{
           setIcon(getGoogleFavicon(searchUrl));
         }
+        
+        // Generate metadata if Save to My Apps is enabled
+        if(saveToMyApps && validURL(startUrl) && startUrl !== "https://") {
+          generateMetadataFromUrl(startUrl);
+        }
       }
     } catch (error) {
       log.debug("Invalid URL:" + searchUrl);
     }
-  }, [startUrl, iconSearchUrl , isIconSearchUrlEnabled, customIconUrl, isCustomIconUrl]);
+  }, [startUrl, iconSearchUrl , isIconSearchUrlEnabled, customIconUrl, isCustomIconUrl, saveToMyApps]);
 
   useEffect(() => {
     if(isAddLinkModalOpen){
@@ -488,6 +614,61 @@ function AddLinkModalWindow(props: any) {
                       </Col>
                     </Row>
                   </FormGroup>
+                )
+              }
+
+              <FormGroup switch className='pl-0 mt-3'>
+                <Row className="mr-1">
+                  <Col md={9}>
+                    <Label check>
+                      Save to My Apps (to reuse in multiple spaces)
+                    </Label>
+                  </Col>
+                  <Col className="container">
+                    <div className="d-flex justify-content-end">
+                      <Input
+                        type="switch"
+                        checked={saveToMyApps}
+                        onChange={() => {
+                          setSaveToMyApps(!saveToMyApps);
+                        }}
+                      />
+                    </div>
+                  </Col>
+                </Row>
+              </FormGroup>
+
+              {
+                saveToMyApps && (
+                  <>
+                    <FormGroup className="align-left mt-3">
+                      <Label for="appDescription">
+                        Description {isFetchingMetadata && <small className="text-muted">(fetching...)</small>}
+                      </Label>
+                      <Input
+                        id="appDescription"
+                        name="appDescription"
+                        type="textarea"
+                        rows={3}
+                        value={appDescription}
+                        onChange={(e) => setAppDescription(e.target.value)}
+                        placeholder="A short description of this app (auto-fetched from website)"
+                      />
+                    </FormGroup>
+                    <FormGroup className="align-left">
+                      <Label for="appCompany">
+                        Company/Provider (optional)
+                      </Label>
+                      <Input
+                        id="appCompany"
+                        name="appCompany"
+                        type="text"
+                        value={appCompany}
+                        onChange={(e) => setAppCompany(e.target.value)}
+                        placeholder="Company or service name (auto-fetched from website)"
+                      />
+                    </FormGroup>
+                  </>
                 )
               }
 
