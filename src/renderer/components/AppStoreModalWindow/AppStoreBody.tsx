@@ -28,7 +28,7 @@ function AppStoreBody(props){
 
     const selectedStore = useSelector((state: any) => state.store.selectedStore);
 
-    const profileId = useSelector((state: any) => state.app.profileId);
+    const userId = useSelector((state: any) => state.user.id);
 
     const userAppsVersion = useSelector((state: any) => state.app.userAppsVersion);
 
@@ -76,15 +76,15 @@ function AppStoreBody(props){
         setAllItemsArray(_all);
 
         // Load user apps
-        if(profileId) {
-            UserAppService.getAllByProfileId(profileId).then((apps: any) => {
+        if(userId) {
+            UserAppService.getAllByUserId(userId).then((apps: any) => {
                 log.debug("Loaded user apps:", apps);
                 setUserApps(apps || []);
             }).catch((error) => {
                 log.error("Error loading user apps:", error);
             });
         }
-    }, [selectedStore, profileId, userAppsVersion]);
+    }, [selectedStore, userId, userAppsVersion]);
 
     useEffect(() => {
         if(categoryId === "" || categoryId === undefined) return;

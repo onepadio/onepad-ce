@@ -368,7 +368,7 @@ db.version(25).stores({
   passwordNeverSave: '$$id, person, hostname',
   tversions: '$$id, table, version',
   userSettings: '$$id, userId, createdAt, updatedAt, settings',
-  userapps: '$$id, profile, createdAt, updatedAt, name, url, icon, description, company', // User's custom apps for store
+  userapps: '$$id, user, createdAt, updatedAt, name, url, icon, description, company', // User's custom apps for store
 });
 
 db.on('changes', function (changes) {

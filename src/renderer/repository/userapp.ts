@@ -2,11 +2,11 @@ import { db } from "./db";
 import log from "loglevel";
 
 export class UserAppRepository {
-    static save(profileId: any, name: any, url: any, icon: any, description: any, company: any) {
+    static save(userId: any, name: any, url: any, icon: any, description: any, company: any) {
         return new Promise((resolve, reject) => {
             // @ts-expect-error TS(2339): Property 'userapps' does not exist on type 'Dexie'.
             db.userapps.add({
-                profile: profileId,
+                user: userId,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 name: name,
@@ -79,13 +79,13 @@ export class UserAppRepository {
         });
     }
 
-    static getAllByProfileId(profileId: any) {
+    static getAllByUserId(userId: any) {
         return new Promise((resolve, reject) => {
             // @ts-expect-error TS(2339): Property 'userapps' does not exist on type 'Dexie'.
-            db.userapps.where({profile: profileId}).sortBy('createdAt').then((userApps: any) => {
+            db.userapps.where({user: userId}).sortBy('createdAt').then((userApps: any) => {
                 resolve(userApps);
             }).catch((error: any) => {
-                log.error("Error getting user apps by profile:", error);
+                log.error("Error getting user apps by user:", error);
                 reject(error);
             });
         });

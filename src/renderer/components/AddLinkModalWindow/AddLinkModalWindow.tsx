@@ -26,6 +26,7 @@ import {
   Col,
 } from "reactstrap";
 import Modal from "../lib/Modal";
+import * as Icon from 'react-feather';
 
 import { Steps, Hints } from 'intro.js-react';
 import defaultIcon from '../../images/default_icon.png';
@@ -90,6 +91,7 @@ function AddLinkModalWindow(props: any) {
   const [appDescription, setAppDescription] = useState("");
   const [appCompany, setAppCompany] = useState("");
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const [availableIcons, setAvailableIcons] = useState([]);
 
@@ -181,7 +183,7 @@ function AddLinkModalWindow(props: any) {
     // If Save to My Apps is checked, save to user apps
     if (saveToMyApps) {
       UserAppService.save(
-        profileId,
+        userId,
         title,
         startUrl,
         icon,
@@ -192,12 +194,10 @@ function AddLinkModalWindow(props: any) {
         // Dispatch action to refresh user apps list
         dispatch(appActions.refreshUserApps());
         alert("App saved to My Apps! You can now add it to any space from the App Store.");
-        toggleAddLinkModal();
       }).catch((error) => {
         log.error("Error saving user app", error);
         alert("Error saving to My Apps: " + error);
       });
-      return;
     }
 
     // Check if workspace and desktop are available
@@ -331,6 +331,7 @@ function AddLinkModalWindow(props: any) {
     setSaveToMyApps(false);
     setAppDescription("");
     setAppCompany("");
+    setShowPreview(false);
   }
 
   function validURL(str: any) {
@@ -474,7 +475,7 @@ function AddLinkModalWindow(props: any) {
       />
       <div className="addSiteButton">
         <div>
-        <Modal id={uuidv4()} heading="Add Link" className="add-link-modal" show={isAddLinkModalOpen}  onClose={() => toggleAddLinkModal()}>
+        <Modal id={uuidv4()} heading="Add Link" className={showPreview ? "add-link-modal add-link-modal-with-preview" : "add-link-modal"} show={isAddLinkModalOpen}  onClose={() => toggleAddLinkModal()}>
             <Form>
               <Input
                 id="defaultUrl"
@@ -484,270 +485,281 @@ function AddLinkModalWindow(props: any) {
                 value={startUrl}
               />
               <Row>
-                <Col md={3} className="mt-4 d-flex justify-content-center">
-                  <FormGroup>
-                    <Label for="iconImg"></Label>
-                        <img
-                          id="iconImg"
-                          src={icon}
-                          width={32}
-                          height={32}
-                          onError={(e) => onIconLoadError(e)}
-                        ></img>
-                  </FormGroup>
-                </Col>
-                <Col md={9}>
-                  <FormGroup className="align-left">
-                    <Label for="startUrl">
-                      Web Address (ex. https://google.com)
-                    </Label>
-                    <Input
-                      id="addLinkStartUrl"
-                      name="startUrl"
-                      placeholder=""
-                      type="text"
-                      value={startUrl}
-                      onChange={(e) => setStartUrl(e.target.value)}
-                    />
-                  </FormGroup>
-                  <FormGroup className="align-left">
-                    <Label for="appName">Title</Label>
-                    <Input
-                      id="addLinkAppName"
-                      name="appName"
-                      placeholder=""
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </FormGroup>
-                  <FormGroup switch className="pl-0 align-left">
-                    <Row className="mr-1">
-                      <Col id="addLinkFetchIcon" md={9}>
-                        <Label check>
-                          Icon from another web address
+                <Col md={showPreview ? 6 : 12}>
+                  <Row>
+                    <Col md={3} className="mt-4 d-flex justify-content-center">
+                      <FormGroup>
+                        <Label for="iconImg"></Label>
+                            <img
+                              id="iconImg"
+                              src={icon}
+                              width={32}
+                              height={32}
+                              onError={(e) => onIconLoadError(e)}
+                            ></img>
+                      </FormGroup>
+                    </Col>
+                    <Col md={9}>
+                      <FormGroup className="align-left">
+                        <Label for="startUrl">
+                          Web Address (ex. https://google.com)
                         </Label>
-                      </Col>
-                      <Col className="container">
-                        <div className="d-flex justify-content-end">
+                        <div className="d-flex align-items-center">
                           <Input
-                            type="switch"
-                            checked={isIconSearchUrlEnabled}
-                            onChange={() => onIconSearchUrlSwitchChange()}
+                            id="addLinkStartUrl"
+                            name="startUrl"
+                            placeholder=""
+                            type="text"
+                            value={startUrl}
+                            onChange={(e) => setStartUrl(e.target.value)}
                           />
+                          <Button
+                            color="dark"
+                            size="sm"
+                            onClick={() => setShowPreview(!showPreview)}
+                            title={showPreview ? "Hide Preview" : "Show Preview"}
+                          >
+                            {showPreview ? <Icon.EyeOff size={16} /> : <Icon.Eye size={16} />}
+                          </Button>
                         </div>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup id="iconSearchUrlInput" className="d-none">
-                    <Input
-                      id="iconSearchUrl"
-                      name="iconSearchUrl"
-                      type="text"
-                      value={iconSearchUrl}
-                      onChange={(e) => setIconSearchUrl(e.target.value)}
-                      placeholder="ex. https://google.com"
-                    />
-                  </FormGroup>
-                  <FormGroup switch className="pl-0 align-left d-none">
-                    <Row className="mr-1">
-                      <Col id="addLinkCustomIcon" md={9}>
-                        <Label check>
-                         Custom Icon Link
+                      </FormGroup>
+                      <FormGroup className="align-left">
+                        <Label for="appName">Title</Label>
+                        <Input
+                          id="addLinkAppName"
+                          name="appName"
+                          placeholder=""
+                          type="text"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                        />
+                      </FormGroup>
+                      <FormGroup switch className="pl-0 align-left">
+                        <Row className="mr-1">
+                          <Col id="addLinkFetchIcon" md={9}>
+                            <Label check>
+                              Icon from another web address
+                            </Label>
+                          </Col>
+                          <Col className="container">
+                            <div className="d-flex justify-content-end">
+                              <Input
+                                type="switch"
+                                checked={isIconSearchUrlEnabled}
+                                onChange={() => onIconSearchUrlSwitchChange()}
+                              />
+                            </div>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                      <FormGroup id="iconSearchUrlInput" className="d-none">
+                        <Input
+                          id="iconSearchUrl"
+                          name="iconSearchUrl"
+                          type="text"
+                          value={iconSearchUrl}
+                          onChange={(e) => setIconSearchUrl(e.target.value)}
+                          placeholder="ex. https://google.com"
+                        />
+                      </FormGroup>
+                      <FormGroup switch className="pl-0 align-left d-none">
+                        <Row className="mr-1">
+                          <Col id="addLinkCustomIcon" md={9}>
+                            <Label check>
+                            Custom Icon Link
+                            </Label>
+                          </Col>
+                          <Col className="container">
+                            <div className="d-flex justify-content-end">
+                              <Input
+                                type="switch"
+                                checked={isCustomIconUrl}
+                                onChange={() => onCustomIconUrlSwitchChange()}
+                              />
+                            </div>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                      <FormGroup id="customIconUrlInput" className="d-none">
+                        <Input
+                          id="customIconUrl"
+                          name="customIconUrl"
+                          type="text"
+                          value={customIconUrl}
+                          onChange={(e) => setCustomIconUrl(e.target.value)}
+                          placeholder="Paste the link here.(ex. https://google.com)"
+                        />
+                      </FormGroup>
+                      <FormGroup className='align-left'>
+                        <Label for="iconFile">
+                          Upload Custom Icon
                         </Label>
-                      </Col>
-                      <Col className="container">
-                        <div className="d-flex justify-content-end">
-                          <Input
-                            type="switch"
-                            checked={isCustomIconUrl}
-                            onChange={() => onCustomIconUrlSwitchChange()}
-                          />
-                        </div>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup id="customIconUrlInput" className="d-none">
-                    <Input
-                      id="customIconUrl"
-                      name="customIconUrl"
-                      type="text"
-                      value={customIconUrl}
-                      onChange={(e) => setCustomIconUrl(e.target.value)}
-                      placeholder="Paste the link here.(ex. https://google.com)"
-                    />
-                  </FormGroup>
-                  <FormGroup className='align-left'>
-                    <Label for="iconFile">
-                      Upload Custom Icon
-                    </Label>
-                    <Input
-                      id="iconFile"
-                      name="iconFile"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleIconFileChange}
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
+                        <Input
+                          id="iconFile"
+                          name="iconFile"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIconFileChange}
+                        />
+                      </FormGroup>
+                    </Col>
+                  </Row>
 
-              {
-                isDesktopsEnabled && (
+                  {
+                    isDesktopsEnabled && (
+                      <FormGroup switch className='pl-0 mt-3'>
+                        <Row className="mr-1">
+                          <Col md={9}>
+                            <Label check>
+                              All Desktops
+                            </Label>
+                          </Col>
+                          <Col className="container">
+                            <div className="d-flex justify-content-end">
+                              <Input
+                                type="switch"
+                                checked={allDesktops}
+                                onChange={() => {
+                                  setAllDesktops(!allDesktops);
+                                }}
+                              />
+                            </div>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                    )
+                  }
+
                   <FormGroup switch className='pl-0 mt-3'>
                     <Row className="mr-1">
                       <Col md={9}>
                         <Label check>
-                          All Desktops
+                          Save to My Apps (to reuse in multiple spaces)
                         </Label>
                       </Col>
                       <Col className="container">
                         <div className="d-flex justify-content-end">
                           <Input
                             type="switch"
-                            checked={allDesktops}
+                            checked={saveToMyApps}
                             onChange={() => {
-                              setAllDesktops(!allDesktops);
+                              setSaveToMyApps(!saveToMyApps);
                             }}
                           />
                         </div>
                       </Col>
                     </Row>
                   </FormGroup>
-                )
-              }
 
-              <FormGroup switch className='pl-0 mt-3'>
-                <Row className="mr-1">
-                  <Col md={9}>
-                    <Label check>
-                      Save to My Apps (to reuse in multiple spaces)
+                  {
+                    saveToMyApps && (
+                      <>
+                        <FormGroup className="align-left mt-3">
+                          <Label for="appDescription">
+                            Description {isFetchingMetadata && <small className="text-muted">(fetching...)</small>}
+                          </Label>
+                          <Input
+                            id="appDescription"
+                            name="appDescription"
+                            type="textarea"
+                            rows={3}
+                            value={appDescription}
+                            onChange={(e) => setAppDescription(e.target.value)}
+                            placeholder="A short description of this app (auto-fetched from website)"
+                          />
+                        </FormGroup>
+                        <FormGroup className="align-left">
+                          <Label for="appCompany">
+                            Company/Provider (optional)
+                          </Label>
+                          <Input
+                            id="appCompany"
+                            name="appCompany"
+                            type="text"
+                            value={appCompany}
+                            onChange={(e) => setAppCompany(e.target.value)}
+                            placeholder="Company or service name (auto-fetched from website)"
+                          />
+                        </FormGroup>
+                      </>
+                    )
+                  }
+
+                  <FormGroup className="align-left text-white d-none">
+                    <Label for="windowSize">
+                      Window
                     </Label>
-                  </Col>
-                  <Col className="container">
-                    <div className="d-flex justify-content-end">
-                      <Input
-                        type="switch"
-                        checked={saveToMyApps}
-                        onChange={() => {
-                          setSaveToMyApps(!saveToMyApps);
-                        }}
-                      />
+                    <select id="windowSize" name="windowSize" value={windowSize} onChange={(e) => onWindowSizeChange(e.target.value)}>
+                      <option value="fullscreen">Internal FullScreen</option>
+                      <option value="fixed">External Fixed</option>
+                    </select>
+                  </FormGroup>
+                  <FormGroup id="ww" className='d-none align-left'>
+                    <Label for="windowWidth">
+                      Width(px)
+                    </Label>
+                    <Input
+                      id="windowWidthInput"
+                      name="windowWidth"
+                      placeholder=""
+                      type="text"
+                      value={windowWidth}
+                      onChange={(e) => setWindowWidth(Number(e.target.value))}
+                    />
+                  </FormGroup>
+                  <FormGroup id="wh" className='d-none align-left'>
+                    <Label for="windowHeight">
+                      Height(px)
+                    </Label>
+                    <Input
+                      id="windowHeightInput"
+                      name="windowHeight"
+                      placeholder=""
+                      type="text"
+                      value={windowWidth}
+                      // @ts-expect-error
+                      onChange={(e) => setWindowHeight(e.target.value)}
+                    />
+                  </FormGroup>
+                  <FormGroup switch className='pl-0 mt-2 align-left d-none'>
+                    <Row className="mr-1">
+                      <Col md={9}>
+                        <Label check>
+                          NavBar
+                        </Label>
+                      </Col>
+                      <Col className="container">
+                        <div className="d-flex justify-content-end">
+                          <Input
+                            type="switch"
+                            checked={showNavbar}
+                            onChange={() => {
+                              setShowNavbar(!showNavbar);
+                            }}
+                          />
+                        </div>
+                      </Col>
+                    </Row>
+                  </FormGroup>
+                </Col>
+                
+                
+                {showPreview && (
+                  <Col md={6} className="preview-column">
+                        <div className="preview-webview-container">
+                          <webview
+                            src={startUrl}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              border: '1px solid #ccc',
+                              borderRadius: '4px'
+                            }}
+                          />
                     </div>
                   </Col>
-                </Row>
-              </FormGroup>
-
-              {
-                saveToMyApps && (
-                  <>
-                    <FormGroup className="align-left mt-3">
-                      <Label for="appDescription">
-                        Description {isFetchingMetadata && <small className="text-muted">(fetching...)</small>}
-                      </Label>
-                      <Input
-                        id="appDescription"
-                        name="appDescription"
-                        type="textarea"
-                        rows={3}
-                        value={appDescription}
-                        onChange={(e) => setAppDescription(e.target.value)}
-                        placeholder="A short description of this app (auto-fetched from website)"
-                      />
-                    </FormGroup>
-                    <FormGroup className="align-left">
-                      <Label for="appCompany">
-                        Company/Provider (optional)
-                      </Label>
-                      <Input
-                        id="appCompany"
-                        name="appCompany"
-                        type="text"
-                        value={appCompany}
-                        onChange={(e) => setAppCompany(e.target.value)}
-                        placeholder="Company or service name (auto-fetched from website)"
-                      />
-                    </FormGroup>
-                  </>
-                )
-              }
-
-              <FormGroup className="align-left text-white d-none">
-                <Label for="windowSize">
-                  Window
-                </Label>
-                <select id="windowSize" name="windowSize" value={windowSize} onChange={(e) => onWindowSizeChange(e.target.value)}>
-                  <option value="fullscreen">Internal FullScreen</option>
-                  <option value="fixed">External Fixed</option>
-                </select>
-              </FormGroup>
-              <FormGroup id="ww" className='d-none align-left'>
-                <Label for="windowWidth">
-                  Width(px)
-                </Label>
-                <Input
-                  id="windowWidthInput"
-                  name="windowWidth"
-                  placeholder=""
-                  type="text"
-                  value={windowWidth}
-                  onChange={(e) => setWindowWidth(Number(e.target.value))}
-                />
-              </FormGroup>
-              <FormGroup id="wh" className='d-none align-left'>
-                <Label for="windowHeight">
-                  Height(px)
-                </Label>
-                <Input
-                  id="windowHeightInput"
-                  name="windowHeight"
-                  placeholder=""
-                  type="text"
-                  value={windowWidth}
-                  // @ts-expect-error
-                  onChange={(e) => setWindowHeight(e.target.value)}
-                />
-              </FormGroup>
-              <FormGroup switch className='pl-0 mt-2 align-left d-none'>
-                <Row className="mr-1">
-                  <Col md={9}>
-                    <Label check>
-                      NavBar
-                    </Label>
-                  </Col>
-                  <Col className="container">
-                    <div className="d-flex justify-content-end">
-                      <Input
-                        type="switch"
-                        checked={showNavbar}
-                        onChange={() => {
-                          setShowNavbar(!showNavbar);
-                        }}
-                      />
-                    </div>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup switch className='pl-0 mt-2 align-left d-none'>
-                <Row className="mr-1">
-                  <Col md={9}>
-                    <Label check>
-                      Tabs
-                    </Label>
-                  </Col>
-                  <Col className="container">
-                    <div className="d-flex justify-content-end">
-                      <Input
-                        type="switch"
-                        checked={withTabs}
-                        onChange={() => {
-                          setWithTabs(!withTabs);
-                        }}
-                      />
-                    </div>
-                  </Col>
-                </Row>
-              </FormGroup>
+                )}
+              </Row>
             </Form>
             <br/><br/>
             <Button color="primary" onClick={save}>

@@ -2,9 +2,9 @@ import { UserAppRepository } from "../repository/userapp";
 import log from "loglevel";
 
 export class UserAppService {
-    static save(profileId: any, name: any, url: any, icon: any, description: any, company: any) {
+    static save(userId: any, name: any, url: any, icon: any, description: any, company: any) {
         return new Promise((resolve, reject) => {
-            UserAppRepository.save(profileId, name, url, icon, description, company).then((id) => {
+            UserAppRepository.save(userId, name, url, icon, description, company).then((id) => {
                 resolve(id);
             }).catch((error) => {
                 reject(error);
@@ -53,9 +53,9 @@ export class UserAppService {
         });
     }
 
-    static getAllByProfileId(profileId: any) {
+    static getAllByUserId(userId: any) {
         return new Promise((resolve, reject) => {
-            UserAppRepository.getAllByProfileId(profileId).then((userApps) => {
+            UserAppRepository.getAllByUserId(userId).then((userApps) => {
                 resolve(userApps);
             }).catch((error) => {
                 reject(error);
