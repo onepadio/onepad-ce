@@ -22,6 +22,9 @@ const windowSlice = createSlice({
     toggleShowSidebar(state, action) {
         state.showSidebar = !state.showSidebar;
     },
+    showSideBar(state, action) {
+        state.showSidebar = true;
+    },
     hideSidebar(state, action) {
         state.showSidebar = false;
     },

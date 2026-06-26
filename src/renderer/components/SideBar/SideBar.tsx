@@ -545,26 +545,7 @@ function SideBar() {
       className="d-flex flex-column justify-content-start global-apps-menu"
     >
       <div className="global-apps-menu-content d-flex flex-column justify-content-start">
-        <div className="apps-list-header">
-          {/* Space Tabs icon button */}
-          <ListGroupItem
-            key="space-tabs-button"
-            className="d-flex justify-content-center align-items-center m-1 mt-3 menu-icon more-button position-relative"
-            onClick={handleBrowserClick}
-            title="Space Tabs"
-          >
-            <div className="appicon d-flex justify-content-center">
-              <div className="more-icon">
-                <Layers color="white" size={24} />
-              </div>
-            </div>
-            {browserTabsCount > 0 && (
-              <span className="position-absolute top-0 right-0 translate-middle badge rounded-pill bg-primary">
-                {browserTabsCount}
-              </span>
-            )}
-          </ListGroupItem>
-        </div>
+        {/* Space Tabs button moved to AppsOverlayMenu */}
 
         {(() => {
           console.log("openWindows: ", openWindows);
@@ -585,7 +566,7 @@ function SideBar() {
                 <hr className="divider-line" />
               </div>
               {/* NavBar Apps - Vertical Layout - Always visible */}
-              <div className="navbar-apps-container">
+              <div className="navbar-apps-container d-none">
                 <NavBarAppsVertical apps={apps} />
               </div>
             </>
@@ -658,14 +639,6 @@ function SideBar() {
           {
             <span className="text-white text-xs">Social</span>
           }
-          </ListGroupItem>
-          <ListGroupItem className="d-flex justify-content-center flex-column mt-2">
-            <Button
-            className={`btn btn-dark ${activeWindowId === "launchpad" ? "active" : ""}`}
-            onClick={() => toggleDesktop() }>
-              <WaffleMenuIcon size={28}/>
-            </Button>
-            <span className="text-white text-xs"></span>
           </ListGroupItem>
           <ListGroupItem className="d-flex justify-content-center flex-column mt-2 d-none">
             <Button

@@ -1,7 +1,7 @@
 .space-stats-widget {
   position: fixed;
-  bottom: 24px;
-  left: 64px;
+  bottom:128px;
+  right: 16px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 16px;

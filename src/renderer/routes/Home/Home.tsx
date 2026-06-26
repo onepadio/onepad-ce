@@ -518,7 +518,7 @@ function Home() {
   }
 
   function verticalBar(){
-    if(activeWindow && activeWindow.id !== "launchpad" && showSidebar && activeBar === "tabs"){
+    if(activeWindow && activeWindow.id !== "launchpad" && activeBar === "tabs"){
       return (<VerticalTabBar />)
     }
   }

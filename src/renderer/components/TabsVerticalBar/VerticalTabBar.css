@@ -2,17 +2,22 @@
     position: absolute;
     top: 76px;
     left: 56px;
-    width: 0px !important;
+    width: 256px !important;
     height: calc(100vh - 76px) !important;
     min-height: calc(100vh - 76px) !important;
     background-color: rgba(27,27,27,1.0);
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     z-index: 1066;
-    transition: width 0.5s linear;
+    transform: translateX(-256px);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .vertical-tab-bar-open{
-    width: 256px !important;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .vertical-tabbar button{
@@ -213,6 +218,14 @@
     width: 100% !important;
     height: 100% !important;
     z-index: 1065;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color 0.3s ease-in-out;
+    pointer-events: none;
+}
+
+.vertical-tab-bar-overlay.open{
+    background-color: rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
 }
 
 /* Screenshot Preview on Hover */

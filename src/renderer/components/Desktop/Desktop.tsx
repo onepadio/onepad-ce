@@ -5,6 +5,7 @@ import log from "loglevel";
 import { modalActions } from "../../store/modal-slice";
 import { workspaceActions } from "../../store/workspace-slice";
 import { chatAssistantActions } from "../../store/chat-assistant-slice";
+import { appActions } from "../../store/app-slice";
 
 import LaunchPadLocal from "../../components/LaunchPadLocal/LaunchPadLocal";
 
@@ -20,6 +21,11 @@ import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import SpaceStatsWidget from "../SpaceStatsWidget/SpaceStatsWidget";
 import Pages from "../Pages/Pages";
+import AppsOverlayMenu from "../NavBarApps/AppsOverlayMenu";
+import { sessionActions as sessionActionsImport } from "../../store/session-slice";
+import { windowServiceActions } from "../../store/window-service-slice";
+import { openAppWindow } from "../../services/window";
+import { activateBrowser } from "../../hubs/WindowService";
 
 function Desktop(props) {
   const dispatch = useDispatch();
@@ -35,6 +41,9 @@ function Desktop(props) {
   );
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const items = useSelector((state: any) => state.workspace.items);
+  const openWindows = useSelector((state: any) => state.session.openWindows);
+  const openTabs = useSelector((state: any) => state.session.openTabs);
+  const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
 
   const user = useSelector((state: any) => state.user);
   const route = useSelector((state: any) => state.session.route);
@@ -200,6 +209,76 @@ function Desktop(props) {
     }, 500);
   }
 
+  function handleSelectApp(appId: string) {
+    const app = openWindows[appId];
+    if (app) {
+      if (activeWindowId === appId) {
+        dispatch(
+          sessionActionsImport.goBackToPreviousWindow({
+            data: {
+              desktopId: desktop.id,
+            },
+          })
+        );
+        return;
+      }
+      if (app.location === "external") {
+        openAppWindow(
+          app.id,
+          app.start_url,
+          app.window_type,
+          app.is_stateful,
+          app.show_controls
+        );
+      } else {
+        dispatch(sessionActionsImport.setActiveWindow({ data: app }));
+        if (openWindows[app.id].sleeping === true) {
+          dispatch(appActions.showSplashScreen({}));
+          setTimeout(() => {
+            dispatch(appActions.hideSplashScreen({}));
+          }, 1000);
+        }
+      }
+    }
+  }
+
+  function handleLaunchpadClick() {
+    setIsLaunchpadActive(true);
+    dispatch(
+      sessionActionsImport.getBackToLaunchPad({
+        data: {
+          desktopId: desktop.id,
+        },
+      })
+    );
+  }
+
+  function handleBrowserClick() {
+    const homePage = "https://www.google.com/";
+    activateBrowser(
+      homePage,
+      workspace,
+      desktop,
+      openWindows,
+      items,
+      isLocal,
+      dispatch
+    );
+  }
+
+  // Build apps array from open windows
+  const filteredApps = Object.values(openWindows).filter(
+    (window: any) =>
+      (window.type === "app" || window.type === "link") &&
+      window.workspace === workspace.id
+  );
+  const apps: any[] = [...filteredApps];
+
+  // Calculate browser tabs count
+  const browserTabsCount = Object.values(openTabs).filter(
+    (tab: any) => tab.type === "browser" && tab.workspace === workspace.id
+  ).length;
+
   return (
     <>
       {activeTabId === "launchpad" && (
@@ -313,6 +392,16 @@ function Desktop(props) {
           <SpaceStatsWidget />
         </div>
       )}
+      
+      <AppsOverlayMenu
+        apps={apps}
+        activeWindowId={activeWindowId}
+        onSelectApp={handleSelectApp}
+        onLaunchpadClick={handleLaunchpadClick}
+        onBrowserClick={handleBrowserClick}
+        isLaunchpadActive={isLaunchpadActive}
+        browserTabsCount={browserTabsCount}
+      />
     </>
   );
 }

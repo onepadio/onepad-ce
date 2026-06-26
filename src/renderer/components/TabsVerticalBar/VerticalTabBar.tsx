@@ -87,11 +87,21 @@ function VerticalTabBar(){
 
     useEffect(() => {
       const container = document.getElementById("vertical-tab-bar");
+      const overlay = document.getElementById("vertical-tab-bar-overlay");
       if (container != null) {
         if(showSidebar){
           container.classList.add("vertical-tab-bar-open");
         }else{
           container.classList.remove("vertical-tab-bar-open");
+          setHoveredTabId(null);
+          setHoveredTabScreenshot(null);
+        }
+      }
+      if (overlay != null) {
+        if(showSidebar){
+          overlay.classList.add("open");
+        }else{
+          overlay.classList.remove("open");
         }
       }
     }, [showSidebar]);
@@ -549,7 +559,7 @@ function VerticalTabBar(){
           >
 
         </div>
-        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar bg-dark w-100">
+        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar bg-dark w-100" onMouseLeave={() => toggleShowSidebar()}>
 
           {tabsMenu()}
 

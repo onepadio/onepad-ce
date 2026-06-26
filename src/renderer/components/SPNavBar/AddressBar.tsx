@@ -831,6 +831,10 @@ function AddressBar(props: any) {
     dispatch(windowActions.toggleShowSidebar({}));
   }
 
+  function showSideBar() {
+    dispatch(windowActions.showSideBar({}));
+  }
+
   const activeWindowTabCount = windowTabs[activeWindowId]?.length || 0;
 
   return (
@@ -847,7 +851,8 @@ function AddressBar(props: any) {
           <Button
             id={"home-button-" + activeTabId}
             className="btn btn-dark ml-2 position-relative"
-            onClick={() => toggleShowSidebar()}
+            onClick={() => showSideBar()}
+            onMouseEnter={() => showSideBar()}
             disabled={disabled}
           >
             <ListTask size={20} />

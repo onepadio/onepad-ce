@@ -51,6 +51,7 @@ function OPWebView(props: any) {
   const [title, setTitle] = useState("");
   const [currentFavIcon, setCurrentFavIcon] = useState("");
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [hoveredLinkUrl, setHoveredLinkUrl] = useState("");
 
   const [storeSS, setStoreSS] = useState(null);
   const [defaultUserAgent, setDefaultUserAgent] = useState("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
@@ -298,6 +299,14 @@ function OPWebView(props: any) {
         // Inject form detection script for password manager
         webview.executeJavaScript(generateFormDetectionScript());
         
+        // Inject CSS for bottom margin to prevent content from being hidden by overlay menu
+        webview.insertCSS(`
+          body {
+            margin-bottom: 80px !important;
+            padding-bottom: 0px !important;
+          }
+        `);
+        
         // Check for saved passwords and offer auto-fill
         checkAndOfferAutofill(webview.getURL());
       };
@@ -461,6 +470,12 @@ function OPWebView(props: any) {
 
       webview.addEventListener("focus", handleWebViewFocus);
 
+      const handleUpdateTargetUrl = (event: any) => {
+        setHoveredLinkUrl(event.url || "");
+      };
+
+      webview.addEventListener("update-target-url", handleUpdateTargetUrl);
+
       return () => {
         // Cleanup event listeners
         webview.removeEventListener("dom-ready", handleDomReady);
@@ -476,6 +491,7 @@ function OPWebView(props: any) {
         webview.removeEventListener("media-paused", () => {});
         webview.removeEventListener("media-stopped", () => {});
         webview.removeEventListener("focus", handleWebViewFocus);
+        webview.removeEventListener("update-target-url", handleUpdateTargetUrl);
       };
     } else {
       log.debug("webview is null");
@@ -616,6 +632,11 @@ function OPWebView(props: any) {
       {!isElectron() && (
         <div className="demo-notice">
           ⚠️ Demo Mode: Limited functionality - Full features available in desktop app
+        </div>
+      )}
+      {hoveredLinkUrl && props.location === "main" && (
+        <div className="link-hover-overlay">
+          {hoveredLinkUrl}
         </div>
       )}
     </>
