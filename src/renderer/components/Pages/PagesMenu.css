@@ -1,0 +1,76 @@
+.pages-menu {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+}
+
+.pages-menu-content {
+  background-color: #5b5e6266;
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 300px;
+}
+
+.pages-menu-label {
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.pages-menu-items {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-menu-item {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+}
+
+.page-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.page-menu-item.active {
+  background-color: #3e648c;
+  color: #fff;
+}
+
+.page-menu-item.add-page-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.page-menu-item.add-page-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.page-menu-app-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}

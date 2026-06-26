@@ -19,6 +19,7 @@ import Widget from "./Widget";
 import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import SpaceStatsWidget from "../SpaceStatsWidget/SpaceStatsWidget";
+import Pages from "../Pages/Pages";
 
 function Desktop(props) {
   const dispatch = useDispatch();
@@ -53,6 +54,7 @@ function Desktop(props) {
   const [name, setName] = useState(props.name);
   const [widgets, setWidgets] = useState([]);
   const [partition, setPartition] = useState("");
+  const [isLaunchpadActive, setIsLaunchpadActive] = useState(true);
 
   useEffect(() => {
     setName(desktop.name.charAt(0).toUpperCase() + desktop.name.slice(1));
@@ -229,7 +231,11 @@ function Desktop(props) {
                 <DateTime />
               </div>
               <div className="d-flex w-100 justify-content-center">
-                <SearchBar id="searchBar" />
+                {isLaunchpadActive ? (
+                  <SearchBar id="searchBar" />
+                ) : (
+                  <></>
+                )}
               </div>
             </div>
 
@@ -237,7 +243,10 @@ function Desktop(props) {
               id="space-right"
               className="d-flex justify-content-center align-items-center space-right p-0"
             >
-              <div id="launchpad-idx" className="launchpad-desktop">
+              <div 
+                id="launchpad-idx" 
+                className={`launchpad-desktop ${!isLaunchpadActive ? 'd-none' : ''}`}
+              >
                 <div className="container-fluid launchpad-container">
                   {isDesktopsEnabled ? (
                     <div className="row">
@@ -268,6 +277,9 @@ function Desktop(props) {
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className="pages-wrapper d-none">
+                <Pages onLaunchpadActive={setIsLaunchpadActive} />
               </div>
               <div className="d-none">
                 <div
