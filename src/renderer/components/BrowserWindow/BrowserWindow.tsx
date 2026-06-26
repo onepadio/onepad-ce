@@ -916,7 +916,7 @@ function BrowserWindow(props: any) {
       return (<></>);
     if(props.location !== "main"){
       // @ts-expect-error
-      const storeSS = window.electronAPI.screenshot.get("screenshot-"+props.tabId);
+      const storeSS = isElectron() && window.electronAPI?.screenshot ? window.electronAPI.screenshot.get("screenshot-"+props.tabId) : null;
       if(storeSS){
         return (
           <>
@@ -924,6 +924,19 @@ function BrowserWindow(props: any) {
           </>
         );
       }else{
+        // Use iframe for non-Electron
+        if (!isElectron()) {
+          return (
+            <iframe
+              id={webViewId}
+              className="webview d-none"
+              src={startUrl}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+              onLoad={() => handleLoad()}
+            ></iframe>
+          );
+        }
+        
         return (
             <webview
               id={webViewId}
@@ -942,6 +955,19 @@ function BrowserWindow(props: any) {
       }
 
     }else{
+      // Use iframe for non-Electron
+      if (!isElectron()) {
+        return (
+          <iframe
+            id={webViewId}
+            className="webview"
+            src={startUrl}
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"
+            onLoad={() => handleLoad()}
+          ></iframe>
+        );
+      }
+      
       return (
         <webview
           id={webViewId}

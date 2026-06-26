@@ -107,7 +107,7 @@ function AppStoreModalWindow(args: any) {
                     dispatch(modalActions.setLocation("launchpad"));
                     toggleAppStore();
                     toggleAddLinkModal();
-                  }}>Add Custom</Button>
+                  }}>Add Custom Website</Button>
                 </Col>
                 <Col md={9} sm={9} xs={8} className="d-flex justify-content-end">
                 </Col>

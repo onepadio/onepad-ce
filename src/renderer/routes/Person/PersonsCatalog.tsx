@@ -99,11 +99,31 @@ export default function PersonsCatalog() {
 
 
   useEffect(() => {
-    if(version === "") return;
-    log.debug("App.js: version", version);
+    // If not running in Electron, version might be empty - use a default version
+    const effectiveVersion = version || "1.0.999";
+    
+    log.debug("App.js: version", effectiveVersion);
     // split version to get the build number
-    let _version = version.split(".");
-    if(_version.length < 3) return;
+    let _version = effectiveVersion.split(".");
+    if(_version.length < 3) {
+      // If version format is invalid, just load the data
+      log.warn("Invalid version format, loading data anyway");
+      // @ts-expect-error TS(2339): Property 'persons' does not exist on type 'Dexie'.
+      db.persons.toArray().then((_persons) => {
+        setPersons(_persons);
+        setIsReady(true);
+      }).catch((error) => {
+        log.error("Error loading persons:", error);
+        // Set ready anyway so the user can at least see the UI
+        setIsReady(true);
+      });
+      // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
+      dispatch(workspaceActions.reset());
+      // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
+      dispatch(sessionActions.reset());
+      return;
+    }
+    
     let _buildNumber = 0;
     if(_version.length > 2){
       let _buildNumberS = _version[2];
@@ -123,6 +143,10 @@ export default function PersonsCatalog() {
     // @ts-expect-error TS(2339): Property 'persons' does not exist on type 'Dexie'.
     db.persons.toArray().then((_persons) => {
       setPersons(_persons);
+      setIsReady(true);
+    }).catch((error) => {
+      log.error("Error loading persons:", error);
+      // Set ready anyway so the user can at least see the UI
       setIsReady(true);
     });
     // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.

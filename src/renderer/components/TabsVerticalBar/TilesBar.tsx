@@ -228,7 +228,7 @@ function TilesBar(){
           if(tab.type === "app"){
             _icon = localStorage.getItem(tab.state.icon) == null ? defaultIcon : localStorage.getItem(tab.state.icon);
           }else{
-            _icon = tab.state.icon;
+            _icon = tab.state.icon || "";
           }
           return tab.id === activeTabId ? (
             <ListGroupItem key={uuidv4()} id={tabId} data-bs-toggle="tooltip" data-bs-placement="right" title={tab.state.title} data-bs-custom-className="custom-tooltip">

@@ -106,6 +106,11 @@ export default function SafariPasswordsReader() {
         let _password = item[3];
         let _notes = item[4];
         // @ts-expect-error
+        if (!window.electronAPI?.encrypt) {
+          log.warn("Password encryption is only available in Electron environment");
+          return;
+        }
+        // @ts-expect-error
         let _encryptedPassword = window.electronAPI.encrypt.get(_password);
         if( _url && _url.length > 0 && _username && _username.length > 0 && _encryptedPassword && _encryptedPassword.length > 0){
           PasswordService.save(personId, _url, _username, _encryptedPassword, _notes, "all").then((data) => {

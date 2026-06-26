@@ -196,12 +196,7 @@ function UserMenu(props: any){
     }
 
     function sendFeedback(){
-        if(isElectron()){
-            // @ts-expect-error
-            window.electronAPI.send("toMain", {
-                action: "send-feedback",
-            });
-        }
+        alert("You can share your feedback with us by sending an email to contact@onepad.io");
     }
 
     function myAccount(){

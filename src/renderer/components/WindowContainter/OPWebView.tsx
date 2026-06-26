@@ -198,6 +198,13 @@ function OPWebView(props: any) {
         return;
       }
       
+      // Check if electronAPI is available
+      // @ts-expect-error
+      if (!window.electronAPI?.decrypt) {
+        log.warn("Password decryption is only available in Electron environment");
+        return;
+      }
+      
       // Decrypt password (handled in the service)
       // @ts-expect-error
       const decryptedPassword = window.electronAPI.decrypt.get(savedPassword.password);
@@ -254,8 +261,17 @@ function OPWebView(props: any) {
     };
   }, [webview, dispatch]);
 
-  // Add all webview event listeners
+  // Add all webview event listeners (only for Electron)
   useEffect(() => {
+    if (!isElectron()) {
+      // For iframe in non-Electron, just set the element reference
+      const iframeElement = document.getElementById(webViewId);
+      if (iframeElement) {
+        setWebView(iframeElement as any);
+      }
+      return;
+    }
+
     if (webview != null) {
       const handleDomReady = () => {
         const webContentsId = webview.getWebContentsId();
@@ -504,9 +520,9 @@ function OPWebView(props: any) {
       _openTabs[activeTabId] = _tab;
       dispatch(sessionActions.setOpenTabs({ data: _openTabs }));
       // @ts-expect-error
-      const storeSS = window.electronAPI.screenshot.get(
+      const storeSS = isElectron() && window.electronAPI?.screenshot ? window.electronAPI.screenshot.get(
         "screenshot-" + props.tabId
-      );
+      ) : null;
       if (storeSS) {
         setStoreSS(storeSS);
       }
@@ -522,15 +538,65 @@ function OPWebView(props: any) {
     }
   }, [isTabGroupsEnabled, activeTab, windowTabs, activeWindowId, activeTabId, props.tabId]);
 
-  return sleepWebView ? (
-    <></>
-  ) : props.location !== "main" ? (
-    storeSS ? (
-      <img className="webview darken-image" src={storeSS} alt="" />
-    ) : (
+  // Render iframe for non-Electron or webview for Electron
+  const renderContent = () => {
+    if (sleepWebView) {
+      return <></>;
+    }
+
+    if (props.location !== "main") {
+      if (storeSS) {
+        return <img className="webview darken-image" src={storeSS} alt="" />;
+      }
+      
+      // Use iframe for non-Electron
+      if (!isElectron()) {
+        return (
+          <iframe
+            id={webViewId}
+            className={"webview d-none m-1 " + (isFullScreen ? "full-screen" : "")}
+            src={startUrl}
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+            onLoad={() => handleLoad()}
+          ></iframe>
+        );
+      }
+      
+      // Use webview for Electron
+      return (
+        <webview
+          id={webViewId}
+          className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "")}
+          // @ts-expect-error
+          autosize="on"
+          src={startUrl}
+          // @ts-expect-error
+          nodeintegration="true"
+          // @ts-expect-error
+          allowpopups="true"
+          partition={props.partition}
+          onLoadCapture={() => handleLoad()}
+        ></webview>
+      );
+    }
+
+    // Main location
+    if (!isElectron()) {
+      return (
+        <iframe
+          id={webViewId}
+          className={"webview m-1 " + (isFullScreen ? "full-screen" : "")}
+          src={startUrl}
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"
+          onLoad={() => handleLoad()}
+        ></iframe>
+      );
+    }
+
+    return (
       <webview
         id={webViewId}
-        className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "")}
+        className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "")}
         // @ts-expect-error
         autosize="on"
         src={startUrl}
@@ -541,21 +607,18 @@ function OPWebView(props: any) {
         partition={props.partition}
         onLoadCapture={() => handleLoad()}
       ></webview>
-    )
-  ) : (
-    <webview
-      id={webViewId}
-      className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "")}
-      // @ts-expect-error
-      autosize="on"
-      src={startUrl}
-      // @ts-expect-error
-      nodeintegration="true"
-      // @ts-expect-error
-      allowpopups="true"
-        partition={props.partition}
-        onLoadCapture={() => handleLoad()}
-    ></webview>
+    );
+  };
+
+  return (
+    <>
+      {renderContent()}
+      {!isElectron() && (
+        <div className="demo-notice">
+          ⚠️ Demo Mode: Limited functionality - Full features available in desktop app
+        </div>
+      )}
+    </>
   );
 }
 

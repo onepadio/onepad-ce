@@ -146,7 +146,7 @@ function TabsScreen(props: any) {
                 windowTabs[activeWindowId].forEach((tabId: any) => {
                     if(openTabs[tabId] && openTabs[tabId].sleeping === false){
                         // @ts-expect-error
-                        let _ss = window.electronAPI.screenshot.get("screenshot-"+tabId);
+                        let _ss = isElectron() && window.electronAPI?.screenshot ? window.electronAPI.screenshot.get("screenshot-"+tabId) : null;
                         _ssDict[tabId] = _ss;
                     }
                 });
@@ -183,7 +183,7 @@ function TabsScreen(props: any) {
                 windowTabs[activeWindowId].forEach((tabId: any) => {
                     if(openTabs[tabId]){
                         // @ts-expect-error
-                        let _ss = window.electronAPI.screenshot.get("screenshot-"+tabId);
+                        let _ss = isElectron() && window.electronAPI?.screenshot ? window.electronAPI.screenshot.get("screenshot-"+tabId) : null;
                         _ssDict[tabId] = _ss;
                     }
                 });

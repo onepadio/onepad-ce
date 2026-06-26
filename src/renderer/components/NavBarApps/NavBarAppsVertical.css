@@ -40,11 +40,12 @@
 
 /* NavBar Apps Vertical in expanded state */
 .navbar-apps-vertical-container.expanded .navbar-apps-vertical {
-  max-height: calc(100vh - 340px) !important;
+  max-height: calc(100vh - 320px) !important;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 40px;
+  height: calc(100vh - 320px) !important;
 }
 
 .navbar-apps-vertical::-webkit-scrollbar {

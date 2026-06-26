@@ -24,6 +24,11 @@ export default function EditProfile() {
 
   useEffect(() => {
     // @ts-expect-error
+    if (!window.electronAPI?.store) {
+      log.warn("Profile store access is only available in Electron environment");
+      return;
+    }
+    // @ts-expect-error
     let _profilesMap = window.electronAPI.store.get("profiles");
     let _profiles: any = [];
     Object.keys(_profilesMap).forEach((key) => {

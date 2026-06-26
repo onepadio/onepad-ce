@@ -426,7 +426,7 @@ function SPNavBar() {
       <div className="drag-bar"></div>
       <div className="sp-navbar">
         <div className="logo"></div>
-        {platform === Platform.MacOS ? <MacTopBar /> : <WindowsTopBar />}
+        {platform === Platform.Windows ? <WindowsTopBar /> : <MacTopBar />}
         {
           <Navbar className="sp-bottom-navbar navbar navbar-expand navbar-light fixed-bottom shadow d-none">
             {}

@@ -79,6 +79,11 @@ function PasswordManagerCanvas(props: any) {
 
     function savePassword(){
         // @ts-expect-error
+        if (!window.electronAPI?.encrypt) {
+            log.warn("Password encryption is only available in Electron environment");
+            return;
+        }
+        // @ts-expect-error
         let _encryptedPassword = window.electronAPI.encrypt.get(password);
         log.debug("encryptedPassword", _encryptedPassword);
         PasswordService.save(personId, website, username, _encryptedPassword, "", space).then((data) => {
@@ -191,6 +196,11 @@ function PasswordManagerCanvas(props: any) {
 
     useEffect(() => {
         if(visiblePasswordId === "" || encryptedPassword === "") return;
+        // @ts-expect-error
+        if (!window.electronAPI?.decrypt) {
+            log.warn("Password decryption is only available in Electron environment");
+            return;
+        }
         let _uf = document.getElementById("pm-username-"+visiblePasswordId);
         // @ts-expect-error
         let _decryptedPassword = window.electronAPI.decrypt.get(encryptedPassword);

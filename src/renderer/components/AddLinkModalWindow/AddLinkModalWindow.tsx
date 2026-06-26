@@ -108,8 +108,9 @@ function AddLinkModalWindow(props: any) {
       
       // Check if electronAPI is available
       if (!window.electronAPI || !window.electronAPI.invoke) {
-        log.error("electronAPI not available!");
-        throw new Error("electronAPI not available");
+        log.warn("Metadata fetching is only available in Electron environment");
+        setIsFetchingMetadata(false);
+        return;
       }
       
       log.debug("Calling electronAPI.invoke...");

@@ -1,12 +1,13 @@
 declare global {
   interface Window {
-    electronAPI: {
+    electronAPI?: {
       invoke: (channel: string, ...args: any[]) => Promise<any>;
     };
   }
 }
 
 const ipcRenderer = window.electronAPI;
+const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
 export interface MemoryInfo {
   workingSetSize: number;
@@ -36,8 +37,12 @@ class MemoryService {
   private readonly TRACKING_INTERVAL = 5000; // 5 seconds
 
   async getTabMemoryInfo(webContentsId: number): Promise<MemoryInfo | null> {
+    if (!isElectron) {
+      console.warn('MemoryService: Not running in Electron, skipping getTabMemoryInfo');
+      return null;
+    }
     try {
-      return await ipcRenderer.invoke('get-tab-memory-info', webContentsId);
+      return await ipcRenderer!.invoke('get-tab-memory-info', webContentsId);
     } catch (error) {
       console.error('Failed to get tab memory info:', error);
       return null;
@@ -45,8 +50,12 @@ class MemoryService {
   }
 
   async getAllTabsMemory(): Promise<TabMemoryInfo[]> {
+    if (!isElectron) {
+      console.warn('MemoryService: Not running in Electron, skipping getAllTabsMemory');
+      return [];
+    }
     try {
-      const result = await ipcRenderer.invoke('get-all-tabs-memory');
+      const result = await ipcRenderer!.invoke('get-all-tabs-memory');
       return result;
     } catch (error) {
       console.error('Failed to get all tabs memory:', error);
@@ -99,6 +108,11 @@ class MemoryService {
   }
 
   startTracking(): void {
+    if (!isElectron) {
+      console.warn('MemoryService: Not running in Electron, memory tracking disabled');
+      return;
+    }
+
     if (this.isTracking) {
       return;
     }

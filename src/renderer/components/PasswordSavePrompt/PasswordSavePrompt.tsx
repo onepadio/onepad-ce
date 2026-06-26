@@ -33,6 +33,13 @@ function PasswordSavePrompt() {
 
   const handleSave = async () => {
     try {
+      // Check if electronAPI is available
+      // @ts-expect-error
+      if (!window.electronAPI?.invoke) {
+        console.error('Password encryption is only available in Electron environment');
+        return;
+      }
+
       // Encrypt the password
       // @ts-expect-error
       const result = await window.electronAPI.invoke('password-encrypt', promptData.password, personId);

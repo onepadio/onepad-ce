@@ -227,15 +227,15 @@ function VerticalTabBar(){
       let tab = openTabs[tabId];
       // Use the full tab ID (including browser_ prefix if present)
       // @ts-expect-error
-      const storeSS = window.electronAPI.screenshot.get("screenshot-"+tabId);
+      const storeSS = isElectron() && window.electronAPI?.screenshot ? window.electronAPI.screenshot.get("screenshot-"+tabId) : null;
       let _ss = storeSS ? storeSS : localStorage.getItem("screenshot-"+tabId);
       let tabTitle = tab.state.title === "" ? tab.state.url.substring(0,27).concat("...") : tab.state.title.length > 27 ? tab.state.title.substring(0,27).concat("...") : tab.state.title;
       let _icon = "";
       try {
         if(tab.type === "app"){
-          _icon = "./images/store/icon/"+tab.state.icon;
+          _icon = tab.state.icon ? "./images/store/icon/"+tab.state.icon : "";
         }else{
-          _icon = tab.state.icon;
+          _icon = tab.state.icon || "";
         }
         return tab.id === activeTabId ? (
           <ListGroupItem key={uuidv4()} id={"tabItem"+tabId}>
@@ -346,9 +346,9 @@ function VerticalTabBar(){
       let _icon = "";
         try {
           if(tab.type === "app"){
-            _icon = tab.state.icon;
+            _icon = tab.state.icon || "";
           }else{
-            _icon = tab.state.icon;
+            _icon = tab.state.icon || "";
           }
           return tab.id === activeTabId ? (
             <ListGroupItem key={uuidv4()} id={"tabItem"+tabId} data-bs-toggle="tooltip" data-bs-placement="right" title={tab.state.title} data-bs-custom-className="custom-tooltip">

@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import defaultBG from '../images/default_bg.jpg';
 
 const appSlice = createSlice({
   name: "app",
@@ -8,7 +9,7 @@ const appSlice = createSlice({
     selectedPerson: {},
     profileId: "",
     selectedProfile: {},
-    bgImage: null,
+    bgImage: defaultBG,
     platform: "",
     version: "",
     hostname: "",

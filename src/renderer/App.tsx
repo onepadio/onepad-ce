@@ -37,21 +37,25 @@ function MyRoutes() {
       const { payload } = data;
       switch (data.payload.event) {
         case 'signIn':
-            // @ts-expect-error
-            window.electronAPI.send("toMain", {
-              action: "signed-in",
-              id: data.payload.data.username,
-            });
+            if (isElectron()) {
+              // @ts-expect-error
+              window.electronAPI.send("toMain", {
+                action: "signed-in",
+                id: data.payload.data.username,
+              });
+            }
             break;
         case 'signUp':
             log.debug('user signed up');
             break;
         case 'signOut':
-            // @ts-expect-error
-            window.electronAPI.send("toMain", {
-              action: "signed-out",
-              id: data.payload.data.username,
-            });
+            if (isElectron()) {
+              // @ts-expect-error
+              window.electronAPI.send("toMain", {
+                action: "signed-out",
+                id: data.payload.data.username,
+              });
+            }
             break;
         case 'signIn_failure':
           log.debug('user sign in failed');

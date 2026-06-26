@@ -93,7 +93,7 @@ export function Layout() {
       onContextMenu={(e) => onContextMenu(e)}
       onKeyDown={(e) => handleKeyDown(e)}
     >
-      <div className="bg-image" style={{ backgroundImage: `url(${bgImage})` }}  onKeyDown={(e) => handleKeyDown(e)}>
+      <div className="bg-image" style={{ backgroundImage: bgImage ? `url(${bgImage})` : 'none' }}  onKeyDown={(e) => handleKeyDown(e)}>
         {" "}
       </div>
       <div id="wrapper"  onKeyDown={(e) => handleKeyDown(e)}>

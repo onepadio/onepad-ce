@@ -452,8 +452,8 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
 
   // Show 1 item when collapsed, 7 when expanded
   const collapsedItems = 5;
-  const expandedItems = 12;
-  const maxVisibleItems = isCollapsed ? collapsedItems : expandedItems;
+  const expandedItems = 999;
+  const maxVisibleItems = expandedItems; // no collapse anymore
 
   // Always show pinned apps, then fill remaining slots with unpinned apps
   const unpinnedSlotsAvailable = Math.max(0, maxVisibleItems - pinnedItems.length);
