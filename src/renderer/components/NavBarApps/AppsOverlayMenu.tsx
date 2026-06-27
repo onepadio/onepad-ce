@@ -1,6 +1,6 @@
-import { Plus, Layers } from "react-bootstrap-icons";
+import { Layers, ChevronDown, ChevronUp } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
 import WaffleMenuIcon from "../Icons/WaffleMenuIcon";
 import "./AppsOverlayMenu.css";
@@ -22,6 +22,8 @@ interface AppsOverlayMenuProps {
   browserTabsCount: number;
 }
 
+type HideMode = 'always-on-top' | 'auto-hide';
+
 function AppsOverlayMenu({ 
   apps, 
   activeWindowId, 
@@ -36,7 +38,150 @@ function AppsOverlayMenu({
   const openWindows = useSelector((state: any) => state.session.openWindows);
   const pinnedApps = desktop?.state?.pinnedApps || [];
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [hideMode, setHideMode] = useState<HideMode>('always-on-top');
+  const [manuallyHidden, setManuallyHidden] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Load hide mode preference from localStorage on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem('apps-overlay-hide-mode');
+    if (savedMode === 'auto-hide' || savedMode === 'always-on-top') {
+      setHideMode(savedMode as HideMode);
+      // If auto-hide mode, start hidden
+      if (savedMode === 'auto-hide') {
+        setIsVisible(false);
+      }
+    }
+  }, []);
+  
+  // Handle visibility based on mode
+  useEffect(() => {
+    // Always show menu when launchpad is active
+    if (isLaunchpadActive) {
+      setIsVisible(true);
+      setManuallyHidden(false);
+      return;
+    }
+
+    // Always on top mode - only hide when manually hidden
+    if (hideMode === 'always-on-top') {
+      setIsVisible(!manuallyHidden);
+      return;
+    }
+
+    // Auto-hide mode - menu is hidden by default, shown via indicator hover
+    // Nothing to do here - visibility is controlled by indicator onMouseEnter
+    // and scroll events below
+  }, [isLaunchpadActive, hideMode, manuallyHidden]);
+
+  // Handle scroll to hide in auto-hide mode
+  useEffect(() => {
+    if (hideMode !== 'auto-hide' || isLaunchpadActive) return;
+
+    const handleWebviewScroll = () => {
+      setIsVisible(false);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+    };
+
+    window.addEventListener('wheel', handleWebviewScroll);
+
+    return () => {
+      window.removeEventListener('wheel', handleWebviewScroll);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, [hideMode, isLaunchpadActive]);
+
+  const handleToggleManualHide = () => {
+    setManuallyHidden(!manuallyHidden);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Remove any existing context menus
+    document.querySelectorAll(".apps-overlay-context-menu").forEach((menu) => {
+      document.body.removeChild(menu);
+    });
+
+    const menu = document.createElement("div");
+    menu.className = "apps-overlay-context-menu context-menu";
+    menu.innerHTML = `
+      <div class="context-menu-item toggle-hide-mode">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          ${hideMode === 'auto-hide' 
+            ? '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>'
+            : '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>'
+          }
+        </svg>
+        <span>${hideMode === 'auto-hide' ? 'Disable Auto-Hide' : 'Enable Auto-Hide'}</span>
+      </div>
+    `;
+    
+    menu.style.position = "fixed";
+    menu.style.opacity = "0";
+    document.body.appendChild(menu);
+    
+    // Get menu dimensions and overlay menu position
+    const menuHeight = menu.offsetHeight;
+    const menuWidth = menu.offsetWidth;
+    const overlayMenuRect = menuRef.current?.getBoundingClientRect();
+    
+    if (overlayMenuRect) {
+      // Position above the overlay menu, similar to tooltips
+      const yPosition = overlayMenuRect.top - menuHeight - 8;
+      
+      // X position close to pointer, but ensure it stays within viewport
+      let xPosition = e.clientX;
+      
+      // Adjust if menu would go off screen
+      if (xPosition + menuWidth > window.innerWidth) {
+        xPosition = window.innerWidth - menuWidth - 10;
+      }
+      if (xPosition < 10) {
+        xPosition = 10;
+      }
+      
+      menu.style.top = `${yPosition}px`;
+      menu.style.left = `${xPosition}px`;
+    }
+    
+    menu.style.opacity = "1";
+
+    menu.querySelector(".toggle-hide-mode")?.addEventListener("click", () => {
+      const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
+      setHideMode(newMode);
+      localStorage.setItem('apps-overlay-hide-mode', newMode);
+      if (newMode === 'always-on-top') {
+        setManuallyHidden(false);
+      }
+      document.body.removeChild(menu);
+    });
+
+    menu.addEventListener("mouseleave", () => {
+      if (document.body.contains(menu)) {
+        document.body.removeChild(menu);
+      }
+    });
+
+    const closeMenu = (e: any) => {
+      if (document.body.contains(menu) && !menu.contains(e.target)) {
+        document.body.removeChild(menu);
+        document.removeEventListener("click", closeMenu);
+      }
+    };
+
+    setTimeout(() => {
+      document.addEventListener("click", closeMenu);
+    }, 0);
+  };
+
   async function handleTogglePin(appId: string) {
     if (!desktop?.id) return;
 
@@ -83,9 +228,58 @@ function AppsOverlayMenu({
   const filteredApps = apps.filter(app => app.type !== "browser");
 
   return (
-    <div className="apps-overlay-menu">
-      <div className="apps-overlay-menu-content">
-        <div className="apps-overlay-menu-items">
+    <>
+      {/* Show up button when manually hidden in always-on-top mode */}
+      {manuallyHidden && hideMode === 'always-on-top' && !isLaunchpadActive && (
+        <div className="apps-overlay-show-button" onClick={handleToggleManualHide}>
+          <ChevronUp size={16} color="white" />
+        </div>
+      )}
+
+      {/* Trigger zone indicator - only show in auto-hide mode when menu is hidden */}
+      {!isVisible && hideMode === 'auto-hide' && !isLaunchpadActive && (
+        <div 
+          className="apps-overlay-trigger-indicator"
+          onMouseEnter={() => setIsVisible(true)}
+        />
+      )}
+      
+      <div 
+        ref={menuRef}
+        className={`apps-overlay-menu ${isVisible ? 'visible' : 'hidden'}`}
+        onContextMenu={handleContextMenu}
+        onMouseLeave={() => {
+          // Auto-hide when mouse leaves in auto-hide mode
+          if (hideMode === 'auto-hide' && !isLaunchpadActive) {
+            if (!hideTimeoutRef.current) {
+              hideTimeoutRef.current = setTimeout(() => {
+                setIsVisible(false);
+                hideTimeoutRef.current = null;
+              }, 500);
+            }
+          }
+        }}
+        onMouseEnter={() => {
+          // Cancel hide timeout when mouse re-enters
+          if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+            hideTimeoutRef.current = null;
+          }
+        }}
+      >
+        <div className="apps-overlay-menu-content">
+          {/* Hide button - only show in always-on-top mode and not on launchpad */}
+          {hideMode === 'always-on-top' && !isLaunchpadActive && (
+            <button 
+              className="apps-overlay-hide-button"
+              onClick={handleToggleManualHide}
+              title="Hide menu"
+            >
+              <ChevronDown size={16} color="white" />
+            </button>
+          )}
+          
+          <div className="apps-overlay-menu-items">
           <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={onLaunchpadClick}
@@ -219,6 +413,7 @@ function AppsOverlayMenu({
         </div>
       </div>
     </div>
+    </>
   );
 }
 

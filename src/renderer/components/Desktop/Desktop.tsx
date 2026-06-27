@@ -115,6 +115,14 @@ function Desktop(props) {
   }, [activeTabId]);
 
   useEffect(() => {
+    if (activeWindowId === "launchpad") {
+      setIsLaunchpadActive(true);
+    } else {
+      setIsLaunchpadActive(false);
+    }
+  }, [activeWindowId]);
+
+  useEffect(() => {
     log.info("widgetConfig", widgetConfig);
     let _partition = "";
     if (route === "authenticated") {
