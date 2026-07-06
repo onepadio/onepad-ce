@@ -318,6 +318,7 @@ function AppsOverlayMenu({
               onMouseLeave={() => setHoveredApp(null)}
               onContextMenu={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const isPinned = pinnedApps.includes(app.id);
                 const isWindowOpen = openWindows[app.id] != null;
 
