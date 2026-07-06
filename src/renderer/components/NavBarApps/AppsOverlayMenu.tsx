@@ -1,4 +1,4 @@
-import { Layers, ChevronDown, ChevronUp } from "react-bootstrap-icons";
+import { Layers, ChevronDown, ChevronUp, WindowStack } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
@@ -293,19 +293,19 @@ function AppsOverlayMenu({
           </button>
           
           <button
-            className="app-menu-item position-relative"
+            className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""}`}
             onClick={onBrowserClick}
             onMouseEnter={() => setHoveredApp("browser")}
             onMouseLeave={() => setHoveredApp(null)}
           >
-            <Layers color="white" size={20} />
+            <WindowStack color="white" size={20} />
             {browserTabsCount > 0 && (
               <span className="position-absolute bottom-0 right-0 translate-middle badge rounded-pill bg-primary badge-count">
                 {browserTabsCount}
               </span>
             )}
             {hoveredApp === "browser" && (
-              <div className="app-tooltip">Space Tabs</div>
+              <div className="app-tooltip">Others</div>
             )}
           </button>
           
