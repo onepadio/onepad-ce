@@ -5,6 +5,7 @@ import isElectron from "is-electron";
 import { sessionActions } from "../../store/session-slice";
 import { appActions } from "../../store/app-slice";
 import { windowBarActions } from "../../store/windowbar-slice";
+import { webviewActions } from "../../store/webview-slice";
 import log from "loglevel";
 
 import "./OPWebView.css";
@@ -52,6 +53,7 @@ function OPWebView(props: any) {
   const [currentFavIcon, setCurrentFavIcon] = useState("");
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [hoveredLinkUrl, setHoveredLinkUrl] = useState("");
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
 
   const [storeSS, setStoreSS] = useState(null);
   const [defaultUserAgent, setDefaultUserAgent] = useState("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
@@ -227,7 +229,7 @@ function OPWebView(props: any) {
     }
   }
 
-  // Password manager: Listen for login detection from webview
+  // Password manager: Listen for login detection and scroll events from webview
   useEffect(() => {
     if (!webview) return;
     
@@ -251,6 +253,83 @@ function OPWebView(props: any) {
           }
         } catch (error) {
           log.error("Error parsing login detection:", error);
+        }
+      }
+      
+      // Listen for scroll events
+      if (event.message && event.message.includes('ONEPAD_SCROLL_EVENT')) {
+        try {
+          const scrollData = JSON.parse(event.message);
+          setScrollPosition({
+            x: scrollData.x,
+            y: scrollData.y
+          });
+          
+          // Update Redux store
+          dispatch(webviewActions.setScrollPosition({
+            x: scrollData.x,
+            y: scrollData.y
+          }));
+          dispatch(webviewActions.setScrolling(true));
+          
+          // Notify parent component if callback exists
+          if (props.onScroll) {
+            props.onScroll({
+              x: scrollData.x,
+              y: scrollData.y,
+              scrollHeight: scrollData.scrollHeight,
+              clientHeight: scrollData.clientHeight
+            });
+          }
+          
+          log.debug("Scroll position updated:", scrollData.x, scrollData.y);
+        } catch (error) {
+          log.error("Error parsing scroll event:", error);
+        }
+      }
+      
+      // Listen for scroll end events
+      if (event.message && event.message.includes('ONEPAD_SCROLL_END')) {
+        try {
+          const scrollData = JSON.parse(event.message);
+          
+          // Update Redux store - scrolling has ended
+          dispatch(webviewActions.setScrolling(false));
+          dispatch(webviewActions.setScrollPosition({
+            x: scrollData.x,
+            y: scrollData.y
+          }));
+          
+          log.debug("Scrolling ended at:", scrollData.x, scrollData.y);
+        } catch (error) {
+          log.error("Error parsing scroll end event:", error);
+        }
+      }
+      
+      // Listen for mouse move events
+      if (event.message && event.message.includes('ONEPAD_MOUSE_MOVE')) {
+        try {
+          const mouseData = JSON.parse(event.message);
+          
+          // Update Redux store
+          dispatch(webviewActions.setMousePosition({
+            x: mouseData.x,
+            y: mouseData.y
+          }));
+          
+          // Notify parent component if callback exists
+          if (props.onMouseMove) {
+            props.onMouseMove({
+              x: mouseData.x,
+              y: mouseData.y,
+              pageX: mouseData.pageX,
+              pageY: mouseData.pageY
+            });
+          }
+          
+          log.debug("Mouse position updated:", mouseData.x, mouseData.y);
+        } catch (error) {
+          log.error("Error parsing mouse move event:", error);
         }
       }
     };
@@ -299,14 +378,141 @@ function OPWebView(props: any) {
         // Inject form detection script for password manager
         webview.executeJavaScript(generateFormDetectionScript());
         
+        // Inject scroll detection script with 100ms throttle
+        webview.executeJavaScript(`
+          (function() {
+            let lastScrollTime = 0;
+            let scrollThrottleTimeout = null;
+            let scrollTimeout = null;
+            const THROTTLE_MS = 100;
+            const SCROLL_END_DELAY = 150;
+            
+            const sendScrollData = () => {
+              const scrollData = {
+                type: 'ONEPAD_SCROLL_EVENT',
+                x: window.scrollX || window.pageXOffset,
+                y: window.scrollY || window.pageYOffset,
+                scrollHeight: document.documentElement.scrollHeight,
+                clientHeight: document.documentElement.clientHeight,
+                isScrolling: true
+              };
+              console.log(JSON.stringify(scrollData));
+            };
+            
+            const sendScrollEndData = () => {
+              const scrollEndData = {
+                type: 'ONEPAD_SCROLL_END',
+                x: window.scrollX || window.pageXOffset,
+                y: window.scrollY || window.pageYOffset
+              };
+              console.log(JSON.stringify(scrollEndData));
+            };
+            
+            const handleScroll = () => {
+              const now = Date.now();
+              const timeSinceLastScroll = now - lastScrollTime;
+              
+              // Clear scroll end timeout
+              if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+              }
+              
+              if (timeSinceLastScroll >= THROTTLE_MS) {
+                // Execute immediately if enough time has passed
+                lastScrollTime = now;
+                sendScrollData();
+                
+                // Clear any pending throttle
+                if (scrollThrottleTimeout) {
+                  clearTimeout(scrollThrottleTimeout);
+                  scrollThrottleTimeout = null;
+                }
+              } else {
+                // Schedule execution for the remaining time
+                if (!scrollThrottleTimeout) {
+                  scrollThrottleTimeout = setTimeout(() => {
+                    lastScrollTime = Date.now();
+                    sendScrollData();
+                    scrollThrottleTimeout = null;
+                  }, THROTTLE_MS - timeSinceLastScroll);
+                }
+              }
+              
+              // Set timeout to detect scroll end
+              scrollTimeout = setTimeout(sendScrollEndData, SCROLL_END_DELAY);
+            };
+            
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            
+            // Send initial scroll position
+            sendScrollData();
+            setTimeout(sendScrollEndData, SCROLL_END_DELAY);
+          })();
+        `);
+        
+        // Inject mouse move detection script with 100ms throttle
+        webview.executeJavaScript(`
+          (function() {
+            let lastMouseMoveTime = 0;
+            let mouseMoveThrottleTimeout = null;
+            const THROTTLE_MS = 200;
+            
+            const sendMouseData = (event) => {
+              const mouseData = {
+                type: 'ONEPAD_MOUSE_MOVE',
+                x: event.clientX,
+                y: event.clientY,
+                pageX: event.pageX,
+                pageY: event.pageY
+              };
+              console.log(JSON.stringify(mouseData));
+            };
+            
+            const handleMouseMove = (event) => {
+              const now = Date.now();
+              const timeSinceLastMove = now - lastMouseMoveTime;
+              
+              if (timeSinceLastMove >= THROTTLE_MS) {
+                // Execute immediately if enough time has passed
+                lastMouseMoveTime = now;
+                sendMouseData(event);
+                
+                // Clear any pending throttle
+                if (mouseMoveThrottleTimeout) {
+                  clearTimeout(mouseMoveThrottleTimeout);
+                  mouseMoveThrottleTimeout = null;
+                }
+              } else {
+                // Schedule execution for the remaining time
+                if (!mouseMoveThrottleTimeout) {
+                  const storedEvent = {
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    pageX: event.pageX,
+                    pageY: event.pageY
+                  };
+                  mouseMoveThrottleTimeout = setTimeout(() => {
+                    lastMouseMoveTime = Date.now();
+                    sendMouseData(storedEvent);
+                    mouseMoveThrottleTimeout = null;
+                  }, THROTTLE_MS - timeSinceLastMove);
+                }
+              }
+            };
+            
+            window.addEventListener('mousemove', handleMouseMove, { passive: true });
+          })();
+        `);
+        
         // Inject CSS for bottom margin to prevent content from being hidden by overlay menu
+        /*
         webview.insertCSS(`
           body {
             margin-bottom: 80px !important;
             padding-bottom: 0px !important;
           }
         `);
-        
+        */
         // Check for saved passwords and offer auto-fill
         checkAndOfferAutofill(webview.getURL());
       };

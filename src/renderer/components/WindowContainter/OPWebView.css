@@ -41,11 +41,11 @@
 
 @keyframes slideUp {
     from {
-        bottom: -50px;
+        top: -50px;
         opacity: 0;
     }
     to {
-        bottom: 20px;
+        top: 20px;
         opacity: 1;
     }
 }
