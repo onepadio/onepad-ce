@@ -86,7 +86,7 @@ export const categoriesArray = [
         id: 15, 
         name: 'Productivity',
         icon: (<Folder size={16} color="white"></Folder>),
-        visible: false, 
+        visible: true, 
     },
     { 
         id: 16, 
@@ -431,7 +431,11 @@ export const categoriesDict = {
     15: {
         id: 15,
         name: 'Productivity',
-        items: []
+        items: [
+            {'id': 'f67e5025-fc8b-445e-aadf-da690115432c', 'name': 'Jira'},
+            {'id': 'one-task-manager', 'name': 'Task Board'},
+            {'id': 'one-todo-list', 'name': 'Todo List'}
+        ]
     },
     16: {
         id: 16,
@@ -642,6 +646,9 @@ export const itemsDb = {
     'e007b0d3-1188-4b72-9085-28c8169fd0cc':{'name': 'Binance', 'company': 'Binance Holdings Limited', 'category': 'Finance', 'description': 'Binance cryptocurrency exchange - We operate the worlds biggest bitcoin exchange and altcoin crypto exchange in the world by volume.', 'icon': 'Binance_icon.png', 'website': 'https://www.binance.com/en', 'login': 'https://accounts.binance.com/en/login', 'linkedin': 'https://www.linkedin.com/company/binance', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     '0d5b07ad-aac8-4708-b6f4-af048f6c33d8':{'name': 'Bitrix24', 'company': 'Bitrix, Inc.', 'category': 'Business', 'description': 'Bitrix24 is a collaboration software with complete tools for management, collaboration, and communication. Bitrix24 gives you a unified platform for your files, projects, messages, tasks, and contacts. ', 'icon': 'bitrix24_icon.png', 'website': 'https://www.bitrix24.com', 'login': 'https://www.bitrix24.net/oauth/authorize/', 'linkedin': 'https://www.linkedin.com/company/bitrix24/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     
+    //OnePad Apps
+    'one-task-manager':{'name': 'Task Board', 'company': 'Sigma Technologies', 'category': 'Productivity', 'description': 'Task Manager is a tool for managing tasks and projects.', 'icon': 'kanban.svg', 'website': 'https://sigma-tech.co.uk', 'login': 'https://taskboard.onepad.io', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
+    'one-todo-list':{'name': 'Todo List', 'company': 'Sigma Technologies', 'category': 'Productivity', 'description': 'Todo List is a tool for managing tasks and projects.', 'icon': 'card-checklist.svg', 'website': 'https://sigma-tech.co.uk', 'login': 'https://todolist.onepad.io', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     // Games
     '599f2c3b-e24a-4ab1-9e1e-bd1a7e252e24':{'name': 'Om Nom Run', 'company': 'Famobi', 'category': 'Skill, Arcade', 'description': "Run alongside Om Nom in his famous adventure, now finally in immersive and full-responsive HTML5. Try to run as far as possible by avoiding the dangerous obstacles and enemies, collect all coins and transform Om Nom into the fastest runner possible. Use the power-ups as smart as possible to explore the beautiful world with all it's beautiful areas, but be aware of the dangers that lurk inside of them. Are you ready to explore the world of Om Nom Run and reach the highest of highscores?", 'icon': 'games/OmNomRunTeaser.jpg', 'website': 'https://html5games.com/', 'login': 'https://play.famobi.com/om-nom-run', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     'f3f63614-c7c8-4308-8201-4cad59c382fd':{'name': 'Garden Bloom', 'company': 'Famobi', 'category': 'Match 3', 'description': "Here it comes! The ultimate Match-3 title! Welcome to the magnificent 'Garden Bloom'! Immerse yourself in the colorful garden and accompany Lucy on her exciting adventures! Match at least 3 flowers of the same color to get flowertastic results! The more you can merge, the more powerful the effect will be! Use mighty power-ups if you think you need help. On top of that you are able to decorate your own garden! How could it be any better? 2000 well designed levels will await you! So it's on you! Are you ready?", 'icon': 'games/GardenBloomTeaser.jpg', 'website': 'https://html5games.com/', 'login': 'https://play.famobi.com/garden-bloom', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
