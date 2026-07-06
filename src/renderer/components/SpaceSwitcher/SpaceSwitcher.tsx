@@ -9,8 +9,6 @@ import {
   processOpenTabsBeforePersist,
   processWindows,
 } from "../../services/window";
-import { Star } from "react-bootstrap-icons";
-import { modalActions } from "../../store/modal-slice";
 
 function SpaceSwitcher() {
   const dispatch = useDispatch();
@@ -112,11 +110,6 @@ function SpaceSwitcher() {
       });
   };
 
-  const handleFavouritesClick = () => {
-    dispatch(modalActions.setSelectedCategory("favourites"));
-    dispatch(modalActions.toggleCategoryPad({ category: "favourites" }));
-  };
-
   const renderSpaceIcon = (workspace: any) => {
     const isActive = workspace.id === currentWorkspace.id;
 
@@ -185,15 +178,6 @@ function SpaceSwitcher() {
 
   return (
     <div className="space-switcher-container">
-      <div
-        className="space-switcher-icon favourites-button"
-          onClick={handleFavouritesClick}
-        title="Open Favourites"
-      >
-        <div className="space-switcher-star-icon">
-          <Star color="white" size={20} />
-        </div>
-      </div>
       {activeWorkspaces.map((workspace: any) => (
         <React.Fragment key={workspace.id}>
           {renderSpaceIcon(workspace)}

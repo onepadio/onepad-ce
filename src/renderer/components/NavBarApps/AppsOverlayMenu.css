@@ -226,6 +226,23 @@
   right: -10px !important;
 }
 
+.favourite-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 /* Context menu styles */
 .context-menu {
   background: #2c2c2c;

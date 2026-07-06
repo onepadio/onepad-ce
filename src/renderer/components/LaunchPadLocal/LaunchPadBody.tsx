@@ -400,11 +400,11 @@ function LaunchPadBody(props: any) {
                       <span
                         style={{
                           color: "rgba(249, 249, 249, 0.8)",
-                          fontSize: "14px",
+                          fontSize: "18px",
                           fontWeight: "500",
                         }}
                       >
-                        Space Apps
+                        {workspace.name}
                       </span>
                     </div>
                   </div>
@@ -438,7 +438,6 @@ function LaunchPadBody(props: any) {
               <div className="container-fluid icons-tab">
                 <div className="d-flex flex-row justify-content-center p-4 icons-pad-space">
                   <div className="d-flex flex-row justify-content-start w-100 flex-wrap">
-                    <BrowserButton showStatusDot={false} />
                     {allItems
                       ?.filter((item) => item.workspace !== profileId)
                       .map((item, index) =>

@@ -30,6 +30,7 @@ import { activateBrowser } from "../../hubs/WindowService";
 function Desktop(props) {
   const dispatch = useDispatch();
   const personId = useSelector((state: any) => state.app.personId);
+  const profileId = useSelector((state: any) => state.app.profileId);
   const isLocal = useSelector((state: any) => state.workspace.isLocal);
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
   const workspaceId = useSelector(
@@ -275,12 +276,37 @@ function Desktop(props) {
   }
 
   // Build apps array from open windows
+  // Include both workspace-specific apps and global apps (favourites with workspace: "all")
   const filteredApps = Object.values(openWindows).filter(
-    (window: any) =>
-      (window.type === "app" || window.type === "link") &&
-      window.workspace === workspace.id
+    (window: any) => {
+      const isValidType = window.type === "app" || window.type === "link" || window.type === "xapp";
+      if (!isValidType) return false;
+      
+      // For xapp type, check desktop property; for others, check workspace property
+      if (window.type === "xapp") {
+        return window.desktop === "all" || window.desktop === workspace.id;
+      }
+      
+      return window.workspace === workspace.id || window.workspace === "all";
+    }
   );
-  const apps: any[] = [...filteredApps];
+
+  // Get favourite app IDs from localStorage
+  const favouriteAppIds = JSON.parse(localStorage.getItem(`xappIds-${profileId}`) || "[]");
+
+  // Sort apps: favourites first, then regular apps
+  const sortedApps = [...filteredApps].sort((a: any, b: any) => {
+    const aIsFavourite = favouriteAppIds.includes(a.id);
+    const bIsFavourite = favouriteAppIds.includes(b.id);
+    
+    // If both are favourites or both are not, maintain original order
+    if (aIsFavourite === bIsFavourite) return 0;
+    
+    // Favourites come first
+    return aIsFavourite ? -1 : 1;
+  });
+  
+  const apps: any[] = sortedApps;
 
   // Calculate browser tabs count
   const browserTabsCount = Object.values(openTabs).filter(
@@ -409,6 +435,7 @@ function Desktop(props) {
         onBrowserClick={handleBrowserClick}
         isLaunchpadActive={isLaunchpadActive}
         browserTabsCount={browserTabsCount}
+        favouriteAppIds={favouriteAppIds}
       />
     </>
   );

@@ -548,7 +548,6 @@ function SideBar() {
         {/* Space Tabs button moved to AppsOverlayMenu */}
 
         {(() => {
-          console.log("openWindows: ", openWindows);
           const filteredApps = Object.values(openWindows).filter((window: any) =>
             (window.type === "app" || window.type === "link") && window.workspace === workspace.id
           );

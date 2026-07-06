@@ -409,10 +409,8 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
   }
 
   // Filter apps and sort by recent usage (most recently used first)
-  console.log("apps: ", apps);
   const filteredApps = apps.filter(app => app.type !== "browser");
   const xapps = apps.filter(app => app.type === "xapp");
-  console.log("xapps: ", xapps);
 
   // Get closed pinned apps from workspace apps/links
   const closedPinnedApps: any[] = [];

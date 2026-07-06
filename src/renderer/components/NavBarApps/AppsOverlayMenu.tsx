@@ -1,4 +1,4 @@
-import { Layers, ChevronDown, ChevronUp, WindowStack } from "react-bootstrap-icons";
+import { Layers, ChevronDown, ChevronUp, WindowStack, Star } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
@@ -7,6 +7,7 @@ import "./AppsOverlayMenu.css";
 
 import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
+import { modalActions } from "../../store/modal-slice";
 import DesktopService from "../../services/desktop";
 
 // @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
@@ -20,6 +21,7 @@ interface AppsOverlayMenuProps {
   onBrowserClick: () => void;
   isLaunchpadActive: boolean;
   browserTabsCount: number;
+  favouriteAppIds: string[];
 }
 
 type HideMode = 'always-on-top' | 'auto-hide';
@@ -31,7 +33,8 @@ function AppsOverlayMenu({
   onLaunchpadClick,
   onBrowserClick,
   isLaunchpadActive,
-  browserTabsCount
+  browserTabsCount,
+  favouriteAppIds
 }: AppsOverlayMenuProps) {
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
@@ -100,6 +103,11 @@ function AppsOverlayMenu({
 
   const handleToggleManualHide = () => {
     setManuallyHidden(!manuallyHidden);
+  };
+
+  const handleFavouritesClick = () => {
+    dispatch(modalActions.setSelectedCategory("favourites"));
+    dispatch(modalActions.toggleCategoryPad({ category: "favourites" }));
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -221,7 +229,7 @@ function AppsOverlayMenu({
   };
 
   const getAppTitle = (app: any) => {
-    return app.type === "app" ? app.data.name : app.data.title;
+    return app.type === "app" || app.type === "xapp" ? app.data.name : app.data.title;
   };
 
   // Filter out browser type apps
@@ -281,6 +289,18 @@ function AppsOverlayMenu({
           
           <div className="apps-overlay-menu-items">
           <button
+            className="app-menu-item"
+            onClick={handleFavouritesClick}
+            onMouseEnter={() => setHoveredApp("favourites")}
+            onMouseLeave={() => setHoveredApp(null)}
+          >
+            <Star color="white" size={20} />
+            {hoveredApp === "favourites" && (
+              <div className="app-tooltip">Favourites</div>
+            )}
+          </button>
+          
+          <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={onLaunchpadClick}
             onMouseEnter={() => setHoveredApp("launchpad")}
@@ -309,7 +329,9 @@ function AppsOverlayMenu({
             )}
           </button>
           
-          {filteredApps.map((app) => (
+          {filteredApps.map((app) => {
+            const isFavourite = favouriteAppIds.includes(app.id);
+            return (
             <button
               key={app.id}
               className={`app-menu-item ${activeWindowId === app.id ? "active" : ""}`}
@@ -406,11 +428,17 @@ function AppsOverlayMenu({
                   e.currentTarget.src = defaultIcon;
                 }}
               />
+              {isFavourite && (
+                <span className="favourite-badge">
+                  <Star size={8} fill="white" color="white" />
+                </span>
+              )}
               {hoveredApp === app.id && (
                 <div className="app-tooltip">{getAppTitle(app)}</div>
               )}
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
