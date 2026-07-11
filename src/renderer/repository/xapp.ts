@@ -2,7 +2,7 @@ import { db } from "./db";
 import {AES, enc}from 'crypto-js';
 
 export default class XAppRepository{
-    static save(name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, profileId: any, autoSave: any, suspendTabs: any) {
+    static save(name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, profileId: any, autoSave: any, suspendTabs: any, useragent = "") {
         return new Promise((resolve, reject) => {
             // @ts-expect-error TS(2339): Property 'xapps' does not exist on type 'Dexie'.
             db.xapps.add({
@@ -17,7 +17,8 @@ export default class XAppRepository{
                     icon: icon,
                     window: window,
                     autoSave: autoSave,
-                    suspendTabs: suspendTabs
+                    suspendTabs: suspendTabs,
+                    useragent: useragent
                 },
                 state:{
                     tabs: []

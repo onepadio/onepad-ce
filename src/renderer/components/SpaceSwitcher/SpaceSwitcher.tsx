@@ -9,6 +9,7 @@ import {
   processOpenTabsBeforePersist,
   processWindows,
 } from "../../services/window";
+import { House } from "react-bootstrap-icons";
 
 function SpaceSwitcher() {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ function SpaceSwitcher() {
   const currentWorkspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
+  const homeWorkspaceId = useSelector((state: any) => state.user.homeWorkspace);
   const openTabs = useSelector((state: any) => state.session.openTabs);
   const openWindows = useSelector((state: any) => state.session.openWindows);
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
@@ -110,6 +112,12 @@ function SpaceSwitcher() {
       });
   };
 
+  const handleHomeClick = () => {
+    if (homeWorkspaceId) {
+      handleWorkspaceSwitch(homeWorkspaceId);
+    }
+  };
+
   const renderSpaceIcon = (workspace: any) => {
     const isActive = workspace.id === currentWorkspace.id;
 
@@ -178,7 +186,16 @@ function SpaceSwitcher() {
 
   return (
     <div className="space-switcher-container">
-      {activeWorkspaces.map((workspace: any) => (
+      <div
+        className={`space-switcher-icon home-button ${currentWorkspace.id === homeWorkspaceId ? "active" : ""}`}
+        onClick={handleHomeClick}
+        title="Home"
+      >
+        <div className="space-switcher-home-icon">
+          <House color="white" size={20} />
+        </div>
+      </div>
+      {activeWorkspaces.filter((workspace: any) => workspace.id !== homeWorkspaceId).map((workspace: any) => (
         <React.Fragment key={workspace.id}>
           {renderSpaceIcon(workspace)}
         </React.Fragment>

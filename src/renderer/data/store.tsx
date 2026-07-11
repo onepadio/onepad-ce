@@ -92,7 +92,7 @@ export const categoriesArray = [
         id: 16, 
         name: 'Communication & Messaging',
         icon: (<Folder size={16} color="white"></Folder>),
-        visible: false, 
+        visible: true, 
     },
     { 
         id: 17, 
@@ -411,6 +411,7 @@ export const categoriesDict = {
             {'id': '20b7ea4b-9182-496f-bd05-4b5f3cb5ab5b', 'name': 'Endless Truck'},
             {'id': '80260f55-d2ae-4c6b-9461-383500197179', 'name': 'Candy Bubble'},
             {'id': '27c71e37-778f-43d8-b431-72b12350839d', 'name': 'Gold Mine'},
+            { 'id': '71dfba26-9264-4f8d-9d05-7728ca2f74f1', 'name' : 'WhatsApp' },
         ]
     },
     11: { 
@@ -440,7 +441,9 @@ export const categoriesDict = {
     16: {
         id: 16,
         name: 'Communication & Messaging',
-        items: []
+        items: [
+            { 'id': '71dfba26-9264-4f8d-9d05-7728ca2f74f1', 'name' : 'WhatsApp' }
+        ]
     },
     17: { 
         id: 17, 
@@ -567,7 +570,7 @@ export const itemsDb = {
     '4b966169-8380-48d1-88e3-96f1a3ce784a':{'name': 'Wikispecies', 'company': 'The Wikimedia Foundation', 'category': 'Utilities', 'description': 'Free directory of species', 'icon': 'Wikispecies-logo.png', 'website': 'https://species.wikimedia.org/wiki/Main_Page', 'login': 'https://species.wikimedia.org/wiki/Main_Page', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     '24632763-c932-4d47-8793-cb99dd984415':{'name': 'Microsoft Loop', 'company': 'Microsoft Corporation', 'category': 'Utilities', 'description': 'Think, plan, and create together like never before', 'icon': 'Microsoft_Loop_logo.png', 'website': 'https://loop.microsoft.com/learn', 'login': 'https://loop.microsoft.com/', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     '0f4f8633-6705-4456-9e54-127fd352243a':{'name': 'Mailchimp', 'company': 'Rocket Science Group', 'category': 'Business', 'description': 'Win new customers with the #1 email marketing and automations brand* that recommends ways to get more opens, clicks and sales.', 'icon': 'mailchimp.png', 'website': 'https://mailchimp.com/', 'login': 'https://login.mailchimp.com/', 'linkedin': 'https://www.linkedin.com/company/intuitmailchimp/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
-    '709a8e1f-d8e3-4019-828d-98e478af76a6':{'name': 'Spotify', 'company': 'Spotify AB', 'category': 'Music & Video', 'description': 'Spotify is a digital music service that gives you access to millions of songs.', 'icon': 'Spotify_icon.png', 'website': 'https://www.spotify.com/', 'login': 'https://open.spotify.com/', 'linkedin': 'https://www.linkedin.com/company/spotify/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
+    '709a8e1f-d8e3-4019-828d-98e478af76a6':{'name': 'Spotify', 'company': 'Spotify AB', 'category': 'Music & Video', 'description': 'Spotify is a digital music service that gives you access to millions of songs.', 'icon': 'Spotify_icon.png', 'website': 'https://www.spotify.com/', 'login': 'https://open.spotify.com/', 'linkedin': 'https://www.linkedin.com/company/spotify/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0', 'useragent': 'custom'},
     '81d04d55-bcdc-4f2b-9ca5-3bb2fb9355d1':{'name': 'NetSuite', 'company': 'NetSuite Inc', 'category': 'Business', 'description': 'NetSuite is the leading integrated cloud business software suite, including business accounting, ERP, CRM and ecommerce software.', 'icon': 'NetSuite-Emblem.png', 'website': 'https://www.netsuite.com/portal/home.shtml', 'login': 'https://system.netsuite.com/pages/customerlogin.jsp?country=US', 'linkedin': 'https://www.linkedin.com/company/netsuite/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     '9aa64024-80aa-4239-99bc-4b198c36b4fa':{'name': 'Mulesoft AnyPoint', 'company': 'MuleSoft, LLC.', 'category': 'Utilities', 'description': "MuleSoft's Anypoint Platform™ is the world's leading integration platform for SOA, SaaS, and APIs.", 'icon': 'mulesoft-logo.png', 'website': 'https://www.mulesoft.com/', 'login': 'https://anypoint.mulesoft.com/login', 'linkedin': 'https://www.linkedin.com/company/mulesoft', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     'f1f9c406-bcbf-4bb7-a4de-6a1e4ede2f70':{'name': 'Paylocity', 'company': 'Paylocity Corporation', 'category': 'Utilities', 'description': 'Paylocity is the HR & Payroll provider that frees you from the tasks of today, so together, we can spend more time focused on the promise of tomorrow.', 'icon': 'paylocity-logo.png', 'website': 'https://www.paylocity.com/', 'login': 'https://access.paylocity.com/', 'linkedin': 'https://www.linkedin.com/company/paylocity', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
@@ -645,6 +648,7 @@ export const itemsDb = {
     'b41c3fdf-7225-4816-9479-732f993c1691':{'name': 'Betterworks', 'company': 'Betterworks Systems Inc. ', 'category': 'Business', 'description': 'Betterworks closes the loop between people, strategy, and results, enabling organizations to align even their most sprawling, dynamic teams.', 'icon': 'betterworks_icon.png', 'website': 'https://www.betterworks.com/', 'login': 'https://app.betterworks.com/app/splash/#/signin', 'linkedin': 'https://www.linkedin.com/company/betterworks', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     'e007b0d3-1188-4b72-9085-28c8169fd0cc':{'name': 'Binance', 'company': 'Binance Holdings Limited', 'category': 'Finance', 'description': 'Binance cryptocurrency exchange - We operate the worlds biggest bitcoin exchange and altcoin crypto exchange in the world by volume.', 'icon': 'Binance_icon.png', 'website': 'https://www.binance.com/en', 'login': 'https://accounts.binance.com/en/login', 'linkedin': 'https://www.linkedin.com/company/binance', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
     '0d5b07ad-aac8-4708-b6f4-af048f6c33d8':{'name': 'Bitrix24', 'company': 'Bitrix, Inc.', 'category': 'Business', 'description': 'Bitrix24 is a collaboration software with complete tools for management, collaboration, and communication. Bitrix24 gives you a unified platform for your files, projects, messages, tasks, and contacts. ', 'icon': 'bitrix24_icon.png', 'website': 'https://www.bitrix24.com', 'login': 'https://www.bitrix24.net/oauth/authorize/', 'linkedin': 'https://www.linkedin.com/company/bitrix24/', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},
+    '71dfba26-9264-4f8d-9d05-7728ca2f74f1':{'name': 'WhatsApp', 'company': 'Meta Platforms, Inc.', 'category': 'Social Networking', 'description': 'WhatsApp is a free messaging and video calling app used by over 2 billion people in more than 180 countries to stay in touch with friends and family, anytime and anywhere.', 'icon': 'whatsapp_icon.png', 'website': 'https://web.whatsapp.com/', 'login': 'https://web.whatsapp.com/', 'linkedin': 'https://www.linkedin.com/company/whatsapp', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0', 'useragent': 'custom'},
     
     //OnePad Apps
     'one-task-manager':{'name': 'Task Board', 'company': 'Sigma Technologies', 'category': 'Productivity', 'description': 'Task Manager is a tool for managing tasks and projects.', 'icon': 'kanban.svg', 'website': 'https://sigma-tech.co.uk', 'login': 'https://taskboard.onepad.io', 'linkedin': '', 'windowType': 'workspace', 'navigationControls': '0', 'autoSave': '0'},

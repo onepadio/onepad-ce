@@ -1,19 +1,3 @@
-/* NavBar Apps Vertical Container */
-.navbar-apps-vertical-container {
-  width: 56px;
-  transition: max-height 0.3s ease-in-out;
-}
-
-/* Collapsed state - smaller height */
-.navbar-apps-vertical-container.collapsed {
-  max-height: 120px; /* Height for 1 icon + chevron button */
-}
-
-/* Expanded state - larger height */
-.navbar-apps-vertical-container.expanded {
-  height: calc(100vh - 300px) !important;
-}
-
 .navbar-apps-vertical-wrapper {
   position: relative;
   width: 56px;
@@ -25,12 +9,14 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-height: calc(100vh - 640px); /* Reduced to make room for more button */
+  height: calc(100vh - 160px);
+  max-height: calc(100vh - 160px); /* Reduced to make room for more button */
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 40px;
   transition: max-height 0.3s ease-in-out;
+  margin-top: 80px;
 }
 
 /* NavBar Apps Vertical in collapsed state */
@@ -172,4 +158,20 @@
 
 .navbar-apps-vertical .menu-icon.closed:hover {
   opacity: 0.8;
+}
+
+/* Add xapp button styling */
+.navbar-apps-vertical .menu-icon.add-xapp-button {
+  opacity: 0.6;
+  transition: all 0.2s ease-in-out;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.navbar-apps-vertical .menu-icon.add-xapp-button:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
 }

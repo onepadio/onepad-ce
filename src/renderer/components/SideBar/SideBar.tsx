@@ -544,7 +544,7 @@ function SideBar() {
       id="globalAppsMenu"
       className="d-flex flex-column justify-content-start global-apps-menu"
     >
-      <div className="global-apps-menu-content d-flex flex-column justify-content-start">
+      <div className="global-apps-menu-content d-flex flex-column justify-content-center">
         {/* Space Tabs button moved to AppsOverlayMenu */}
 
         {(() => {
@@ -559,13 +559,8 @@ function SideBar() {
 
           return (
             <>
-              {/* Horizontal Divider - Only show if both sections have content */}
-
-              <div className="sidebar-divider">
-                <hr className="divider-line" />
-              </div>
               {/* NavBar Apps - Vertical Layout - Always visible */}
-              <div className="navbar-apps-container d-none">
+              <div className="navbar-apps-container">
                 <NavBarAppsVertical apps={apps} />
               </div>
             </>
@@ -573,7 +568,7 @@ function SideBar() {
         })()}
       </div>
       <div className="star-icon-container">
-        <ListGroup className="d-flex">
+        <ListGroup className="d-flex d-none">
           <ListGroupItem className="d-flex justify-content-center flex-column m-0 p-0">
               <Button
                 color="dark"

@@ -21,7 +21,7 @@ import * as Icon from 'react-feather';
 import clsx from "clsx";
 
 import logoIcon from '../../images/icon_512x512_transparent.png';
-import "./ProfilesCatalog.css";
+import "./PersonsCatalog.css";
 import NewPersonModalWindow from "./NewPersonModal";
 import DeleteProfileWarningModalWindow from "./DeleteProfileWarningModal";
 import PINModalWindow from "./PINModal";

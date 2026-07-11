@@ -98,7 +98,8 @@ const electronHandler = {
       'resume-docker-container',
       'get-tab-memory-info',
       'get-all-tabs-memory',
-      'fetch-website-metadata'
+      'fetch-website-metadata',
+      'get-user-agent'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

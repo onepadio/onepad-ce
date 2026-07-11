@@ -1,8 +1,8 @@
 import XAppRepository from "../repository/xapp";
 
 export default class XAppService {
-    static async save(name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, profileId: any, autoSave: any, suspendTabs: any) {
-        return await XAppRepository.save(name, startUrl, customUrl, storeId, icon, window, profileId, autoSave, suspendTabs);
+    static async save(name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, profileId: any, autoSave: any, suspendTabs: any, useragent = "") {
+        return await XAppRepository.save(name, startUrl, customUrl, storeId, icon, window, profileId, autoSave, suspendTabs, useragent);
     }
     
     static async update(id: any, name: any, startUrl: any, customUrl: any, icon: any, window: any) {

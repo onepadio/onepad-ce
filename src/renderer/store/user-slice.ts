@@ -11,6 +11,7 @@ const userSlice = createSlice({
     username: "",
     isLoggedIn: false,
     defaultWorkspace: "",
+    homeWorkspace: "",
     product: "FREE",
     limits: {
       maxProfiles: 1,
@@ -39,6 +40,9 @@ const userSlice = createSlice({
     },
     setDefaultWorkspace(state, action) {
       state.defaultWorkspace = action.payload.id;
+    },
+    setHomeWorkspace(state, action) {
+      state.homeWorkspace = action.payload.id;
     },
     setProduct(state, action) {
       state.product = action.payload;

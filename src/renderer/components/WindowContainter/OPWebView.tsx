@@ -30,6 +30,8 @@ function OPWebView(props: any) {
   
   const openTabs = useSelector((state: any) => state.session.openTabs);
   
+  const openWindows = useSelector((state: any) => state.session.openWindows);
+  
   // Use ref to always access latest openTabs in event handlers
   const openTabsRef = useRef(openTabs);
   useEffect(() => {
@@ -56,7 +58,45 @@ function OPWebView(props: any) {
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
 
   const [storeSS, setStoreSS] = useState(null);
-  const [defaultUserAgent, setDefaultUserAgent] = useState("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+  const [defaultUserAgent, setDefaultUserAgent] = useState("");
+  const [userAgentLoaded, setUserAgentLoaded] = useState(false);
+  const [needsCustomUA, setNeedsCustomUA] = useState(false);
+
+  // Check if current tab's app requires custom user agent
+  useEffect(() => {
+    const currentTab = openTabs[props.tabId];
+    if (currentTab && currentTab.window) {
+      // First check if window data has useragent information
+      const windowData = openWindows[currentTab.window];
+      if (windowData && windowData.data && windowData.data.useragent) {
+        setNeedsCustomUA(windowData.data.useragent === 'custom');
+      } else {
+        setNeedsCustomUA(false);
+      }
+    }
+  }, [openTabs, openWindows, props.tabId]);
+
+  useEffect(() => {
+    const fetchUserAgent = async () => {
+      if (isElectron() && window.electronAPI?.invoke) {
+        try {
+          const userAgent = await window.electronAPI.invoke('get-user-agent');
+          setDefaultUserAgent(userAgent);
+          setUserAgentLoaded(true);
+          log.info("User agent loaded from main process:", userAgent);
+        } catch (error) {
+          log.error("Failed to get user agent from main process, using fallback:", error);
+          setDefaultUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+          setUserAgentLoaded(true);
+        }
+      } else {
+        setDefaultUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+        setUserAgentLoaded(true);
+      }
+    };
+    
+    fetchUserAgent();
+  }, []);
 
   function handleLoad() {
     log.debug("handleLoad....");
@@ -784,7 +824,30 @@ function OPWebView(props: any) {
         );
       }
       
-      // Use webview for Electron
+      // Wait for user agent to load before rendering webview
+      if (!userAgentLoaded) {
+        return <div className="webview d-none m-1" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Loading...</div>;
+      }
+      
+      // Use webview for Electron (nodeintegration disabled to prevent detection)
+      // Render different webview based on whether custom UA is needed
+      if (needsCustomUA) {
+        return (
+          <webview
+            id={webViewId}
+            className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "")}
+            // @ts-expect-error
+            autosize="on"
+            src={startUrl}
+            // @ts-expect-error
+            allowpopups="true"
+            partition={props.partition}
+            useragent={defaultUserAgent}
+            onLoadCapture={() => handleLoad()}
+          ></webview>
+        );
+      }
+      
       return (
         <webview
           id={webViewId}
@@ -792,8 +855,6 @@ function OPWebView(props: any) {
           // @ts-expect-error
           autosize="on"
           src={startUrl}
-          // @ts-expect-error
-          nodeintegration="true"
           // @ts-expect-error
           allowpopups="true"
           partition={props.partition}
@@ -815,6 +876,29 @@ function OPWebView(props: any) {
       );
     }
 
+    // Wait for user agent to load before rendering webview
+    if (!userAgentLoaded) {
+      return <div className="webview m-1" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff'}}>Loading...</div>;
+    }
+
+    // Render different webview based on whether custom UA is needed
+    if (needsCustomUA) {
+      return (
+        <webview
+          id={webViewId}
+          className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "")}
+          // @ts-expect-error
+          autosize="on"
+          src={startUrl}
+          // @ts-expect-error
+          allowpopups="true"
+          partition={props.partition}
+          useragent={defaultUserAgent}
+          onLoadCapture={() => handleLoad()}
+        ></webview>
+      );
+    }
+
     return (
       <webview
         id={webViewId}
@@ -822,8 +906,6 @@ function OPWebView(props: any) {
         // @ts-expect-error
         autosize="on"
         src={startUrl}
-        // @ts-expect-error
-        nodeintegration="true"
         // @ts-expect-error
         allowpopups="true"
         partition={props.partition}

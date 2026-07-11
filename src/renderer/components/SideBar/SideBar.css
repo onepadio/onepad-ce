@@ -34,8 +34,7 @@
 }
 
 .global-apps-menu-content {
-  height: calc(100vh - 240px);
-  margin-top: 6px;
+  height: 100%;
 }
 
 .global-apps-menu-middle {
@@ -210,7 +209,6 @@
 /* NavBar Apps Container */
 .navbar-apps-container {
   width: 100%;
-  height: calc(100vh - 300px) !important;
 }
 
 .navbar-apps-container::-webkit-scrollbar {

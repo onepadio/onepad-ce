@@ -1,8 +1,8 @@
 import AppRepository from "../repository/app";
 
 export default class AppService {
-    static async save(workspaceId: any, desktopId: any, name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, autoSave: any, suspendTabs: any, isolated = false) {
-        return await AppRepository.save(workspaceId, desktopId, name, startUrl, customUrl, storeId, icon, window, autoSave, suspendTabs, isolated);
+    static async save(workspaceId: any, desktopId: any, name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, autoSave: any, suspendTabs: any, isolated = false, useragent = "") {
+        return await AppRepository.save(workspaceId, desktopId, name, startUrl, customUrl, storeId, icon, window, autoSave, suspendTabs, isolated, useragent);
     }
     
     static async update(id: any, desktopId: any, name: any, startUrl: any, customUrl: any, icon: any, window: any) {

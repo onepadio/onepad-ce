@@ -1,0 +1,65 @@
+.sidebar-canvas{
+    background-color: #1b1b1b;
+    color: white;
+    position: absolute;
+    top: 36px;
+    left: 56px;
+    z-index: 1999;
+    height: calc(100vh - 36px);
+    transition: all 0.25s linear;
+    opacity: 0;
+    display: none !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-canvas-open{
+    opacity: 1;
+    display: block !important;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 40px;
+}
+
+.sidebar-title{
+    color: white;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sidebar-close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.sidebar-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-offcanvas{
+    z-index: 998;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+}
+
+.sidebar-webview {
+    
+}
+
+.hidden {
+    display: none !important;
+}

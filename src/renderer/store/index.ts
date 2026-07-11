@@ -13,6 +13,7 @@ import p2pFileSlice from "./p2pfile-slice";
 import canvasSlice from "./canvas-slice";
 import cornerWindowSlice from "./corner-window-slice";
 import chatSlice from "./chat-slice";
+import sidebarSlice from "./sidebar-slice";
 import musicPlayerSlice from "./musicplayer-slice";
 import utilityAppsSlice from "./utility-slice";
 import browserSlice from "./browser-slice";
@@ -45,6 +46,7 @@ const store = configureStore({
     canvas: canvasSlice.reducer,
     cornerWindow: cornerWindowSlice.reducer,
     chat: chatSlice.reducer,
+    sidebar: sidebarSlice.reducer,
     musicPlayer: musicPlayerSlice.reducer,
     utility: utilityAppsSlice.reducer,
     browser: browserSlice.reducer,

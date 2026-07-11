@@ -176,7 +176,7 @@ function UserMenu(props: any){
         });
     }
 
-    function profiles(){
+    function accounts(){
         saveActiveWorkspace(() => {
             dispatch(userActions.setUserId(""));
             dispatch(appActions.setProfileId(""));
@@ -344,8 +344,8 @@ function UserMenu(props: any){
                 <DropdownItem header>
                     {person.name}
                 </DropdownItem>
-                <DropdownItem onClick={profiles} >
-                    Switch Profile
+                <DropdownItem onClick={accounts} >
+                    Switch Account
                 </DropdownItem>
                 {
                     version.includes("dev") ? userSignIn() : null

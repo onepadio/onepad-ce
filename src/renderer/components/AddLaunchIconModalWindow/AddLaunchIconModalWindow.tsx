@@ -80,6 +80,7 @@ function AddLaunchIconModalWindow(props: any) {
   const [showControls, setShowControls] = useState(0);
   const [suspendTabs, setSuspendTabs] = useState(false);
   const [isolated, setIsolated] = useState(false);
+  const [useragent, setUseragent] = useState("");
 
   // Advanced accordion
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -133,7 +134,8 @@ function AddLaunchIconModalWindow(props: any) {
         window,
         autoSave,
         suspendTabs,
-        isolated
+        isolated,
+        useragent
       ).then((id) => {
         FavouritesService.save(id).then((favourites) => {
           AppService.getAppsByWorkspaceIdAndDesktopId(
@@ -155,7 +157,8 @@ function AddLaunchIconModalWindow(props: any) {
         window,
         profileId,
         autoSave,
-        suspendTabs
+        suspendTabs,
+        useragent
       )
         .then((id) => {
           log.debug("XAppService.save", id);
@@ -227,6 +230,7 @@ function AddLaunchIconModalWindow(props: any) {
     setWindowType("internal");
     setIsStateful(_item.autoSave);
     setShowControls(_item.navigationControls);
+    setUseragent(_item.useragent || "");
   }
 
   function refresh() {
@@ -240,6 +244,7 @@ function AddLaunchIconModalWindow(props: any) {
       setWindowType("internal");
       setIsStateful(data.autoSave);
       setShowControls(data.navigationControls);
+      setUseragent(data.useragent || "");
     });
   }
 
@@ -259,6 +264,7 @@ function AddLaunchIconModalWindow(props: any) {
     setWindowType("internal");
     setIsStateful(selectedAppStoreItem.autoSave);
     setShowControls(selectedAppStoreItem.navigationControls);
+    setUseragent(selectedAppStoreItem.useragent || "");
   }
 
   useEffect(() => {

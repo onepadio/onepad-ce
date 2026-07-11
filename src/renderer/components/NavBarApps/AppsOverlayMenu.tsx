@@ -1,4 +1,4 @@
-import { Layers, ChevronDown, ChevronUp, WindowStack, Star } from "react-bootstrap-icons";
+import { Layers, ChevronDown, ChevronUp, WindowStack, House } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
@@ -7,7 +7,6 @@ import "./AppsOverlayMenu.css";
 
 import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
-import { modalActions } from "../../store/modal-slice";
 import DesktopService from "../../services/desktop";
 
 // @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
@@ -21,7 +20,7 @@ interface AppsOverlayMenuProps {
   onBrowserClick: () => void;
   isLaunchpadActive: boolean;
   browserTabsCount: number;
-  favouriteAppIds: string[];
+  homeAppIds: string[];
 }
 
 type HideMode = 'always-on-top' | 'auto-hide';
@@ -34,7 +33,7 @@ function AppsOverlayMenu({
   onBrowserClick,
   isLaunchpadActive,
   browserTabsCount,
-  favouriteAppIds
+  homeAppIds
 }: AppsOverlayMenuProps) {
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
@@ -61,13 +60,6 @@ function AppsOverlayMenu({
   
   // Handle visibility based on mode
   useEffect(() => {
-    // Always show menu when launchpad is active
-    if (isLaunchpadActive) {
-      setIsVisible(true);
-      setManuallyHidden(false);
-      return;
-    }
-
     // Always on top mode - only hide when manually hidden
     if (hideMode === 'always-on-top') {
       setIsVisible(!manuallyHidden);
@@ -77,11 +69,11 @@ function AppsOverlayMenu({
     // Auto-hide mode - menu is hidden by default, shown via indicator hover
     // Nothing to do here - visibility is controlled by indicator onMouseEnter
     // and scroll events below
-  }, [isLaunchpadActive, hideMode, manuallyHidden]);
+  }, [hideMode, manuallyHidden]);
 
   // Handle scroll to hide in auto-hide mode
   useEffect(() => {
-    if (hideMode !== 'auto-hide' || isLaunchpadActive) return;
+    if (hideMode !== 'auto-hide') return;
 
     const handleWebviewScroll = () => {
       setIsVisible(false);
@@ -99,15 +91,10 @@ function AppsOverlayMenu({
         clearTimeout(hideTimeoutRef.current);
       }
     };
-  }, [hideMode, isLaunchpadActive]);
+  }, [hideMode]);
 
   const handleToggleManualHide = () => {
     setManuallyHidden(!manuallyHidden);
-  };
-
-  const handleFavouritesClick = () => {
-    dispatch(modalActions.setSelectedCategory("favourites"));
-    dispatch(modalActions.toggleCategoryPad({ category: "favourites" }));
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -238,14 +225,14 @@ function AppsOverlayMenu({
   return (
     <>
       {/* Show up button when manually hidden in always-on-top mode */}
-      {manuallyHidden && hideMode === 'always-on-top' && !isLaunchpadActive && (
+      {manuallyHidden && hideMode === 'always-on-top' && (
         <div className="apps-overlay-show-button" onClick={handleToggleManualHide}>
           <ChevronUp size={16} color="white" />
         </div>
       )}
 
       {/* Trigger zone indicator - only show in auto-hide mode when menu is hidden */}
-      {!isVisible && hideMode === 'auto-hide' && !isLaunchpadActive && (
+      {!isVisible && hideMode === 'auto-hide' && (
         <div 
           className="apps-overlay-trigger-indicator"
           onMouseEnter={() => setIsVisible(true)}
@@ -258,7 +245,7 @@ function AppsOverlayMenu({
         onContextMenu={handleContextMenu}
         onMouseLeave={() => {
           // Auto-hide when mouse leaves in auto-hide mode
-          if (hideMode === 'auto-hide' && !isLaunchpadActive) {
+          if (hideMode === 'auto-hide') {
             if (!hideTimeoutRef.current) {
               hideTimeoutRef.current = setTimeout(() => {
                 setIsVisible(false);
@@ -277,7 +264,7 @@ function AppsOverlayMenu({
       >
         <div className="apps-overlay-menu-content">
           {/* Hide button - only show in always-on-top mode and not on launchpad */}
-          {hideMode === 'always-on-top' && !isLaunchpadActive && (
+          {hideMode === 'always-on-top' && (
             <button 
               className="apps-overlay-hide-button"
               onClick={handleToggleManualHide}
@@ -288,18 +275,6 @@ function AppsOverlayMenu({
           )}
           
           <div className="apps-overlay-menu-items">
-          <button
-            className="app-menu-item"
-            onClick={handleFavouritesClick}
-            onMouseEnter={() => setHoveredApp("favourites")}
-            onMouseLeave={() => setHoveredApp(null)}
-          >
-            <Star color="white" size={20} />
-            {hoveredApp === "favourites" && (
-              <div className="app-tooltip">Favourites</div>
-            )}
-          </button>
-          
           <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={onLaunchpadClick}
@@ -330,7 +305,7 @@ function AppsOverlayMenu({
           </button>
           
           {filteredApps.map((app) => {
-            const isFavourite = favouriteAppIds.includes(app.id);
+            const isHomeApp = homeAppIds.includes(app.id);
             return (
             <button
               key={app.id}
@@ -428,9 +403,9 @@ function AppsOverlayMenu({
                   e.currentTarget.src = defaultIcon;
                 }}
               />
-              {isFavourite && (
-                <span className="favourite-badge">
-                  <Star size={8} fill="white" color="white" />
+              {isHomeApp && (
+                <span className="home-badge">
+                  <House size={8} fill="white" color="white" />
                 </span>
               )}
               {hoveredApp === app.id && (

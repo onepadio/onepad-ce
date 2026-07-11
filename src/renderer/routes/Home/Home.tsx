@@ -72,6 +72,7 @@ import WindowsActionsMenu from "../../components/WindowActionsMenu/WindowsAction
 import WebViewCanvas from "../../components/WebViewCanvas/WebViewCanvas";
 import CornerWebViewModal from "../../components/CornerWebViewModal/CornerWebViewModal";
 import ChatAppsWindow from "../../components/ChatAppsWindow/ChatAppsWindow";
+import SidebarWindow from "../../components/SidebarWindow/SidebarWindow";
 import ChatAssistant from "../../components/ChatAssistant/ChatAssistant";
 import MusicPlayerWindow from "../../components/MusicPlayerWindow/MusicPlayerWindow";
 import UtilityAppsCanvas from "../../components/UtilityAppsCanvas/UtilityAppsCanvas";
@@ -635,7 +636,7 @@ function Home() {
         platform === "" ? <></> : (platform === Platform.MacOS ? <MacActionsMenu /> : <WindowsActionsMenu />)
       }
       {
-        isSharedAppsEnabled ? <SideBar /> : <></>
+        activeWindow?.id !== "launchpad" ? <SideBar /> : <></>
       }
       <AppStoreModalWindow />
 
@@ -665,23 +666,15 @@ function Home() {
         isMemoryDashboardOpen ? <MemoryDashboard /> : <></>
       }
       {
-        personId !== "" ? <ChatAppsWindow /> : <></>
+        personId !== "" ? <SidebarWindow /> : <></>
       }
       <ChatAssistant />
-      {
-        personId !== "" ? <MusicPlayerWindow /> : <></>
-      }
-      {
-        personId !== "" ? <UtilityAppsCanvas /> : <></>
-      }
       {
         personId !== "" ? <AIAssistantsCanvas /> : <></>
       }
       {
         isWebViewCanvasOpen ? <WebViewCanvas /> : <></>
       }
-      {/* @ts-expect-error TS(2554): Expected 1 arguments, but got 0. */}
-      <SpaceAppWindow partitionId={getPartitionId()}/>
       {
         isAddLaunchIconModalOpen ? <AddLaunchIconModalWindow /> : <></>
       }

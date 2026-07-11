@@ -45,6 +45,30 @@ function ChatAppsWindow(props: any){
     const [windowId, setWindowId] = useState(uuidv4());
     const [webviewId, setWebviewId] = useState(uuidv4());
     const [webviewHeight, setWebviewHeight] = useState("calc(100% - 40px)");
+    const [defaultUserAgent, setDefaultUserAgent] = useState("");
+    const [userAgentLoaded, setUserAgentLoaded] = useState(false);
+
+    useEffect(() => {
+      const fetchUserAgent = async () => {
+        if (window.electronAPI?.invoke) {
+          try {
+            const userAgent = await window.electronAPI.invoke('get-user-agent');
+            setDefaultUserAgent(userAgent);
+            setUserAgentLoaded(true);
+            log.info("User agent loaded from main process:", userAgent);
+          } catch (error) {
+            log.error("Failed to get user agent from main process, using fallback:", error);
+            setDefaultUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+            setUserAgentLoaded(true);
+          }
+        } else {
+          setDefaultUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+          setUserAgentLoaded(true);
+        }
+      };
+      
+      fetchUserAgent();
+    }, []);
 
     function handleLoad(){
 
@@ -153,7 +177,7 @@ function ChatAppsWindow(props: any){
               )
             }
             {
-              personId !== "" && (
+              personId !== "" && userAgentLoaded && (
                 <webview
                   id={"whatsapp-"+webviewId}
                   className={ isOpen ? "chatview-webview" : "hidden"}
@@ -161,14 +185,17 @@ function ChatAppsWindow(props: any){
                   autosize="on"
                   src={webviewUrl}
                   // @ts-expect-error
-                  nodeintegration="true"
-                  // @ts-expect-error
                   allowpopups="false"
                   partition={"persist:"+personId}
+                  useragent={defaultUserAgent}
                   onLoadCapture={() => handleLoad()}
                   style={{width: "100%", height: webviewHeight}}
-                  useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
                 ></webview>
+              )
+            }
+            {
+              personId !== "" && !userAgentLoaded && (
+                <div className="chatview-webview" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', height: webviewHeight}}>Loading...</div>
               )
             }
           </div>

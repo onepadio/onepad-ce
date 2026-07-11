@@ -78,6 +78,20 @@ export class UsersRepository{
         });
     }
 
+    static setHomeWorkspace(id: any, workspaceId: any) {
+        return new Promise((resolve, reject) => {
+            // @ts-expect-error TS(2339): Property 'users' does not exist on type 'Dexie'.
+            db.users.update(id, {
+                updatedAt: Date.now(),
+                homeWorkspace: workspaceId
+            }).then((id: any) => {
+                resolve(id);
+            }).catch((error: any) => {
+                reject(error);
+            });
+        });
+    }
+
     static delete(id: any) {
         return new Promise((resolve, reject) => {
             // @ts-expect-error TS(2339): Property 'users' does not exist on type 'Dexie'.

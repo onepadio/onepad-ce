@@ -36,6 +36,7 @@ function Desktop(props) {
   const workspaceId = useSelector(
     (state: any) => state.workspace.selectedWorkspace.id
   );
+  const homeWorkspaceId = useSelector((state: any) => state.user.homeWorkspace);
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
   const isDesktopsEnabled = useSelector(
     (state: any) => state.settings.isDesktopsEnabled
@@ -276,7 +277,9 @@ function Desktop(props) {
   }
 
   // Build apps array from open windows
-  // Include both workspace-specific apps and global apps (favourites with workspace: "all")
+  // Include workspace-specific apps and home workspace apps (always visible)
+  const isHomeWorkspace = workspace.id === homeWorkspaceId;
+  
   const filteredApps = Object.values(openWindows).filter(
     (window: any) => {
       const isValidType = window.type === "app" || window.type === "link" || window.type === "xapp";
@@ -284,26 +287,43 @@ function Desktop(props) {
       
       // For xapp type, check desktop property; for others, check workspace property
       if (window.type === "xapp") {
-        return window.desktop === "all" || window.desktop === workspace.id;
+        // In home workspace, show only home workspace apps
+        if (isHomeWorkspace) {
+          return window.desktop === homeWorkspaceId;
+        }
+        // In other workspaces, show both current workspace apps and home workspace apps
+        return window.desktop === homeWorkspaceId || window.desktop === workspace.id;
       }
       
-      return window.workspace === workspace.id || window.workspace === "all";
+      // In home workspace, show only home workspace apps
+      if (isHomeWorkspace) {
+        return window.workspace === homeWorkspaceId;
+      }
+      // In other workspaces, show both current workspace apps and home workspace apps
+      return window.workspace === workspace.id || window.workspace === homeWorkspaceId;
     }
   );
 
-  // Get favourite app IDs from localStorage
-  const favouriteAppIds = JSON.parse(localStorage.getItem(`xappIds-${profileId}`) || "[]");
+  // Get home workspace app IDs to mark them with badge
+  const homeAppIds = Object.values(openWindows)
+    .filter((window: any) => {
+      if (window.type === "xapp") {
+        return window.desktop === homeWorkspaceId;
+      }
+      return window.workspace === homeWorkspaceId;
+    })
+    .map((window: any) => window.id);
 
-  // Sort apps: favourites first, then regular apps
+  // Sort apps: home apps first, then regular apps
   const sortedApps = [...filteredApps].sort((a: any, b: any) => {
-    const aIsFavourite = favouriteAppIds.includes(a.id);
-    const bIsFavourite = favouriteAppIds.includes(b.id);
+    const aIsHome = homeAppIds.includes(a.id);
+    const bIsHome = homeAppIds.includes(b.id);
     
-    // If both are favourites or both are not, maintain original order
-    if (aIsFavourite === bIsFavourite) return 0;
+    // If both are home or both are not, maintain original order
+    if (aIsHome === bIsHome) return 0;
     
-    // Favourites come first
-    return aIsFavourite ? -1 : 1;
+    // Home apps come first
+    return aIsHome ? -1 : 1;
   });
   
   const apps: any[] = sortedApps;
@@ -435,7 +455,7 @@ function Desktop(props) {
         onBrowserClick={handleBrowserClick}
         isLaunchpadActive={isLaunchpadActive}
         browserTabsCount={browserTabsCount}
-        favouriteAppIds={favouriteAppIds}
+        homeAppIds={homeAppIds}
       />
     </>
   );

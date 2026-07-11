@@ -1068,6 +1068,26 @@ ipcMain.handle('convert-to-png', async (event, data) => {
   return img.toPNG();
 });
 
+ipcMain.handle('get-user-agent', async () => {
+  try {
+    const chromeVersion = process.versions.chrome;
+    
+    if (!chromeVersion) {
+      log.warn('Chrome version not available, using fallback');
+      return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+    }
+    
+    // Use standard Chrome user agent without Electron identifiers to avoid detection
+    const userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+    log.info('Generated user agent (masked for compatibility):', userAgent);
+    log.info('Chrome version:', chromeVersion);
+    return userAgent;
+  } catch (error) {
+    log.error('Error generating user agent:', error);
+    return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+  }
+});
+
 ipcMain.handle('get-tab-memory-info', async (event, webContentsId) => {
   try {
     const wc = webContents.fromId(webContentsId);

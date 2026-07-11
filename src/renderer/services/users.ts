@@ -57,6 +57,15 @@ export class UsersService {
         });
     }
 
+    static setHomeWorkspace(userId: any, workspaceId: any) {
+        return new Promise((resolve, reject) => {
+            UsersRepository.setHomeWorkspace(userId, workspaceId).then((id) => {
+                resolve(id);
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
 
     static delete(userId: any) {
         return new Promise((resolve, reject) => {

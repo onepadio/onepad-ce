@@ -2,7 +2,7 @@ import { db } from "./db";
 import {AES, enc}from 'crypto-js';
 
 export default class AppRepository{
-    static save(workspaceId: any, desktopId: any, name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, autoSave: any, suspendTabs: any, isolated: any) {
+    static save(workspaceId: any, desktopId: any, name: any, startUrl: any, customUrl: any, storeId: any, icon: any, window: any, autoSave: any, suspendTabs: any, isolated: any, useragent = "") {
         return new Promise((resolve, reject) => {
             // @ts-expect-error TS(2339): Property 'apps' does not exist on type 'Dexie'.
             db.apps.add({
@@ -19,7 +19,8 @@ export default class AppRepository{
                     window: window,
                     autoSave: autoSave,
                     suspendTabs: suspendTabs,
-                    isolated: isolated
+                    isolated: isolated,
+                    useragent: useragent
                 },
                 state:{
                     tabs: []
