@@ -394,8 +394,6 @@ function AppsOverlayMenu({
               }}
             >
               <img
-                width={20}
-                height={20}
                 className="app-menu-icon"
                 src={getAppIcon(app)}
                 alt={getAppTitle(app)}

@@ -199,7 +199,8 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
             data-bs-custom-className="custom-tooltip"
           >
             <img
-              width={36}
+              width={24}
+              height={24}
               className="launch-icon"
               src={_icon}
               alt={_title}
