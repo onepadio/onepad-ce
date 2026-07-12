@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import log from "loglevel";
 import { v4 as uuidv4 } from 'uuid';
 import { sidebarActions } from "../../store/sidebar-slice";
-import { X } from "react-bootstrap-icons";
+import { X, HouseFill, ArrowLeft, ArrowRight, ArrowClockwise } from "react-bootstrap-icons";
 import { itemsDb } from "../../data/store";
 
 import "./SidebarWindow.css"
@@ -129,6 +129,34 @@ function SidebarWindow(props: any){
       dispatch(sidebarActions.close());
     }
 
+    function handleGoHome() {
+      const webview = document.getElementById(`sidebar-webview-${appId}`) as any;
+      if (webview && openedApps[appId]) {
+        webview.src = openedApps[appId].url;
+      }
+    }
+
+    function handleGoBack() {
+      const webview = document.getElementById(`sidebar-webview-${appId}`) as any;
+      if (webview && webview.canGoBack()) {
+        webview.goBack();
+      }
+    }
+
+    function handleGoForward() {
+      const webview = document.getElementById(`sidebar-webview-${appId}`) as any;
+      if (webview && webview.canGoForward()) {
+        webview.goForward();
+      }
+    }
+
+    function handleReload() {
+      const webview = document.getElementById(`sidebar-webview-${appId}`) as any;
+      if (webview) {
+        webview.reload();
+      }
+    }
+
     return (
       <>
           <div
@@ -150,6 +178,20 @@ function SidebarWindow(props: any){
           style={{width: width}}
         >
             <div className="sidebar-header">
+              <div className="sidebar-nav-buttons">
+                <button className="sidebar-nav-btn" onClick={handleGoHome} title="Home">
+                  <HouseFill size={16} color="white" />
+                </button>
+                <button className="sidebar-nav-btn" onClick={handleGoBack} title="Back">
+                  <ArrowLeft size={16} color="white" />
+                </button>
+                <button className="sidebar-nav-btn" onClick={handleGoForward} title="Forward">
+                  <ArrowRight size={16} color="white" />
+                </button>
+                <button className="sidebar-nav-btn" onClick={handleReload} title="Reload">
+                  <ArrowClockwise size={16} color="white" />
+                </button>
+              </div>
               <h6 className="sidebar-title">{title}</h6>
               <button className="sidebar-close-btn" onClick={handleClose}>
                 <X size={20} color="white" />
@@ -174,9 +216,9 @@ function SidebarWindow(props: any){
                       src={app.url}
                       // @ts-expect-error
                       allowpopups="false"
-                      partition={"persist:"+userId}
+                      partition={"persist:sidebar-"+userId}
                       useragent={defaultUserAgent}
-                      style={{width: "100%", height: "calc(100% - 72px)"}}
+                      style={{width: "100%", height: "calc(100% - 40px)"}}
                     ></webview>
                   );
                 }
@@ -192,8 +234,8 @@ function SidebarWindow(props: any){
                     src={app.url}
                     // @ts-expect-error
                     allowpopups="false"
-                    partition={"persist:"+userId}
-                    style={{width: "100%", height: "calc(100% - 72px)"}}
+                    partition={"persist:sidebar-"+userId}
+                    style={{width: "100%", height: "calc(100% - 40px)"}}
                   ></webview>
                 );
               })

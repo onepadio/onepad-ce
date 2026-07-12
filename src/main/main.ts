@@ -289,7 +289,8 @@ app.on('web-contents-created', (e, contents) => {
 
     // Set up download handler for this webContents (webview) - only once per session
     // Use the session object itself as the key by converting to string
-    const sessionKey = contents.session.partition || 'default';
+    const sessionKey = (contents.session as any).partition || 'default';
+    
     if (!sessionsWithDownloadListeners.has(sessionKey)) {
       console.log(`Setting up will-download listener for session partition: ${sessionKey}`);
       sessionsWithDownloadListeners.add(sessionKey);
@@ -310,6 +311,23 @@ app.on('web-contents-created', (e, contents) => {
 
     contents.setWindowOpenHandler(({ url, disposition }) => {
       console.log('setWindowOpenHandler...', url);
+      
+      // Check if this is a sidebar webview using storagePath (cross-platform)
+      const storagePath = contents.session.storagePath || '';
+      // Normalize path separators for cross-platform compatibility
+      const normalizedPath = storagePath.replace(/\\/g, '/');
+      const isSidebarWebview = normalizedPath.includes('/sidebar-');
+      
+      console.log('setWindowOpenHandler - storagePath:', storagePath, 'isSidebarWebview:', isSidebarWebview);
+      
+      // For sidebar webviews, load URL in the same webview
+      if (isSidebarWebview) {
+        console.log('Sidebar webview detected, loading URL in same webview:', url);
+        contents.loadURL(url);
+        return {
+          action: 'deny',
+        };
+      }
       
       // Check if URL is a downloadable file
       const downloadableExtensions = [
