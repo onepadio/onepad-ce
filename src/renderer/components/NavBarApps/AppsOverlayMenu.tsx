@@ -38,6 +38,7 @@ function AppsOverlayMenu({
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
   const openWindows = useSelector((state: any) => state.session.openWindows);
+  const isSidebarOpen = useSelector((state: any) => state.sidebar.isOpen);
   const pinnedApps = desktop?.state?.pinnedApps || [];
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
@@ -70,6 +71,11 @@ function AppsOverlayMenu({
     // Nothing to do here - visibility is controlled by indicator onMouseEnter
     // and scroll events below
   }, [hideMode, manuallyHidden]);
+
+  useEffect(() => {
+    if (hideMode === 'auto-hide') return;
+    setIsVisible(!isSidebarOpen);
+  }, [isSidebarOpen, hideMode]);
 
   // Handle scroll to hide in auto-hide mode
   useEffect(() => {
