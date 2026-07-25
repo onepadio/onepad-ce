@@ -8,6 +8,88 @@
     background-color: #292e36;
     padding-right: 4px;
     z-index: 999;
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    pointer-events: auto;
+}
+
+.address-bar.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.address-bar.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.address-bar-trigger-indicator {
+    position: fixed;
+    top: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 16px;
+    background-color: rgba(91, 94, 98, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 6px;
+    z-index: 998;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    animation: addressBarPulseIndicator 2s ease-in-out infinite;
+}
+
+.address-bar-trigger-indicator:hover {
+    background-color: rgba(91, 94, 98, 0.5);
+    transform: translateX(-50%) scale(1.05);
+}
+
+@keyframes addressBarPulseIndicator {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.address-bar-settings {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.address-bar-settings-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 180px;
+    z-index: 10001;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.address-bar-settings-menu .context-menu-item {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.address-bar-settings-menu .context-menu-item:hover {
+    background-color: #404040;
+}
+
+.address-bar-settings-menu .context-menu-item svg {
+    flex-shrink: 0;
 }
 .address-bar .address-bar-new{
     margin-top: 8px;
@@ -35,6 +117,16 @@
 .address-bar.with-left-bar{
     left: 42px !important;
     width: calc(100% - 42px) !important;
+}
+
+/* Full-bleed address bar when left sidebar is in auto-hide mode */
+body.sidebar-auto-hide .address-bar.with-left-bar{
+    left: 0 !important;
+    width: calc(100%) !important;
+}
+
+body.sidebar-auto-hide .address-bar.with-left-bar.chat-assistant-open {
+    width: calc(60vw) !important;
 }
 
 /* Address bar resizing when chat assistant is open */

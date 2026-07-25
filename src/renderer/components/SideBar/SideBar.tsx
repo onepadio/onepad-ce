@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 
@@ -44,6 +44,120 @@ function SideBar() {
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
 
   const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
+  const activeWindow = useSelector((state: any) => state.session.activeWindow);
+  const isSidebarWindowOpen = useSelector((state: any) => state.sidebar.isOpen);
+
+  type HideMode = 'always-on-top' | 'auto-hide';
+  const [hideMode, setHideMode] = useState<HideMode>('always-on-top');
+
+  const isLaunchpad = activeWindowId === "launchpad" || activeWindow?.id === "launchpad";
+  const shouldAutoHide = (isLaunchpad || hideMode === 'auto-hide') && !isSidebarWindowOpen;
+  const [isVisible, setIsVisible] = useState(true);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Load hide mode preference from localStorage on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem('sidebar-hide-mode');
+    if (savedMode === 'auto-hide' || savedMode === 'always-on-top') {
+      setHideMode(savedMode as HideMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsVisible(!shouldAutoHide);
+  }, [shouldAutoHide]);
+
+  // Expand webview/address bar to full width when sidebar auto-hides
+  useEffect(() => {
+    if (shouldAutoHide) {
+      document.body.classList.add('sidebar-auto-hide');
+    } else {
+      document.body.classList.remove('sidebar-auto-hide');
+    }
+    return () => {
+      document.body.classList.remove('sidebar-auto-hide');
+    };
+  }, [shouldAutoHide]);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    document.querySelectorAll(".sidebar-context-menu").forEach((menu) => {
+      document.body.removeChild(menu);
+    });
+
+    const menu = document.createElement("div");
+    menu.className = "sidebar-context-menu context-menu";
+    menu.innerHTML = `
+      <div class="context-menu-item toggle-hide-mode">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          ${hideMode === 'auto-hide'
+            ? '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>'
+            : '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>'
+          }
+        </svg>
+        <span>${hideMode === 'auto-hide' ? 'Disable Auto-Hide' : 'Enable Auto-Hide'}</span>
+      </div>
+    `;
+
+    menu.style.position = "fixed";
+    menu.style.opacity = "0";
+    document.body.appendChild(menu);
+
+    const menuHeight = menu.offsetHeight;
+    const menuWidth = menu.offsetWidth;
+    const sidebarRect = menuRef.current?.getBoundingClientRect();
+
+    let xPosition = e.clientX + 10;
+    let yPosition = e.clientY;
+
+    if (sidebarRect) {
+      xPosition = sidebarRect.right + 8;
+    }
+
+    if (xPosition + menuWidth > window.innerWidth) {
+      xPosition = window.innerWidth - menuWidth - 10;
+    }
+    if (yPosition + menuHeight > window.innerHeight) {
+      yPosition = window.innerHeight - menuHeight - 10;
+    }
+    if (yPosition < 10) {
+      yPosition = 10;
+    }
+
+    menu.style.top = `${yPosition}px`;
+    menu.style.left = `${xPosition}px`;
+    menu.style.opacity = "1";
+
+    menu.querySelector(".toggle-hide-mode")?.addEventListener("click", () => {
+      const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
+      setHideMode(newMode);
+      localStorage.setItem('sidebar-hide-mode', newMode);
+      document.body.removeChild(menu);
+    });
+
+    menu.addEventListener("mouseleave", () => {
+      if (document.body.contains(menu)) {
+        document.body.removeChild(menu);
+      }
+    });
+
+    const closeMenu = (event: any) => {
+      if (document.body.contains(menu) && !menu.contains(event.target)) {
+        document.body.removeChild(menu);
+        document.removeEventListener("click", closeMenu);
+      }
+    };
+
+    setTimeout(() => {
+      document.addEventListener("click", closeMenu);
+    }, 0);
+  };
 
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
 
@@ -540,125 +654,154 @@ function SideBar() {
   ).length;
 
   return (
-    <div
-      id="globalAppsMenu"
-      className="d-flex flex-column justify-content-start global-apps-menu"
-    >
-      <div className="global-apps-menu-content d-flex flex-column justify-content-center">
-        {/* Space Tabs button moved to AppsOverlayMenu */}
+    <>
+      {/* Trigger zone indicator - show when sidebar is auto-hidden */}
+      {shouldAutoHide && !isVisible && (
+        <div
+          className="sidebar-trigger-indicator"
+          onMouseEnter={() => setIsVisible(true)}
+          onContextMenu={handleContextMenu}
+          title="Show apps sidebar"
+        />
+      )}
 
-        {(() => {
-          const filteredApps = Object.values(openWindows).filter((window: any) =>
-            (window.type === "app" || window.type === "link") && window.workspace === workspace.id
-          );
+      <div
+        id="globalAppsMenu"
+        ref={menuRef}
+        className={`d-flex flex-column justify-content-start global-apps-menu ${isVisible ? "visible" : "hidden"}`}
+        onContextMenu={handleContextMenu}
+        onMouseLeave={() => {
+          if (!shouldAutoHide) return;
+          if (!hideTimeoutRef.current) {
+            hideTimeoutRef.current = setTimeout(() => {
+              setIsVisible(false);
+              hideTimeoutRef.current = null;
+            }, 500);
+          }
+        }}
+        onMouseEnter={() => {
+          if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+            hideTimeoutRef.current = null;
+          }
+        }}
+      >
+        <div className="global-apps-menu-content d-flex flex-column justify-content-center">
+          {/* Space Tabs button moved to AppsOverlayMenu */}
 
-          const apps = [...filteredApps];
-          // Check if appsMenu has any active apps from xappsStore
-          const activeAppIds = Object.keys(openWindows);
-          const hasActiveXApps = activeAppIds.some((id: any) => xappsStore.hasOwnProperty(id));
+          {(() => {
+            const filteredApps = Object.values(openWindows).filter((window: any) =>
+              (window.type === "app" || window.type === "link") && window.workspace === workspace.id
+            );
 
-          return (
-            <>
-              {/* NavBar Apps - Vertical Layout - Always visible */}
-              <div className="navbar-apps-container">
-                <NavBarAppsVertical apps={apps} />
-              </div>
-            </>
-          );
-        })()}
-      </div>
-      <div className="star-icon-container">
-        <ListGroup className="d-flex d-none">
-          <ListGroupItem className="d-flex justify-content-center flex-column m-0 p-0">
+            const apps = [...filteredApps];
+            // Check if appsMenu has any active apps from xappsStore
+            const activeAppIds = Object.keys(openWindows);
+            const hasActiveXApps = activeAppIds.some((id: any) => xappsStore.hasOwnProperty(id));
+
+            return (
+              <>
+                {/* NavBar Apps - Vertical Layout - Always visible */}
+                <div className="navbar-apps-container">
+                  <NavBarAppsVertical apps={apps} />
+                </div>
+              </>
+            );
+          })()}
+        </div>
+        <div className="star-icon-container">
+          <ListGroup className="d-flex d-none">
+            <ListGroupItem className="d-flex justify-content-center flex-column m-0 p-0">
+                <Button
+                  color="dark"
+                  className={selectedCategory === "search" ? "active" : ""}
+                  onClick={() => {
+                    //setSelectedCategory("search");
+                    dispatch(utilityAppsActions.setActiveCategory("search"));
+                    dispatch(utilityAppsActions.close());
+                    dispatch(musicPlayerActions.close());
+                    dispatch(chatActions.close());
+                    if(!utilityState.isOpen){
+                      dispatch(utilityAppsActions.open("search"));
+                    }
+                  }}
+                  title="Search"
+                  onMouseEnter={() => setOnCategory("search")}
+                  onMouseLeave={() => setOnCategory("")}
+                >
+                  <Search color="white" size={18} />
+                </Button>
+                <span className="text-white text-xs">Search</span>
+            </ListGroupItem>
+            <ListGroupItem className="d-flex  justify-content-center flex-column mt-2">
+                <Button
+                  title="OneChat"
+                  color="dark"
+                  className={selectedCategory === "chat" ? "active" : ""}
+                  onClick={() => {
+                    dispatch(utilityAppsActions.close());
+                    dispatch(musicPlayerActions.close());
+                    dispatch(chatActions.open());
+                    setSelectedCategory("chat");
+                  }}
+                  onMouseEnter={() => setOnCategory("chat")}
+                  onMouseLeave={() => setOnCategory("")}
+                >
+                  <ChatDots color="white" size={20} />
+                </Button>
+                {
+                  <span className="text-white text-xs">Chats</span>
+                }
+            </ListGroupItem>
+            <ListGroupItem className="d-flex  justify-content-center flex-column mt-2">
               <Button
                 color="dark"
-                className={selectedCategory === "search" ? "active" : ""}
+                title="Social"
+                className={selectedCategory === "social" ? "active" : ""}
                 onClick={() => {
-                  //setSelectedCategory("search");
-                  dispatch(utilityAppsActions.setActiveCategory("search"));
+                  dispatch(utilityAppsActions.setActiveCategory("social"));
                   dispatch(utilityAppsActions.close());
                   dispatch(musicPlayerActions.close());
                   dispatch(chatActions.close());
                   if(!utilityState.isOpen){
-                    dispatch(utilityAppsActions.open("search"));
+                    dispatch(utilityAppsActions.open("social"));
                   }
                 }}
-                title="Search"
-                onMouseEnter={() => setOnCategory("search")}
+                onMouseEnter={() => setOnCategory("social")}
                 onMouseLeave={() => setOnCategory("")}
               >
-                <Search color="white" size={18} />
-              </Button>
-              <span className="text-white text-xs">Search</span>
-          </ListGroupItem>
-          <ListGroupItem className="d-flex  justify-content-center flex-column mt-2">
+                <Instagram color="white" size={20} />
+            </Button>
+            {
+              <span className="text-white text-xs">Social</span>
+            }
+            </ListGroupItem>
+            <ListGroupItem className="d-flex justify-content-center flex-column mt-2 d-none">
               <Button
-                title="OneChat"
                 color="dark"
-                className={selectedCategory === "chat" ? "active" : ""}
+                className={selectedCategory === "favourites" ? "active" : ""}
                 onClick={() => {
+                  setSelectedCategory("favourites");
                   dispatch(utilityAppsActions.close());
                   dispatch(musicPlayerActions.close());
-                  dispatch(chatActions.open());
-                  setSelectedCategory("chat");
+                  dispatch(chatActions.close());
                 }}
-                onMouseEnter={() => setOnCategory("chat")}
+                title="Favourites"
+                onMouseEnter={() => setOnCategory("favourites")}
                 onMouseLeave={() => setOnCategory("")}
               >
-                <ChatDots color="white" size={20} />
+                <Star
+                  color="white"
+                  size={20}
+                />
               </Button>
-              {
-                <span className="text-white text-xs">Chats</span>
-              }
-          </ListGroupItem>
-          <ListGroupItem className="d-flex  justify-content-center flex-column mt-2">
-            <Button
-              color="dark"
-              title="Social"
-              className={selectedCategory === "social" ? "active" : ""}
-              onClick={() => {
-                dispatch(utilityAppsActions.setActiveCategory("social"));
-                dispatch(utilityAppsActions.close());
-                dispatch(musicPlayerActions.close());
-                dispatch(chatActions.close());
-                if(!utilityState.isOpen){
-                  dispatch(utilityAppsActions.open("social"));
-                }
-              }}
-              onMouseEnter={() => setOnCategory("social")}
-              onMouseLeave={() => setOnCategory("")}
-            >
-              <Instagram color="white" size={20} />
-          </Button>
-          {
-            <span className="text-white text-xs">Social</span>
-          }
-          </ListGroupItem>
-          <ListGroupItem className="d-flex justify-content-center flex-column mt-2 d-none">
-            <Button
-              color="dark"
-              className={selectedCategory === "favourites" ? "active" : ""}
-              onClick={() => {
-                setSelectedCategory("favourites");
-                dispatch(utilityAppsActions.close());
-                dispatch(musicPlayerActions.close());
-                dispatch(chatActions.close());
-              }}
-              title="Favourites"
-              onMouseEnter={() => setOnCategory("favourites")}
-              onMouseLeave={() => setOnCategory("")}
-            >
-              <Star
-                color="white"
-                size={20}
-              />
-            </Button>
-            <span className="text-white text-xs">Favourites</span>
-          </ListGroupItem>
-        </ListGroup>
+              <span className="text-white text-xs">Favourites</span>
+            </ListGroupItem>
+          </ListGroup>
 
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

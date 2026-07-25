@@ -1,9 +1,14 @@
 .app-window{
     position: absolute;
-    top: 70px;
+    top: 75px;
     left: 0px;
     transition: all 0.5s ease;
     z-index: 988;
+}
+
+/* Expand window when address bar is in auto-hide mode */
+body.addressbar-auto-hide .app-window{
+    top: 36px;
 }
 
 .app-window.remote{
@@ -50,7 +55,12 @@
 
 .app-window .webview-container.tabs-mode{
     top: 0px;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 75px);
+}
+
+/* Full height when address bar is auto-hidden (relative to 36px top chrome) */
+body.addressbar-auto-hide .app-window .webview-container.tabs-mode{
+    height: calc(100vh - 36px);
 }
 
 .app-window.hidden-tab .webview-container.tabs-mode{
@@ -83,6 +93,16 @@
 .app-window .with-left-bar{
     left: 42px !important;
     width: calc(100vw - 42px) !important;
+}
+
+/* Full-bleed layout when left sidebar is in auto-hide mode */
+body.sidebar-auto-hide .app-window .with-left-bar{
+    left: 0 !important;
+    width: 100vw !important;
+}
+
+body.sidebar-auto-hide .app-window .webview-container.with-left-bar.chat-assistant-open {
+    width: calc(60vw) !important;
 }
 
 .show-tab {

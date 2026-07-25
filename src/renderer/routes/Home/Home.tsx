@@ -635,9 +635,7 @@ function Home() {
       {
         platform === "" ? <></> : (platform === Platform.MacOS ? <MacActionsMenu /> : <WindowsActionsMenu />)
       }
-      {
-        activeWindow?.id !== "launchpad" ? <SideBar /> : <></>
-      }
+      <SideBar />
       <AppStoreModalWindow />
 
       <NewWorkspaceModalWindow onClose={(success: boolean) => {

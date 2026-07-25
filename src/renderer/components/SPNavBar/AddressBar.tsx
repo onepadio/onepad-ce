@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import log from "loglevel";
@@ -61,6 +61,7 @@ import {
   Robot,
   Justify,
   ListTask,
+  ThreeDotsVertical,
 } from "react-bootstrap-icons";
 import { openAppWindow, closeWindow } from "../../services/window";
 import { newTabForActiveWindow } from "../../util/tabs";
@@ -224,6 +225,62 @@ function AddressBar(props: any) {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const toggle = () => setDropdownOpen((prevState: any) => !prevState);
+
+  type HideMode = 'always-on-top' | 'auto-hide';
+  const [hideMode, setHideMode] = useState<HideMode>(() => {
+    const saved = localStorage.getItem('addressbar-hide-mode');
+    return saved === 'auto-hide' ? 'auto-hide' : 'always-on-top';
+  });
+  const shouldAutoHide = hideMode === 'auto-hide' && activeTab?.id !== "launchpad";
+  const [isVisible, setIsVisible] = useState(!shouldAutoHide);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addressBarRef = useRef<HTMLDivElement>(null);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsVisible(!shouldAutoHide);
+    setSettingsOpen(false);
+  }, [shouldAutoHide]);
+
+  useEffect(() => {
+    if (shouldAutoHide) {
+      document.body.classList.add('addressbar-auto-hide');
+    } else {
+      document.body.classList.remove('addressbar-auto-hide');
+    }
+    return () => {
+      document.body.classList.remove('addressbar-auto-hide');
+    };
+  }, [shouldAutoHide]);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+
+    const closeSettings = (e: MouseEvent) => {
+      if (
+        settingsMenuRef.current &&
+        !settingsMenuRef.current.contains(e.target as Node) &&
+        !(e.target as Element)?.closest?.('.address-bar-settings-button')
+      ) {
+        setSettingsOpen(false);
+      }
+    };
+
+    document.addEventListener('click', closeSettings);
+    return () => document.removeEventListener('click', closeSettings);
+  }, [settingsOpen]);
+
+  const handleToggleHideMode = () => {
+    const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
+    setHideMode(newMode);
+    localStorage.setItem('addressbar-hide-mode', newMode);
+    setSettingsOpen(false);
+  };
 
   function goHome() {
     let _webview = document.getElementById(webViewId);
@@ -838,13 +895,39 @@ function AddressBar(props: any) {
   const activeWindowTabCount = windowTabs[activeWindowId]?.length || 0;
 
   return (
-    <div
-      id="address-bar"
-      className={`address-bar d-flex ${props.className} ${
-        isSharedAppsEnabled ? " with-left-bar" : ""
-      } ${isAIAssistantOpen ? "chat-assistant-open" : ""}`}
+    <>
+      {shouldAutoHide && !isVisible && (
+        <div
+          className="address-bar-trigger-indicator"
+          onMouseEnter={() => setIsVisible(true)}
+          title="Show address bar"
+        />
+      )}
 
-    >
+      <div
+        id="address-bar"
+        ref={addressBarRef}
+        className={`address-bar d-flex ${props.className} ${
+          isSharedAppsEnabled ? " with-left-bar" : ""
+        } ${isAIAssistantOpen ? "chat-assistant-open" : ""} ${
+          isVisible ? "visible" : "hidden"
+        }`}
+        onMouseLeave={() => {
+          if (!shouldAutoHide || settingsOpen) return;
+          if (!hideTimeoutRef.current) {
+            hideTimeoutRef.current = setTimeout(() => {
+              setIsVisible(false);
+              hideTimeoutRef.current = null;
+            }, 500);
+          }
+        }}
+        onMouseEnter={() => {
+          if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+            hideTimeoutRef.current = null;
+          }
+        }}
+      >
       {activeTab.id !== "launchpad" && (
         <>
 
@@ -1043,9 +1126,43 @@ function AddressBar(props: any) {
               <Terminal size={16} />
             </button>
           )}
+          <div className="address-bar-settings" ref={settingsMenuRef}>
+            <Button
+              color="dark"
+              className="address-bar-settings-button"
+              title="Address bar settings"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSettingsOpen((open) => !open);
+              }}
+            >
+              <ThreeDotsVertical size={16} />
+            </Button>
+            {settingsOpen && (
+              <div className="address-bar-settings-menu context-menu">
+                <div
+                  className="context-menu-item"
+                  onClick={handleToggleHideMode}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    {hideMode === 'auto-hide' ? (
+                      <>
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                      </>
+                    ) : (
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    )}
+                  </svg>
+                  <span>{hideMode === 'auto-hide' ? 'Disable Auto-Hide' : 'Enable Auto-Hide'}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
+    </>
   );
 }
 
