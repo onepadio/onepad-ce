@@ -9,12 +9,12 @@ import { openInternalWindow } from "../../services/window";
 import { openAppWindow } from "../../services/window";
 
 import "./SideBar.css";
-import { ListGroup, ListGroupItem } from "reactstrap";
+import { Badge, ListGroup, ListGroupItem } from "reactstrap";
 
 // @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
 import defaultIcon from "../../images/default_icon.png";
 
-import { ChatDots, MusicNoteBeamed, Plus, Robot, Star, Layers } from "react-bootstrap-icons";
+import { ChatDots, MusicNoteBeamed, Plus, Robot, Star, Layers, ListTask } from "react-bootstrap-icons";
 import XAppService from "../../services/xapp";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { Button } from "reactstrap";
@@ -31,6 +31,7 @@ import { aiAppsActions } from "renderer/store/ai-slice";
 import WorkspaceMenu from "../WorkspaceMenu/WorkspaceMenu";
 import NavBarAppsVertical from "../NavBarApps/NavBarAppsVertical";
 import { activateBrowser } from "../../hubs/WindowService";
+import { windowActions } from "renderer/store/window-slice";
 
 function SideBar() {
   const dispatch = useDispatch();
@@ -181,6 +182,7 @@ function SideBar() {
   const items = useSelector((state: any) => state.workspace.links);
   const isLocal = useSelector((state: any) => state.workspace.isLocal);
   const browserWindows = useSelector((state: any) => state.session.browserWindows);
+  const activeWindowTabCount = windowTabs[activeWindowId]?.length || 0;
 
   // Add music player apps array
   const musicApps = [
@@ -686,7 +688,28 @@ function SideBar() {
           }
         }}
       >
+        <div className="d-flex justify-content-center align-items-center mr-2 mt-2">
+          <Button
+            id={"home-button-" + workspace.id}
+            className="btn btn-dark position-relative"
+            onClick={() => dispatch(windowActions.showSideBar({}))}
+          >
+            <ListTask size={20} />
+            {activeWindowTabCount > 0 && (
+              <Badge
+                color="primary"
+                pill
+                className="position-absolute start-100 translate-middle"
+                style={{ top: '15px' }}
+              >
+                {activeWindowTabCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
         <div className="global-apps-menu-content d-flex flex-column justify-content-center">
+
+            
           {/* Space Tabs button moved to AppsOverlayMenu */}
 
           {(() => {

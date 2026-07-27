@@ -1,10 +1,10 @@
 .vertical-tabbar{
     position: absolute;
-    top: 76px;
+    top: 36px;
     left: 56px;
     width: 256px !important;
-    height: calc(100vh - 76px) !important;
-    min-height: calc(100vh - 76px) !important;
+    height: calc(100vh - 36px) !important;
+    min-height: calc(100vh - 36px) !important;
     background-color: rgba(27,27,27,1.0);
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     z-index: 1066;

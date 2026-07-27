@@ -933,26 +933,7 @@ function AddressBar(props: any) {
 
           <Button
             id={"home-button-" + activeTabId}
-            className="btn btn-dark ml-2 position-relative"
-            onClick={() => showSideBar()}
-            onMouseEnter={() => showSideBar()}
-            disabled={disabled}
-          >
-            <ListTask size={20} />
-            {activeWindowTabCount > 0 && (
-              <Badge
-                color="primary"
-                pill
-                className="position-absolute start-100 translate-middle"
-                style={{ top: '15px' }}
-              >
-                {activeWindowTabCount}
-              </Badge>
-            )}
-          </Button>
-          <Button
-            id={"home-button-" + activeTabId}
-            className="btn btn-dark"
+            className="btn btn-dark ml-3"
             onClick={() => goHome()}
             disabled={disabled}
           >

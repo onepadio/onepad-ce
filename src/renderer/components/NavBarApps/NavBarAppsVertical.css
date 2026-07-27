@@ -16,7 +16,7 @@
   -ms-overflow-style: none;
   padding-bottom: 40px;
   transition: max-height 0.3s ease-in-out;
-  margin-top: 80px;
+  margin-top: 40px;
 }
 
 /* NavBar Apps Vertical in collapsed state */
@@ -54,16 +54,6 @@
   background-color: rgba(233, 234, 251, 0.082);
   border-radius: 8px;
   padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  &:hover {
-    background-color: rgba(233, 234, 251, 0.182);
-    transform: scale(1.05);
-  }
 }
 
 /* Active app indicator - left blue line */
