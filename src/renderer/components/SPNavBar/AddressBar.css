@@ -26,25 +26,35 @@
     pointer-events: auto;
 }
 
-.address-bar-trigger-indicator {
+/* Full-width hit zone: any X within the indicator height shows the address bar */
+.address-bar-trigger-zone {
     position: fixed;
     top: 48px;
+    left: 0;
+    width: 100%;
+    height: 16px;
+    z-index: 998;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.address-bar-trigger-indicator {
+    position: absolute;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     width: 300px;
-    height: 16px;
+    height: 100%;
     background-color: rgba(91, 94, 98, 0.3);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-radius: 6px;
-    z-index: 998;
-    pointer-events: auto;
-    cursor: pointer;
+    pointer-events: none;
     transition: all 0.2s ease;
     animation: addressBarPulseIndicator 2s ease-in-out infinite;
 }
 
-.address-bar-trigger-indicator:hover {
+.address-bar-trigger-zone:hover .address-bar-trigger-indicator {
     background-color: rgba(91, 94, 98, 0.5);
     transform: translateX(-50%) scale(1.05);
 }

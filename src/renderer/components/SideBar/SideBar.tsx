@@ -657,14 +657,16 @@ function SideBar() {
 
   return (
     <>
-      {/* Trigger zone indicator - show when sidebar is auto-hidden */}
+      {/* Full-height hit zone: any Y within the indicator width shows the sidebar */}
       {shouldAutoHide && !isVisible && (
         <div
-          className="sidebar-trigger-indicator"
+          className="sidebar-trigger-zone"
           onMouseEnter={() => setIsVisible(true)}
           onContextMenu={handleContextMenu}
           title="Show apps sidebar"
-        />
+        >
+          <div className="sidebar-trigger-indicator" />
+        </div>
       )}
 
       <div

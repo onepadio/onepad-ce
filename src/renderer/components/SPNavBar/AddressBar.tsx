@@ -898,10 +898,12 @@ function AddressBar(props: any) {
     <>
       {shouldAutoHide && !isVisible && (
         <div
-          className="address-bar-trigger-indicator"
+          className="address-bar-trigger-zone"
           onMouseEnter={() => setIsVisible(true)}
           title="Show address bar"
-        />
+        >
+          <div className="address-bar-trigger-indicator" />
+        </div>
       )}
 
       <div
