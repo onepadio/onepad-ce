@@ -1,0 +1,144 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: Platforms to build and publish
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - mac
+          - win
+          - linux
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+env:
+  CI: true
+
+jobs:
+  publish:
+    name: Publish (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            electron_args: -m --x64 --arm64
+          - os: windows-latest
+            platform: win
+            electron_args: -w --x64
+          - os: ubuntu-22.04
+            platform: linux
+            electron_args: -l --x64
+    # Skip platforms not selected on manual runs
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      inputs.platforms == 'all' ||
+      inputs.platforms == matrix.platform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libdrm2 \
+            libgtk-3-0 \
+            libgbm1 \
+            libasound2 \
+            rpm \
+            fakeroot
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install app dependencies
+        working-directory: release/app
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Package and publish to DigitalOcean Spaces
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET }}
+          _CSC_LINK: ${{ secrets.CSC_LINK }}
+          _CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          _WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          _WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${AWS_ACCESS_KEY_ID:-}" || -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            echo "::error::Missing DO_SPACES_KEY / DO_SPACES_SECRET secrets"
+            exit 1
+          fi
+
+          if [[ "${{ matrix.platform }}" == "mac" ]]; then
+            if [[ -n "${_CSC_LINK:-}" && -n "${_CSC_KEY_PASSWORD:-}" ]]; then
+              export CSC_LINK="$_CSC_LINK"
+              export CSC_KEY_PASSWORD="$_CSC_KEY_PASSWORD"
+            else
+              echo "No macOS signing secrets; publishing unsigned"
+              export CSC_IDENTITY_AUTO_DISCOVERY=false
+            fi
+          elif [[ "${{ matrix.platform }}" == "win" ]]; then
+            if [[ -n "${_WIN_CSC_LINK:-}" && -n "${_WIN_CSC_KEY_PASSWORD:-}" ]]; then
+              export CSC_LINK="$_WIN_CSC_LINK"
+              export CSC_KEY_PASSWORD="$_WIN_CSC_KEY_PASSWORD"
+            else
+              echo "No Windows signing secrets; publishing unsigned"
+              export CSC_IDENTITY_AUTO_DISCOVERY=false
+            fi
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+
+          unset _CSC_LINK _CSC_KEY_PASSWORD _WIN_CSC_LINK _WIN_CSC_KEY_PASSWORD
+          npx electron-builder ${{ matrix.electron_args }} --publish always
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OnePad-${{ matrix.platform }}-${{ github.ref_name }}
+          path: |
+            release/build/*.dmg
+            release/build/*.pkg
+            release/build/*.zip
+            release/build/*.exe
+            release/build/*.AppImage
+            release/build/*.deb
+            release/build/*.rpm
+            release/build/latest*.yml
+            release/build/*.blockmap
+          if-no-files-found: warn
+          retention-days: 30

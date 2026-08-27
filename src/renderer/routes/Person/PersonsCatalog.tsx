@@ -22,11 +22,11 @@ import clsx from "clsx";
 
 import logoIcon from '../../images/icon_512x512_transparent.png';
 import "./PersonsCatalog.css";
+import "./FrostedDragBar.css";
 import NewPersonModalWindow from "./NewPersonModal";
 import DeleteProfileWarningModalWindow from "./DeleteProfileWarningModal";
 import PINModalWindow from "./PINModal";
 import Profile from "./Profle";
-import TopBar from "./TopBar";
 import { settingsActions } from "../../store/settings-slice";
 import { modalActions } from "../../store/modal-slice";
 import { db } from "../../repository/db";
@@ -432,6 +432,7 @@ export default function PersonsCatalog() {
 
   return (
     <>
+      <div className="frosted-drag-bar" />
       <NewPersonModalWindow isOpen={showAddProfileModal} onClose={onNewProfileWindowClose} />
       <DeleteProfileWarningModalWindow isOpen={showDeleteProfileModal} onClose={onDeleteProfileWindowClose} onConfirm={deleteProfile} />
       <PINModalWindow isOpen={showPINModal} onClose={onPINModalWindowClose} onSuccess={onPINSuccess} profileId={selectedPersonId} />

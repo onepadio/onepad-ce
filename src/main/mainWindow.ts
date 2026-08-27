@@ -17,7 +17,8 @@ export default function createMainWindow(
   version: string
 ): BrowserWindow {
   let win: BrowserWindow | undefined;
-  let isKiosk = false;
+  const startInKiosk = process.argv.includes('--kiosk') || app.commandLine.hasSwitch('kiosk');
+  let isKiosk = startInKiosk;
   const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
   let homePage = 'https://app.onepad.io';
 
@@ -48,7 +49,7 @@ export default function createMainWindow(
     frame: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hiddenInset',
-    kiosk: false,
+    kiosk: startInKiosk,
     webPreferences: {
       sandbox: false,
       preload: getPreloadPath(),
@@ -119,6 +120,9 @@ export default function createMainWindow(
 
   const menuBuilder = new MenuBuilder(win);
   menuBuilder.buildMenu();
+  if (startInKiosk) {
+    win.setMenu(null);
+  }
 
   // Open urls in the user's browser
   win.webContents.setWindowOpenHandler((edata) => {

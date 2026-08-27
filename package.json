@@ -48,6 +48,7 @@
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "start": "electron-vite dev",
     "dev": "electron-vite dev",
+    "dev:kiosk": "electron-vite dev -- --kiosk",
     "preview": "electron-vite preview",
     "test": "jest"
   },

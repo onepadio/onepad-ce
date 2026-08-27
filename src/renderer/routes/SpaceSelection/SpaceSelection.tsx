@@ -9,6 +9,7 @@ import { modalActions } from "../../store/modal-slice";
 import { appActions } from "../../store/app-slice";
 
 import "./SpaceSelection.css";
+import "../Person/FrostedDragBar.css";
 
 import { Button, Spinner } from "reactstrap";
 import * as Icon from 'react-feather';
@@ -29,7 +30,6 @@ import DesktopService from "renderer/services/desktop";
 import NewWorkspaceModalWindow from "renderer/components/NewWorkspaceModalWindow/NewWorkspaceModalWindow";
 import { userActions } from "renderer/store/user-slice";
 import { sessionActions } from "renderer/store/session-slice";
-import TopBar from "../Person/TopBar";
 
 export default function SpaceSelection() {
   const dispatch = useDispatch();
@@ -114,6 +114,7 @@ export default function SpaceSelection() {
 
   return (
     <>
+      <div className="frosted-drag-bar" />
       <div className="space-selection-background" style={{ backgroundImage: `url(${spaceBgImage})` }} />
       <Button
         color="secondary"

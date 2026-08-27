@@ -1,0 +1,119 @@
+name: Build
+
+on:
+  push:
+    branches: [masterx, mainx]
+  pull_request:
+    branches: [masterx, mainx]
+  workflow_dispatch:
+
+env:
+  CI: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            electron_args: -m --x64 --arm64
+          - os: windows-latest
+            platform: win
+            electron_args: -w --x64
+          - os: ubuntu-22.04
+            platform: linux
+            electron_args: -l --x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libdrm2 \
+            libgtk-3-0 \
+            libgbm1 \
+            libasound2 \
+            rpm \
+            fakeroot
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install app dependencies
+        working-directory: release/app
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        shell: bash
+        env:
+          _CSC_LINK: ${{ secrets.CSC_LINK }}
+          _CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          _WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          _WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          USE_HARD_LINKS: false
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ matrix.platform }}" == "mac" ]]; then
+            if [[ -n "${_CSC_LINK:-}" && -n "${_CSC_KEY_PASSWORD:-}" ]]; then
+              export CSC_LINK="$_CSC_LINK"
+              export CSC_KEY_PASSWORD="$_CSC_KEY_PASSWORD"
+            else
+              echo "No macOS signing secrets; building unsigned"
+              export CSC_IDENTITY_AUTO_DISCOVERY=false
+            fi
+          elif [[ "${{ matrix.platform }}" == "win" ]]; then
+            if [[ -n "${_WIN_CSC_LINK:-}" && -n "${_WIN_CSC_KEY_PASSWORD:-}" ]]; then
+              export CSC_LINK="$_WIN_CSC_LINK"
+              export CSC_KEY_PASSWORD="$_WIN_CSC_KEY_PASSWORD"
+            else
+              echo "No Windows signing secrets; building unsigned"
+              export CSC_IDENTITY_AUTO_DISCOVERY=false
+            fi
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+
+          unset _CSC_LINK _CSC_KEY_PASSWORD _WIN_CSC_LINK _WIN_CSC_KEY_PASSWORD
+          npx electron-builder ${{ matrix.electron_args }} --publish never
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OnePad-${{ matrix.platform }}-${{ github.sha }}
+          path: |
+            release/build/*.dmg
+            release/build/*.pkg
+            release/build/*.zip
+            release/build/*.exe
+            release/build/*.AppImage
+            release/build/*.deb
+            release/build/*.rpm
+            release/build/latest*.yml
+            release/build/*.blockmap
+          if-no-files-found: warn
+          retention-days: 14
