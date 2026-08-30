@@ -44,6 +44,10 @@ import {
 
 import { windowActions } from "../../store/window-slice";
 import clsx from "clsx";
+import {
+  requestSidebarAutoHide,
+  isNodeInAppsMenu,
+} from "../../util/sidebarChrome";
 
 
 function VerticalTabBar(){
@@ -541,8 +545,13 @@ function VerticalTabBar(){
       }
     };
 
-    function toggleShowSidebar() {
-      dispatch(windowActions.toggleShowSidebar({}));
+    function closeTabSidebar(e?: React.MouseEvent) {
+      if (e && isNodeInAppsMenu(e.relatedTarget)) {
+        // Moving back to the apps sidebar — keep tab bar open so both stay linked
+        return;
+      }
+      dispatch(windowActions.hideSidebar({}));
+      requestSidebarAutoHide();
     }
 
     return (
@@ -555,11 +564,14 @@ function VerticalTabBar(){
             "flex",
           )}
           id="vertical-tab-bar-overlay"
-          onClick={() => toggleShowSidebar()}
+          onClick={() => {
+            dispatch(windowActions.hideSidebar({}));
+            requestSidebarAutoHide();
+          }}
           >
 
         </div>
-        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar bg-dark w-100" onMouseLeave={() => toggleShowSidebar()}>
+        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar bg-dark w-100" onMouseLeave={(e) => closeTabSidebar(e)}>
 
           {tabsMenu()}
 

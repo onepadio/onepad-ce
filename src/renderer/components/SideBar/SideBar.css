@@ -28,6 +28,7 @@
   opacity: 1;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   pointer-events: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .global-apps-menu.hidden {

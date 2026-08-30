@@ -32,6 +32,10 @@ import WorkspaceMenu from "../WorkspaceMenu/WorkspaceMenu";
 import NavBarAppsVertical from "../NavBarApps/NavBarAppsVertical";
 import { activateBrowser } from "../../hubs/WindowService";
 import { windowActions } from "renderer/store/window-slice";
+import {
+  SIDEBAR_AUTOHIDE_EVENT,
+  isNodeInVerticalTabBar,
+} from "../../util/sidebarChrome";
 
 function SideBar() {
   const dispatch = useDispatch();
@@ -47,6 +51,7 @@ function SideBar() {
   const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
   const activeWindow = useSelector((state: any) => state.session.activeWindow);
   const isSidebarWindowOpen = useSelector((state: any) => state.sidebar.isOpen);
+  const showTabSidebar = useSelector((state: any) => state.window.showSidebar);
 
   type HideMode = 'always-on-top' | 'auto-hide';
   const [hideMode, setHideMode] = useState<HideMode>('always-on-top');
@@ -57,6 +62,23 @@ function SideBar() {
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  function clearHideTimeout() {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  }
+
+  function scheduleHide() {
+    if (!shouldAutoHide) return;
+    if (hideTimeoutRef.current) return;
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsVisible(false);
+      dispatch(windowActions.hideSidebar({}));
+      hideTimeoutRef.current = null;
+    }, 500);
+  }
+
   // Load hide mode preference from localStorage on mount
   useEffect(() => {
     const savedMode = localStorage.getItem('sidebar-hide-mode');
@@ -66,12 +88,32 @@ function SideBar() {
   }, []);
 
   useEffect(() => {
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
+    clearHideTimeout();
     setIsVisible(!shouldAutoHide);
   }, [shouldAutoHide]);
+
+  // Keep apps sidebar visible while the vertical tab bar is open
+  useEffect(() => {
+    if (!shouldAutoHide) return;
+    if (showTabSidebar) {
+      clearHideTimeout();
+      setIsVisible(true);
+    }
+  }, [showTabSidebar, shouldAutoHide]);
+
+  // Tab bars request a joint hide when the pointer leaves both chrome areas
+  useEffect(() => {
+    const onAutoHideRequest = () => {
+      if (!shouldAutoHide) return;
+      clearHideTimeout();
+      setIsVisible(false);
+      dispatch(windowActions.hideSidebar({}));
+    };
+    window.addEventListener(SIDEBAR_AUTOHIDE_EVENT, onAutoHideRequest);
+    return () => {
+      window.removeEventListener(SIDEBAR_AUTOHIDE_EVENT, onAutoHideRequest);
+    };
+  }, [shouldAutoHide, dispatch]);
 
   // Expand webview/address bar to full width when sidebar auto-hides
   useEffect(() => {
@@ -183,6 +225,11 @@ function SideBar() {
   const isLocal = useSelector((state: any) => state.workspace.isLocal);
   const browserWindows = useSelector((state: any) => state.session.browserWindows);
   const activeWindowTabCount = windowTabs[activeWindowId]?.length || 0;
+  const browserTabsCount = Object.values(openTabs).filter(
+    (tab: any) => tab.type === "browser" && tab.workspace === workspace.id
+  ).length;
+  const sideBarTabCount =
+    activeWindow?.type === "browser" ? browserTabsCount : activeWindowTabCount;
 
   // Add music player apps array
   const musicApps = [
@@ -651,10 +698,6 @@ function SideBar() {
     );
   }
 
-  const browserTabsCount = Object.values(openTabs).filter(
-    (tab: any) => tab.type === "browser" && tab.workspace === workspace.id
-  ).length;
-
   return (
     <>
       {/* Full-height hit zone: any Y within the indicator width shows the sidebar */}
@@ -674,19 +717,19 @@ function SideBar() {
         ref={menuRef}
         className={`d-flex flex-column justify-content-start global-apps-menu ${isVisible ? "visible" : "hidden"}`}
         onContextMenu={handleContextMenu}
-        onMouseLeave={() => {
+        onMouseLeave={(e) => {
           if (!shouldAutoHide) return;
-          if (!hideTimeoutRef.current) {
-            hideTimeoutRef.current = setTimeout(() => {
-              setIsVisible(false);
-              hideTimeoutRef.current = null;
-            }, 500);
+          // Moving into the vertical tab bar — keep apps sidebar open
+          if (isNodeInVerticalTabBar(e.relatedTarget) || showTabSidebar) {
+            clearHideTimeout();
+            return;
           }
+          scheduleHide();
         }}
         onMouseEnter={() => {
-          if (hideTimeoutRef.current) {
-            clearTimeout(hideTimeoutRef.current);
-            hideTimeoutRef.current = null;
+          clearHideTimeout();
+          if (shouldAutoHide) {
+            setIsVisible(true);
           }
         }}
       >
@@ -697,14 +740,14 @@ function SideBar() {
             onClick={() => dispatch(windowActions.showSideBar({}))}
           >
             <ListTask size={20} />
-            {activeWindowTabCount > 0 && (
+            {sideBarTabCount > 0 && (
               <Badge
                 color="primary"
                 pill
                 className="position-absolute start-100 translate-middle"
                 style={{ top: '15px' }}
               >
-                {activeWindowTabCount}
+                {sideBarTabCount}
               </Badge>
             )}
           </Button>

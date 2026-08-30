@@ -19,6 +19,7 @@
     z-index:1997;
     backdrop-filter: blur(16px);
     background-color: #292e36;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .sp-navbar .top-menus{

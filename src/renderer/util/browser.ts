@@ -1,84 +1,98 @@
 import { v4 as uuidv4 } from "uuid";
-import isElectron from "is-electron";
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
-import { windowActions } from "../store/window-slice"
 import { sessionActions } from "../store/session-slice";
-import { modalActions } from "../store/modal-slice";
 import { windowServiceActions } from "../store/window-service-slice";
 
 import BrowserStateService from "../services/browsers";
-// @ts-expect-error
-import globe_icon from "../images/globe_icon_96.png";
-import { openInternalWindow, openAppWindow, handleWindowClosed } from "../services/window";
-import { newTabForActiveWindow } from "./tabs";
+import { openInternalWindow, openAppWindow } from "../services/window";
 
 
 
 
-  function newBrowserTab(openWindows: any, openTabs: any, windowTabs: any, items: any, isLocal: any, desktop: any, workspace: any, dispatch: any, url: any, activeBrowserWindowId: any){
-    let _openWindows = Object.assign({}, openWindows);
-    let _openTabs = Object.assign({}, openTabs);
-    let _windowTabs = Object.assign({}, windowTabs);
+const MAX_BROWSER_GROUPS = 9;
 
-    let _id = "browser_".concat(uuidv4());
-    log.debug("openLink");
-    log.debug("openInternalWindow:"+url);
-    if(openWindows[_id] != null && openWindows[_id].location === "external"){
-        openAppWindow(_id, url, "external", 0, 0);
-        return;
-    }
-
-    if(openWindows[_id] != null){
-        dispatch(sessionActions.setActiveWindow({data: openWindows[_id]}));
-        return;
-    }
-
-    let window = {
-        workspace: workspace.id,
-        id: _id,
-        url: ":browser",
-        location: "main",
-    }
-
-    openInternalWindow(
-        window,
-        items,
-        openWindows,
-        isLocal,
-        (result: any) => {
-            if(result === undefined || result === null){
-                return;
-            }
-            let _result = Object.assign({}, result);
-            _result.type = "browser";
-            _result.url = url;
-            _result.location = "main";
-            _result.desktop = desktop.id;
-            _result.workspace = workspace.id;
-
-            log.debug("Result:"+_result);
-            // OpenWindows
-            _openWindows[result.id] = _result;
-            dispatch(
-                sessionActions.setOpenWindows({
-                data: _openWindows,
-            }));
-
-            // Create initial tab using WindowService
-            dispatch(windowServiceActions.openNewTab({
-              windowId: _result.id,
-              url: url
-            }));
-
-            dispatch(sessionActions.setActiveWindow({data: _result}));
-            dispatch(sessionActions.addBrowserWindow({data: _id}));
-            dispatch(sessionActions.setActiveBrowserWindowId({data: _id}));
-
-        },
-    );
+/**
+ * Creates a new browser window (tab group) with an initial tab.
+ * Returns false if the max number of groups has been reached.
+ */
+export function createBrowserGroup(
+  openWindows: any,
+  items: any,
+  isLocal: any,
+  desktop: any,
+  workspace: any,
+  dispatch: any,
+  url: any,
+  browserWindowsLength: number
+): boolean {
+  if (browserWindowsLength >= MAX_BROWSER_GROUPS) {
+    alert("Maximum number of tab groups reached");
+    return false;
   }
+
+  let _openWindows = Object.assign({}, openWindows);
+  let _id = "browser_".concat(uuidv4());
+  log.debug("createBrowserGroup", url);
+
+  if (openWindows[_id] != null && openWindows[_id].location === "external") {
+    openAppWindow(_id, url, "external", 0, 0);
+    return true;
+  }
+
+  if (openWindows[_id] != null) {
+    dispatch(sessionActions.setActiveWindow({ data: openWindows[_id] }));
+    return true;
+  }
+
+  let window = {
+    workspace: workspace.id,
+    id: _id,
+    url: ":browser",
+    location: "main",
+  };
+
+  openInternalWindow(
+    window,
+    items,
+    openWindows,
+    isLocal,
+    (result: any) => {
+      if (result === undefined || result === null) {
+        return;
+      }
+      let _result = Object.assign({}, result);
+      _result.type = "browser";
+      _result.url = url;
+      _result.location = "main";
+      _result.desktop = desktop.id;
+      _result.workspace = workspace.id;
+
+      log.debug("Result:", _result);
+      _openWindows[result.id] = _result;
+      dispatch(
+        sessionActions.setOpenWindows({
+          data: _openWindows,
+        })
+      );
+
+      dispatch(
+        windowServiceActions.openNewTab({
+          windowId: _result.id,
+          url: url,
+        })
+      );
+
+      dispatch(sessionActions.setActiveWindow({ data: _result }));
+      dispatch(sessionActions.addBrowserWindow({ data: _id }));
+      dispatch(sessionActions.setActiveBrowserWindowId({ data: _id }));
+    }
+  );
+  return true;
+}
+
+function newBrowserTab(openWindows: any, openTabs: any, windowTabs: any, items: any, isLocal: any, desktop: any, workspace: any, dispatch: any, url: any, activeBrowserWindowId: any){
+  createBrowserGroup(openWindows, items, isLocal, desktop, workspace, dispatch, url, 0);
+}
 
 export function activateBrowser(url: any, desktop = {}, workspace = {}, dispatch: any, openWindows: any, openTabs: any, windowTabs: any, activeTabs: any, items: any, isLocal: any, activeBrowserWindowId: any, needsOpenTab = false){
     let _openWindows = Object.assign({}, openWindows);

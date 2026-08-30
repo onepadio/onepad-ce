@@ -5,13 +5,14 @@
     width: 256px !important;
     height: calc(100vh - 36px) !important;
     min-height: calc(100vh - 36px) !important;
-    background-color: rgba(27,27,27,1.0);
+    background-color: #292e36;
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     z-index: 1066;
     transform: translateX(-256px);
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     opacity: 0;
     pointer-events: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .vertical-tab-bar-open{
@@ -40,11 +41,11 @@
 }
 
 .vertical-tabbar .bg-dark{
-    background-color: #252525;
+    background-color: #292e36 !important;
 }
 
 .vertical-tabbar .list-group{
-    --bs-list-group-bg:: #252525;
+    --bs-list-group-bg: #292e36;
     --bs-list-group-border-color: #3c3d3c;
     --bs-list-group-color: white;
     --bs-list-group-item-padding-x: unset;
@@ -53,26 +54,31 @@
 .vertical-tabbar .list-group-item{
     border:none;
     padding-top: 15px;
+    background-color: transparent !important;
 }
 
 .vertical-tabbar .tabs-menu-container{
     position: absolute;
-    top: 4px;
+    top: 0px;
     left: 0px;
     width: 256px !important;
     height: calc(100vh - 30px) !important;
     display: flex;
     flex-direction: column;
+    background-color: #292e36;
+    padding-top: 12px;
+    padding-left: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .vertical-tabbar .new-tab-button-fixed{
     flex-shrink: 0;
     width: 100%;
-    background-color: #252525;
+    background-color: #292e36;
 }
 
 .vertical-tabbar .new-tab-button-fixed .list-group-item{
-    background-color: #252525;
+    background-color: #292e36 !important;
     border: none;
 }
 
@@ -81,7 +87,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     --bs-accordion-btn-color:white;
-    --bs-accordion-bg: #252525;
+    --bs-accordion-bg: #292e36;
     --bs-accordion-color: white;
     --bs-accordion-active-color: white;
     --bs-accordion-border-color: unset;
@@ -95,7 +101,7 @@
     height: calc(100vh - 30px) !important;
     overflow-y: auto;
     --bs-accordion-btn-color:white;
-    --bs-accordion-bg: #252525;
+    --bs-accordion-bg: #292e36;
     --bs-accordion-color: white;
     --bs-accordion-active-color: white;
     --bs-accordion-border-color: unset;
@@ -136,7 +142,7 @@
 }
 
 .tabs-menu .accordion-item .accordion-button.collapsed{
-    background-color: #252525;
+    background-color: #292e36;
 }
 
 .tabs-menu .accordion-item .accordion-button.collapsed:hover{

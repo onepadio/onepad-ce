@@ -50,6 +50,7 @@ import EditLinkModalWindow from "../../components/EditLinkModalWindow/EditLinkMo
 import EditFavouritesGroupModal from "../../components/modal/favourites/EditFavouritesGroupModal/EditFavouritesGroupModal";
 
 import VerticalTabBar from "../../components/TabsVerticalBar/VerticalTabBar";
+import BrowserVerticalTabBar from "../../components/TabsVerticalBar/BrowserVerticalTabBar";
 import TilesBar from "../../components/TabsVerticalBar/TilesBar";
 import RenameDesktopModalWindow from "../../components/RenameDesktopModalWindow/RenameDesktopModalWindow";
 import WindowSideBar from "../../components/WindowSideBar/WindowSideBar";
@@ -520,6 +521,9 @@ function Home() {
 
   function verticalBar(){
     if(activeWindow && activeWindow.id !== "launchpad" && activeBar === "tabs"){
+      if(activeWindow.type === "browser"){
+        return (<BrowserVerticalTabBar />)
+      }
       return (<VerticalTabBar />)
     }
   }

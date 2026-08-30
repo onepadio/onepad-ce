@@ -1,0 +1,102 @@
+.browser-groups-list {
+  padding-bottom: 16px;
+}
+
+.browser-tab-group {
+  --tree-line: rgba(255, 255, 255, 0.28);
+  --tree-indent: 22px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.browser-tab-group:last-child {
+  border-bottom: none;
+}
+
+.browser-tab-list-item {
+  background: transparent !important;
+  position: relative;
+}
+
+.vertical-tabbar .vertical-tab-item.browser-group-parent {
+  margin-left: 0 !important;
+  font-weight: 600;
+}
+
+.browser-tab-children {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.browser-tab-child-item {
+  display: flex !important;
+  align-items: stretch;
+  padding-left: 0 !important;
+  position: relative;
+  min-height: 40px;
+}
+
+/* Gutter that holds the └ / ├ connector */
+.browser-tree-branch {
+  flex: 0 0 var(--tree-indent);
+  width: var(--tree-indent);
+  position: relative;
+  margin-left: 10px;
+  pointer-events: none;
+}
+
+/* Vertical segment: full height for mid children, stops at elbow for last */
+.browser-tree-branch::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--tree-line);
+}
+
+/* Reach up toward the parent row */
+.browser-tab-child-first .browser-tree-branch::before {
+  top: -6px;
+}
+
+.browser-tab-child-last .browser-tree-branch::before {
+  bottom: 50%;
+}
+
+/* Horizontal elbow into the child */
+.browser-tree-branch::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  height: 1px;
+  background: var(--tree-line);
+}
+
+.browser-tab-child-item .vertical-tab-item.browser-group-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 0 !important;
+  margin-right: 4px !important;
+  opacity: 0.92;
+}
+
+.vertical-tabbar .vertical-tab-item.browser-group-child .tab-title {
+  font-weight: 400;
+  font-size: 11px;
+}
+
+.browser-tab-chevron-col {
+  max-width: 20px;
+  cursor: pointer;
+  padding-left: 2px !important;
+}
+
+.browser-tab-chevron-col:hover {
+  opacity: 0.8;
+}
