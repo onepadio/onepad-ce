@@ -138,13 +138,12 @@ export class SessionService{
 
             // @ts-expect-error TS(2571): Object is of type 'unknown'.
             if(session.state.browserWindows){
-                let bw: any = [];
+                let bw: string[] = [];
                 // @ts-expect-error TS(2571): Object is of type 'unknown'.
                 session.state.browserWindows.forEach((windowId: any) => {
                     // @ts-expect-error TS(2571): Object is of type 'unknown'.
                     if(session.state.openWindows[windowId]){
-                        // @ts-expect-error TS(2571): Object is of type 'unknown'.
-                        bw.push(session.state.openWindows[windowId]);
+                        bw.push(windowId);
                     }
                 });
                 dispatch(sessionActions.setBrowserWindows({ data: bw }));

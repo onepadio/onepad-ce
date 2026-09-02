@@ -103,7 +103,8 @@ function SpaceSwitcher() {
           dispatch,
           workspaceId,
           workspaceState,
-          sessionStateData
+          sessionStateData,
+          { restoreLastActive: true }
         );
         UsersService.setLastWorkspace(userId, workspaceId);
       })

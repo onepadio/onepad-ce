@@ -153,7 +153,13 @@ const sessionSlice = createSlice({
       state.zoomLevel = action.payload;
     },
     addBrowserWindow(state, action){
-      state.browserWindows.push(action.payload.data);
+      const id = action.payload.data;
+      const exists = state.browserWindows.some(
+        (entry: any) => entry === id || (entry && typeof entry === "object" && entry.id === id)
+      );
+      if (!exists) {
+        state.browserWindows.push(id);
+      }
     },
     setClosedExternalTabId(state, action){
       state.closedExternalTabId = action.payload;

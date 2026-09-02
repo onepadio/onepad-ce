@@ -908,6 +908,8 @@ export function activateBrowser(
         data: openWindows[_id],
       })
     );
+    dispatch(sessionActions.addBrowserWindow({ data: _id }));
+    dispatch(sessionActions.setActiveBrowserWindowId({ data: _id }));
     return;
   }
 

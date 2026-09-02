@@ -127,12 +127,12 @@ function SpaceIcon(props) {
       windowTabs: _windows.windowTabs,
       activeDesktopWindows: activeDesktopWindows,
       activeTabs: _windows.activeTabs,
-      activeTab: { id: "launchpad" },
-      activeTabId: "launchpad",
-      activeWindow: { id: "launchpad" },  
-      activeWindowId: "launchpad",
-      activeWindowTabs: [],
-      activeBrowserWindowId: "",
+      activeTab: activeTab?.type === "xapp" ? { id: "launchpad" } : activeTab,
+      activeTabId: activeTab?.type === "xapp" ? "launchpad" : activeTabId,
+      activeWindow: activeWindow?.type === "xapp" ? { id: "launchpad" } : activeWindow,
+      activeWindowId: activeWindow?.type === "xapp" ? "launchpad" : activeWindowId,
+      activeWindowTabs: activeWindow?.type === "xapp" ? [] : activeWindowTabs,
+      activeBrowserWindowId: activeBrowserWindowId || "",
       sessions: _sessions,
       currentSession: {},
     })
@@ -141,7 +141,8 @@ function SpaceIcon(props) {
           dispatch,
           props.id,
           workspaceState,
-          sessionStateData
+          sessionStateData,
+          { restoreLastActive: true }
         );
         UsersService.setLastWorkspace(userId, props.id);
       })

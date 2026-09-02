@@ -32,6 +32,42 @@ export const localWorkspace =  {
     archived: false,
 };
 
+type SelectWorkspaceOptions = {
+    restoreLastActive?: boolean;
+};
+
+function dispatchWorkspaceFocus(
+    dispatch: any,
+    desktopId: string,
+    openWindows: Record<string, any>,
+    openTabs: Record<string, any>,
+    activeDesktopWindows: Record<string, string>,
+    savedState: any,
+    restoreLastActive: boolean
+) {
+    if (!restoreLastActive) {
+        dispatch(sessionActions.getBackToLaunchPad({ data: { desktopId } }));
+        return;
+    }
+
+    const windowId =
+        activeDesktopWindows[desktopId] ||
+        savedState?.activeWindowId ||
+        savedState?.activeWindow?.id;
+
+    if (!windowId || windowId === "launchpad" || !openWindows[windowId]) {
+        dispatch(sessionActions.getBackToLaunchPad({ data: { desktopId } }));
+        return;
+    }
+
+    dispatch(sessionActions.setActiveWindow({ data: openWindows[windowId] }));
+
+    const savedTabId = savedState?.activeTabId || savedState?.activeTab?.id;
+    if (savedTabId && savedTabId !== "launchpad" && openTabs[savedTabId]) {
+        dispatch(sessionActions.setActiveTab({ data: openTabs[savedTabId] }));
+    }
+}
+
 export class WorkspaceService{
     static async init(userId: any){
         const workspaces: any[any] = await getWorkspaces(userId);
@@ -55,7 +91,13 @@ export class WorkspaceService{
         return workspaceId;
     }
 
-    static async loadWorkspaceById(dispatch: any, id: any, workspaceState: any, sessionState: any){
+    static async loadWorkspaceById(
+        dispatch: any,
+        id: any,
+        workspaceState: any,
+        sessionState: any,
+        options: SelectWorkspaceOptions = {}
+    ){
         let workspace = await WorkspaceRepository.get(id);
         let desktops = await DesktopService.getDesktopsByWorkspaceId(id);
         let desktop = await DesktopService.getDefaultDesktopByWorkspaceId(id);
@@ -86,25 +128,15 @@ export class WorkspaceService{
         dispatch(workspaceActions.setLinks({ links: links }));
 
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
-        let _activeWindowId = sessionState.activeDesktopWindows[desktop.id];
-        let _activeWindow = sessionState.openWindows[_activeWindowId];
-
-        //if(_activeWindow !== undefined){
-        //    dispatch(sessionActions.setActiveWindow({ data: _activeWindow }));
-        //}else{
-            dispatch(sessionActions.getBackToLaunchPad({data: {
-                // @ts-expect-error TS(2571): Object is of type 'unknown'.
-                desktopId: desktop.id,
-            }}));
-        //}
-
-        //if(workspace.state.activeBrowserWindowId){
-        //    if(workspace.state.openWindows[workspace.state.activeBrowserWindowId] !== undefined && workspace.state.browserWindows.includes(workspace.state.activeBrowserWindowId)){
-        //        dispatch(sessionActions.setActiveBrowserWindowId({ data: workspace.state.activeBrowserWindowId }));
-        //    }
-        //}else{
-        //    dispatch(sessionActions.setActiveBrowserWindowId({ data: "" }));
-        //}
+        dispatchWorkspaceFocus(
+            dispatch,
+            desktop.id,
+            sessionState.openWindows,
+            sessionState.openTabs,
+            sessionState.activeDesktopWindows,
+            workspace.state,
+            options.restoreLastActive === true
+        );
 
         // let browserState = await BrowserStateService.getBrowserStateByWorkspaceId(workspace.id);
 
@@ -118,7 +150,13 @@ export class WorkspaceService{
 
     }
 
-    static async selectWorkspaceById(dispatch: any, id: any, workspaceState: any, sessionState: any){
+    static async selectWorkspaceById(
+        dispatch: any,
+        id: any,
+        workspaceState: any,
+        sessionState: any,
+        options: SelectWorkspaceOptions = {}
+    ){
         let workspace = await WorkspaceRepository.get(id);
         let desktops = await DesktopService.getDesktopsByWorkspaceId(id);
         let desktop = await DesktopService.getDefaultDesktopByWorkspaceId(id);
@@ -298,10 +336,15 @@ export class WorkspaceService{
             }
 
 
-            dispatch(sessionActions.getBackToLaunchPad({data: {
-                // @ts-expect-error TS(2571): Object is of type 'unknown'.
-                desktopId: desktop.id,
-            }}));
+            dispatchWorkspaceFocus(
+                dispatch,
+                desktop.id,
+                _openWindows,
+                _openTabs,
+                _activeDesktopWindows,
+                workspace.state,
+                options.restoreLastActive === true
+            );
             /*
             if(workspace.state.browserWindows){
                 let bw = [];

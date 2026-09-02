@@ -222,7 +222,13 @@ function WorkspaceMenu({
         }).then((id) => {
             let _isOpen = workspaceState.recentWorkspaces[userId].find((workspace) => workspace.id === selectedWorkspaceId) ? true : false;
             if(_isOpen) {
-                WorkspaceService.loadWorkspaceById(dispatch, selectedWorkspaceId, workspaceState, sessionStateData);
+                WorkspaceService.loadWorkspaceById(
+                    dispatch,
+                    selectedWorkspaceId,
+                    workspaceState,
+                    sessionStateData,
+                    { restoreLastActive: true }
+                );
                 UsersService.setLastWorkspace(userId, selectedWorkspaceId);
                 setSelectedWorkspaceId("");
                 return;
@@ -249,7 +255,13 @@ function WorkspaceMenu({
               });
 
             XAppService.saveStateToSessionStorage(openWindows, openTabs, windowTabs, activeTabs);
-            WorkspaceService.selectWorkspaceById(dispatch, selectedWorkspaceId, workspaceState, sessionStateData);
+            WorkspaceService.selectWorkspaceById(
+                dispatch,
+                selectedWorkspaceId,
+                workspaceState,
+                sessionStateData,
+                { restoreLastActive: true }
+            );
             UsersService.setLastWorkspace(userId, selectedWorkspaceId)
             setSelectedWorkspaceId("");
         }).catch((err) => {

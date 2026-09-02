@@ -18,6 +18,10 @@ import { closeTab } from "../../util/tabs";
 import { createBrowserGroup } from "../../util/browser";
 import { closeWindow } from "../../services/window";
 import {
+  getBrowserWindowIds,
+  syncBrowserWindowsIfNeeded,
+} from "../../util/browserWindows";
+import {
   requestSidebarAutoHide,
   isNodeInAppsMenu,
 } from "../../util/sidebarChrome";
@@ -47,15 +51,27 @@ function getSortedTabIdsForWindow(windowId: string, windowTabs: any, openTabs: a
   return [...tabIds]
     .filter((tabId) => openTabs[tabId])
     .sort((a, b) => {
-      const createdA = openTabs[a]?.created || 0;
-      const createdB = openTabs[b]?.created || 0;
-      return createdA - createdB;
+      const createdA = openTabs[a]?.created || openTabs[a]?.lastAccessed || 0;
+      const createdB = openTabs[b]?.created || openTabs[b]?.lastAccessed || 0;
+      if (createdA !== createdB) return createdA - createdB;
+      return tabIds.indexOf(a) - tabIds.indexOf(b);
     });
 }
 
-function buildGroups(browserWindows: string[], windowTabs: any, openTabs: any): TabGroup[] {
-  return (browserWindows || [])
-    .filter((windowId) => openTabs && windowTabs[windowId])
+function buildGroups(
+  openWindows: any,
+  browserWindows: any[],
+  windowTabs: any,
+  openTabs: any,
+  workspaceId?: string
+): TabGroup[] {
+  const windowIds = getBrowserWindowIds(openWindows, browserWindows, windowTabs);
+
+  return windowIds
+    .filter((windowId) => {
+      if (!workspaceId) return true;
+      return openWindows[windowId]?.workspace === workspaceId;
+    })
     .map((windowId) => {
       const sorted = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
       return {
@@ -64,7 +80,14 @@ function buildGroups(browserWindows: string[], windowTabs: any, openTabs: any): 
         childTabIds: sorted.slice(1),
       };
     })
-    .filter((group) => group.parentTabId != null);
+    .filter((group) => group.parentTabId != null)
+    .sort((a, b) => {
+      const tabA = openTabs[a.parentTabId!];
+      const tabB = openTabs[b.parentTabId!];
+      const timeA = tabA?.created || tabA?.lastAccessed || 0;
+      const timeB = tabB?.created || tabB?.lastAccessed || 0;
+      return timeA - timeB;
+    });
 }
 
 function BrowserVerticalTabBar() {
@@ -88,8 +111,19 @@ function BrowserVerticalTabBar() {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [hoveredTabId, setHoveredTabId] = useState<string | null>(null);
 
-  const groups = buildGroups(browserWindows, windowTabs, openTabs);
+  const groups = buildGroups(
+    openWindows,
+    browserWindows,
+    windowTabs,
+    openTabs,
+    workspace?.id
+  );
   const homePage = newTabUrl || "https://www.google.com/";
+
+  // Repair browserWindows registry when legacy windows exist but are not registered
+  useEffect(() => {
+    syncBrowserWindowsIfNeeded(browserWindows, openWindows, windowTabs, dispatch);
+  }, [browserWindows, openWindows, windowTabs, dispatch]);
 
   useEffect(() => {
     const container = document.getElementById("vertical-tab-bar");

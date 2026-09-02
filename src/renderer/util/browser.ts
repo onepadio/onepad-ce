@@ -5,6 +5,7 @@ import { windowServiceActions } from "../store/window-service-slice";
 
 import BrowserStateService from "../services/browsers";
 import { openInternalWindow, openAppWindow } from "../services/window";
+import { getBrowserWindowIds } from "./browserWindows";
 
 
 
@@ -136,7 +137,9 @@ export function activateBrowser(url: any, desktop = {}, workspace = {}, dispatch
         dispatch(sessionActions.setOpenTabs({data: _openTabs}));
         dispatch(sessionActions.setWindowTabs({data: _windowTabs}));
         dispatch(sessionActions.setActiveTabs({data: _activeTabs}));
-        dispatch(sessionActions.setBrowserWindows({data: state.browserWindows}));
+        dispatch(sessionActions.setBrowserWindows({
+          data: getBrowserWindowIds(_openWindows, state.browserWindows || [], _windowTabs),
+        }));
         dispatch(sessionActions.setActiveBrowserWindowId({data: state.activeBrowserWindowId}));
         dispatch(sessionActions.setActiveWindow({data: _openWindows[state.activeBrowserWindowId]}));
       }else{

@@ -259,7 +259,13 @@ function SpaceTopBar(){
           sessions: _sessions,
           currentSession: {},
       }).then((id) => {
-          WorkspaceService.loadWorkspaceById(dispatch, selectedWorkspaceId, workspaceState, sessionStateData);
+          WorkspaceService.loadWorkspaceById(
+              dispatch,
+              selectedWorkspaceId,
+              workspaceState,
+              sessionStateData,
+              { restoreLastActive: true }
+          );
           UsersService.setLastWorkspace(userId, selectedWorkspaceId);
           setSelectedWorkspaceId("");
       }).catch((err) => {
