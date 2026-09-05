@@ -1,0 +1,309 @@
+/* Transparent catcher below AppsOverlayMenu (1999) and switcher (1998) */
+.app-tab-switcher-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1997;
+  background: transparent;
+}
+
+/* Sits just above AppsOverlayMenu (bottom: 36px, ~60px tall content) */
+.app-tab-switcher-strip {
+  position: fixed;
+  bottom: 108px;
+  left: 64px;
+  width: calc(100vw - 128px);
+  z-index: 1998;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: appTabSwitcherSlideIn 0.18s ease-out;
+}
+
+/* Centered on the dock app icon (left = icon center, clamped in JS) */
+.app-tab-switcher-strip-anchored {
+  left: 50%;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  justify-content: flex-start;
+  transform: translateX(-50%);
+}
+
+@keyframes appTabSwitcherSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.app-tab-switcher-strip:not(.app-tab-switcher-strip-anchored) {
+  animation-name: appTabSwitcherSlideInCentered;
+}
+
+@keyframes appTabSwitcherSlideInCentered {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-tab-switcher-strip-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 8px 8px 10px;
+  background-color: #25292f66;
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.app-tab-switcher-scroll-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(720px, calc(100vw - 280px));
+  display: flex;
+  align-items: flex-start;
+}
+
+.app-tab-switcher-scroll {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.app-tab-switcher-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.app-tab-switcher-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(28, 31, 36, 0.92);
+  color: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: background-color 0.15s ease;
+}
+
+.app-tab-switcher-nav:hover {
+  background: rgba(40, 44, 52, 0.98);
+}
+
+.app-tab-switcher-nav-left {
+  left: 2px;
+}
+
+.app-tab-switcher-nav-right {
+  right: 2px;
+}
+
+.app-tab-switcher-tile {
+  flex: 0 0 auto;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.app-tab-switcher-tile:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.app-tab-switcher-tile.active {
+  border-color: #3b82f6;
+}
+
+.app-tab-switcher-tile-preview {
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111827;
+}
+
+.app-tab-switcher-tile-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.app-tab-switcher-tile-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #1f2937, #111827);
+}
+
+.app-tab-switcher-tile-placeholder img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0.7;
+}
+
+.app-tab-switcher-tile-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+  min-width: 0;
+}
+
+.app-tab-switcher-tile-icon,
+.app-tab-switcher-tile-icon-spacer {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.app-tab-switcher-tile-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f3f4f6;
+}
+
+.app-tab-switcher-empty {
+  padding: 28px 12px;
+  color: #9ca3af;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Matches tab tile footprint so it sits on the same row baseline */
+.app-tab-switcher-new-tab {
+  flex: 0 0 auto;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.app-tab-switcher-new-tab:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.app-tab-switcher-new-tab-preview {
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  color: #d1d5db;
+}
+
+.app-tab-switcher-new-tab:hover .app-tab-switcher-new-tab-preview {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.app-tab-switcher-new-tab-label {
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 0 2px;
+  color: #f3f4f6;
+  white-space: nowrap;
+}
+
+.app-tab-switcher-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-tab-switcher-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .app-tab-switcher-strip:not(.app-tab-switcher-strip-anchored) {
+    left: 16px;
+    width: calc(100vw - 32px);
+  }
+
+  .app-tab-switcher-strip {
+    bottom: 100px;
+  }
+
+  .app-tab-switcher-scroll-wrap {
+    max-width: calc(100vw - 200px);
+  }
+
+  .app-tab-switcher-tile,
+  .app-tab-switcher-new-tab {
+    width: 112px;
+  }
+}

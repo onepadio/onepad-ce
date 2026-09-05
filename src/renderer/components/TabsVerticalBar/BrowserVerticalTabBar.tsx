@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import isElectron from "is-electron";
-import log from "loglevel";
 import clsx from "clsx";
 import { Container, Row, Col, ListGroup, ListGroupItem } from "reactstrap";
 import {
@@ -17,10 +15,13 @@ import { windowActions } from "../../store/window-slice";
 import { closeTab } from "../../util/tabs";
 import { createBrowserGroup } from "../../util/browser";
 import { closeWindow } from "../../services/window";
+import { syncBrowserWindowsIfNeeded } from "../../util/browserWindows";
 import {
-  getBrowserWindowIds,
-  syncBrowserWindowsIfNeeded,
-} from "../../util/browserWindows";
+  buildGroups,
+  switchBrowserTab,
+  truncateTabTitle,
+  type TabGroup,
+} from "../../util/browserTabGroups";
 import {
   requestSidebarAutoHide,
   isNodeInAppsMenu,
@@ -28,67 +29,6 @@ import {
 
 import "./VerticalTabBar.css";
 import "./BrowserVerticalTabBar.css";
-
-type TabGroup = {
-  windowId: string;
-  parentTabId: string | null;
-  childTabIds: string[];
-};
-
-function truncateTitle(tab: any, maxLen = 24): string {
-  const title = tab?.state?.title || "";
-  const url = tab?.state?.url || "";
-  if (!title) {
-    return url.length > maxLen ? url.substring(0, maxLen).concat("...") : url;
-  }
-  return title.length > maxLen ? title.substring(0, maxLen).concat("...") : title;
-}
-
-function getSortedTabIdsForWindow(windowId: string, windowTabs: any, openTabs: any): string[] {
-  const tabIds = windowTabs[windowId];
-  if (!tabIds || !Array.isArray(tabIds)) return [];
-
-  return [...tabIds]
-    .filter((tabId) => openTabs[tabId])
-    .sort((a, b) => {
-      const createdA = openTabs[a]?.created || openTabs[a]?.lastAccessed || 0;
-      const createdB = openTabs[b]?.created || openTabs[b]?.lastAccessed || 0;
-      if (createdA !== createdB) return createdA - createdB;
-      return tabIds.indexOf(a) - tabIds.indexOf(b);
-    });
-}
-
-function buildGroups(
-  openWindows: any,
-  browserWindows: any[],
-  windowTabs: any,
-  openTabs: any,
-  workspaceId?: string
-): TabGroup[] {
-  const windowIds = getBrowserWindowIds(openWindows, browserWindows, windowTabs);
-
-  return windowIds
-    .filter((windowId) => {
-      if (!workspaceId) return true;
-      return openWindows[windowId]?.workspace === workspaceId;
-    })
-    .map((windowId) => {
-      const sorted = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
-      return {
-        windowId,
-        parentTabId: sorted[0] || null,
-        childTabIds: sorted.slice(1),
-      };
-    })
-    .filter((group) => group.parentTabId != null)
-    .sort((a, b) => {
-      const tabA = openTabs[a.parentTabId!];
-      const tabB = openTabs[b.parentTabId!];
-      const timeA = tabA?.created || tabA?.lastAccessed || 0;
-      const timeB = tabB?.created || tabB?.lastAccessed || 0;
-      return timeA - timeB;
-    });
-}
 
 function BrowserVerticalTabBar() {
   const dispatch = useDispatch();
@@ -171,34 +111,7 @@ function BrowserVerticalTabBar() {
   }
 
   function handleSwitchTab(tab: any) {
-    log.debug("BrowserVerticalTabBar handleSwitchTab", tab);
-
-    // Update this window's remembered active tab before switching windows.
-    // App.tsx restores activeTabs[windowId] whenever activeWindow changes;
-    // without this, clicking a child in another group shows that group's last tab.
-    const _activeTabs = Object.assign({}, activeTabs);
-    _activeTabs[tab.window] = tab.id;
-    dispatch(sessionActions.setActiveTabs({ data: _activeTabs }));
-
-    const win = openWindows[tab.window];
-    if (win && activeWindow?.id !== tab.window) {
-      dispatch(sessionActions.setActiveWindow({ data: win }));
-      dispatch(sessionActions.setActiveBrowserWindowId({ data: tab.window }));
-    }
-
-    if (tab.location === "external") {
-      if (isElectron()) {
-        // @ts-expect-error
-        window.electronAPI.send("toMain", {
-          action: "switch-to-external-tab",
-          tabWindowId: tab.window,
-          tabId: tab.id,
-          type: tab.type,
-        });
-      }
-    } else {
-      dispatch(sessionActions.setActiveTab({ data: tab }));
-    }
+    switchBrowserTab(tab, dispatch, openWindows, activeTabs, activeWindow?.id);
   }
 
   function handleCloseChildTab(tab: any, e: React.MouseEvent) {
@@ -292,7 +205,7 @@ function BrowserVerticalTabBar() {
 
     const isActive = tab.id === activeTabId;
     const showClose = hoveredTabId === tab.id || isActive;
-    const title = truncateTitle(tab);
+    const title = truncateTabTitle(tab);
     const icon = tabIcon(tab);
 
     const row = (

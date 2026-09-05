@@ -383,6 +383,10 @@ function OPWebView(props: any) {
 
   // Add all webview event listeners (only for Electron)
   useEffect(() => {
+    if (!userAgentLoaded) {
+      return;
+    }
+
     if (!isElectron()) {
       // For iframe in non-Electron, just set the element reference
       const iframeElement = document.getElementById(webViewId);
@@ -743,7 +747,7 @@ function OPWebView(props: any) {
       log.debug("webview is null");
       setWebView(document.getElementById(webViewId));
     }
-  }, [webview, activeTabId, props.tabId]);
+  }, [webview, activeTabId, props.tabId, userAgentLoaded]);
 
   useEffect(() => {
     let _openTabs = Object.assign({}, openTabs);

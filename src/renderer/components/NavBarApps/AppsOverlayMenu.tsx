@@ -15,12 +15,18 @@ import defaultIcon from "../../images/default_icon.png";
 interface AppsOverlayMenuProps {
   apps: any[];
   activeWindowId: string | null;
-  onSelectApp: (appId: string) => void;
+  onSelectApp: (appId: string, anchorX?: number) => void;
   onLaunchpadClick: () => void;
   onBrowserClick: () => void;
+  onBrowserHoverStart?: () => void;
+  onBrowserHoverEnd?: () => void;
+  onAppHoverStart?: (appId: string, anchorX?: number) => void;
+  onAppHoverEnd?: (appId: string) => void;
   isLaunchpadActive: boolean;
   browserTabsCount: number;
   homeAppIds: string[];
+  /** Keep dock visible in auto-hide mode while a tab switcher is open/hovered */
+  suppressAutoHide?: boolean;
 }
 
 type HideMode = 'always-on-top' | 'auto-hide';
@@ -31,9 +37,14 @@ function AppsOverlayMenu({
   onSelectApp, 
   onLaunchpadClick,
   onBrowserClick,
+  onBrowserHoverStart,
+  onBrowserHoverEnd,
+  onAppHoverStart,
+  onAppHoverEnd,
   isLaunchpadActive,
   browserTabsCount,
-  homeAppIds
+  homeAppIds,
+  suppressAutoHide = false,
 }: AppsOverlayMenuProps) {
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
@@ -46,6 +57,40 @@ function AppsOverlayMenu({
   const [manuallyHidden, setManuallyHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const suppressAutoHideRef = useRef(suppressAutoHide);
+
+  useEffect(() => {
+    suppressAutoHideRef.current = suppressAutoHide;
+  }, [suppressAutoHide]);
+
+  // While a switcher is open, cancel pending hide and keep the dock visible
+  useEffect(() => {
+    if (hideMode !== "auto-hide") return;
+    if (!suppressAutoHide) return;
+
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsVisible(true);
+  }, [suppressAutoHide, hideMode]);
+
+  // When switcher closes, hide again if pointer is no longer over the menu
+  useEffect(() => {
+    if (hideMode !== "auto-hide") return;
+    if (suppressAutoHide) return;
+
+    if (!menuRef.current?.matches(":hover")) {
+      if (!hideTimeoutRef.current) {
+        hideTimeoutRef.current = setTimeout(() => {
+          if (!suppressAutoHideRef.current) {
+            setIsVisible(false);
+          }
+          hideTimeoutRef.current = null;
+        }, 500);
+      }
+    }
+  }, [suppressAutoHide, hideMode]);
   
   // Load hide mode preference from localStorage on mount
   useEffect(() => {
@@ -250,11 +295,13 @@ function AppsOverlayMenu({
         className={`apps-overlay-menu ${isVisible ? 'visible' : 'hidden'}`}
         onContextMenu={handleContextMenu}
         onMouseLeave={() => {
-          // Auto-hide when mouse leaves in auto-hide mode
-          if (hideMode === 'auto-hide') {
+          // Auto-hide when mouse leaves in auto-hide mode — unless a switcher is open
+          if (hideMode === 'auto-hide' && !suppressAutoHideRef.current) {
             if (!hideTimeoutRef.current) {
               hideTimeoutRef.current = setTimeout(() => {
-                setIsVisible(false);
+                if (!suppressAutoHideRef.current) {
+                  setIsVisible(false);
+                }
                 hideTimeoutRef.current = null;
               }, 500);
             }
@@ -284,7 +331,11 @@ function AppsOverlayMenu({
           <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={onLaunchpadClick}
-            onMouseEnter={() => setHoveredApp("launchpad")}
+            onMouseEnter={() => {
+              setHoveredApp("launchpad");
+              // Leaving app/browser icons toward launchpad should dismiss hover switchers
+              onBrowserHoverEnd?.();
+            }}
             onMouseLeave={() => setHoveredApp(null)}
           >
             <WaffleMenuIcon size={20} />
@@ -296,8 +347,14 @@ function AppsOverlayMenu({
           <button
             className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""}`}
             onClick={onBrowserClick}
-            onMouseEnter={() => setHoveredApp("browser")}
-            onMouseLeave={() => setHoveredApp(null)}
+            onMouseEnter={() => {
+              setHoveredApp("browser");
+              onBrowserHoverStart?.();
+            }}
+            onMouseLeave={() => {
+              setHoveredApp(null);
+              onBrowserHoverEnd?.();
+            }}
           >
             <WindowStack color="white" size={20} />
             {browserTabsCount > 0 && (
@@ -316,9 +373,19 @@ function AppsOverlayMenu({
             <button
               key={app.id}
               className={`app-menu-item ${activeWindowId === app.id ? "active" : ""}`}
-              onClick={() => onSelectApp(app.id)}
-              onMouseEnter={() => setHoveredApp(app.id)}
-              onMouseLeave={() => setHoveredApp(null)}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                onSelectApp(app.id, rect.left + rect.width / 2);
+              }}
+              onMouseEnter={(e) => {
+                setHoveredApp(app.id);
+                const rect = e.currentTarget.getBoundingClientRect();
+                onAppHoverStart?.(app.id, rect.left + rect.width / 2);
+              }}
+              onMouseLeave={() => {
+                setHoveredApp(null);
+                onAppHoverEnd?.(app.id);
+              }}
               onContextMenu={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

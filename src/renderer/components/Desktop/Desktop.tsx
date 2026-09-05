@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 
@@ -22,10 +22,15 @@ import { aiAppsActions } from "renderer/store/ai-slice";
 import SpaceStatsWidget from "../SpaceStatsWidget/SpaceStatsWidget";
 import Pages from "../Pages/Pages";
 import AppsOverlayMenu from "../NavBarApps/AppsOverlayMenu";
+import BrowserTabSwitcher from "../NavBarApps/BrowserTabSwitcher";
+import AppTabSwitcher from "../NavBarApps/AppTabSwitcher";
 import { sessionActions as sessionActionsImport } from "../../store/session-slice";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { openAppWindow } from "../../services/window";
 import { activateBrowser } from "../../hubs/WindowService";
+
+const SWITCHER_HOVER_OPEN_MS = 350;
+const SWITCHER_HOVER_CLOSE_MS = 280;
 
 function Desktop(props) {
   const dispatch = useDispatch();
@@ -66,6 +71,19 @@ function Desktop(props) {
   const [widgets, setWidgets] = useState([]);
   const [partition, setPartition] = useState("");
   const [isLaunchpadActive, setIsLaunchpadActive] = useState(true);
+  const [showBrowserTabSwitcher, setShowBrowserTabSwitcher] = useState(false);
+  const [showAppTabSwitcher, setShowAppTabSwitcher] = useState(false);
+  const [appTabSwitcherWindowId, setAppTabSwitcherWindowId] = useState<string | null>(null);
+  const [appTabSwitcherAnchorX, setAppTabSwitcherAnchorX] = useState<number | null>(null);
+  const [switcherPinned, setSwitcherPinned] = useState(false);
+
+  const hoverOpenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const switcherPinnedRef = useRef(false);
+
+  useEffect(() => {
+    switcherPinnedRef.current = switcherPinned;
+  }, [switcherPinned]);
 
   useEffect(() => {
     setName(desktop.name.charAt(0).toUpperCase() + desktop.name.slice(1));
@@ -122,6 +140,19 @@ function Desktop(props) {
     } else {
       setIsLaunchpadActive(false);
     }
+    if (!activeWindowId?.startsWith("browser_")) {
+      setShowBrowserTabSwitcher(false);
+    }
+    if (
+      !activeWindowId ||
+      activeWindowId === "launchpad" ||
+      activeWindowId.startsWith("browser_")
+    ) {
+      setShowAppTabSwitcher(false);
+      setAppTabSwitcherWindowId(null);
+      setAppTabSwitcherAnchorX(null);
+    }
+    setSwitcherPinned(false);
   }, [activeWindowId]);
 
   useEffect(() => {
@@ -219,41 +250,159 @@ function Desktop(props) {
     }, 500);
   }
 
-  function handleSelectApp(appId: string) {
-    const app = openWindows[appId];
-    if (app) {
-      if (activeWindowId === appId) {
-        dispatch(
-          sessionActionsImport.goBackToPreviousWindow({
-            data: {
-              desktopId: desktop.id,
-            },
-          })
-        );
-        return;
+  function clearHoverTimers() {
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  }
+
+  function closeAppTabSwitcher() {
+    setShowAppTabSwitcher(false);
+    setAppTabSwitcherWindowId(null);
+    setAppTabSwitcherAnchorX(null);
+  }
+
+  function closeAllSwitchers() {
+    clearHoverTimers();
+    setShowBrowserTabSwitcher(false);
+    closeAppTabSwitcher();
+    setSwitcherPinned(false);
+  }
+
+  function openBrowserSwitcher(pinned: boolean) {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+    setShowBrowserTabSwitcher(true);
+    setSwitcherPinned(pinned);
+  }
+
+  function openAppSwitcher(appId: string, pinned: boolean, anchorX?: number) {
+    clearHoverTimers();
+    setShowBrowserTabSwitcher(false);
+    setAppTabSwitcherWindowId(appId);
+    if (typeof anchorX === "number") {
+      setAppTabSwitcherAnchorX(anchorX);
+    }
+    setShowAppTabSwitcher(true);
+    setSwitcherPinned(pinned);
+  }
+
+  function scheduleHoverClose() {
+    if (switcherPinnedRef.current) return;
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+    }
+    hoverCloseTimerRef.current = setTimeout(() => {
+      hoverCloseTimerRef.current = null;
+      if (!switcherPinnedRef.current) {
+        setShowBrowserTabSwitcher(false);
+        setShowAppTabSwitcher(false);
+        setAppTabSwitcherWindowId(null);
+        setAppTabSwitcherAnchorX(null);
       }
-      if (app.location === "external") {
-        openAppWindow(
-          app.id,
-          app.start_url,
-          app.window_type,
-          app.is_stateful,
-          app.show_controls
-        );
+    }, SWITCHER_HOVER_CLOSE_MS);
+  }
+
+  function cancelHoverClose() {
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  }
+
+  function handleBrowserHoverStart() {
+    cancelHoverClose();
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+    }
+    hoverOpenTimerRef.current = setTimeout(() => {
+      hoverOpenTimerRef.current = null;
+      if (switcherPinnedRef.current) return;
+      openBrowserSwitcher(false);
+    }, SWITCHER_HOVER_OPEN_MS);
+  }
+
+  function handleAppHoverStart(appId: string, anchorX?: number) {
+    cancelHoverClose();
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+    }
+    hoverOpenTimerRef.current = setTimeout(() => {
+      hoverOpenTimerRef.current = null;
+      if (switcherPinnedRef.current) return;
+      openAppSwitcher(appId, false, anchorX);
+    }, SWITCHER_HOVER_OPEN_MS);
+  }
+
+  function handleDockIconHoverEnd() {
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+    scheduleHoverClose();
+  }
+
+  function handleSwitcherHoverStart() {
+    cancelHoverClose();
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+  }
+
+  function handleSwitcherHoverEnd() {
+    scheduleHoverClose();
+  }
+
+  useEffect(() => {
+    return () => clearHoverTimers();
+  }, []);
+
+  function handleSelectApp(appId: string, anchorX?: number) {
+    clearHoverTimers();
+    setShowBrowserTabSwitcher(false);
+    const app = openWindows[appId];
+    if (!app) return;
+
+    if (activeWindowId === appId) {
+      // Already on this app — toggle flat tab screenshot switcher
+      if (showAppTabSwitcher && appTabSwitcherWindowId === appId) {
+        closeAllSwitchers();
       } else {
-        dispatch(sessionActionsImport.setActiveWindow({ data: app }));
-        if (openWindows[app.id].sleeping === true) {
-          dispatch(appActions.showSplashScreen({}));
-          setTimeout(() => {
-            dispatch(appActions.hideSplashScreen({}));
-          }, 1000);
-        }
+        openAppSwitcher(appId, true, anchorX);
+      }
+      return;
+    }
+
+    closeAllSwitchers();
+
+    if (app.location === "external") {
+      openAppWindow(
+        app.id,
+        app.start_url,
+        app.window_type,
+        app.is_stateful,
+        app.show_controls
+      );
+    } else {
+      dispatch(sessionActionsImport.setActiveWindow({ data: app }));
+      if (openWindows[app.id].sleeping === true) {
+        dispatch(appActions.showSplashScreen({}));
+        setTimeout(() => {
+          dispatch(appActions.hideSplashScreen({}));
+        }, 1000);
       }
     }
   }
 
   function handleLaunchpadClick() {
     setIsLaunchpadActive(true);
+    closeAllSwitchers();
     dispatch(
       sessionActionsImport.getBackToLaunchPad({
         data: {
@@ -264,6 +413,20 @@ function Desktop(props) {
   }
 
   function handleBrowserClick() {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+
+    if (activeWindowId?.startsWith("browser_")) {
+      if (showBrowserTabSwitcher) {
+        closeAllSwitchers();
+      } else {
+        openBrowserSwitcher(true);
+      }
+      return;
+    }
+
+    setShowBrowserTabSwitcher(false);
+    setSwitcherPinned(false);
     const homePage = "https://www.google.com/";
     activateBrowser(
       homePage,
@@ -453,9 +616,30 @@ function Desktop(props) {
         onSelectApp={handleSelectApp}
         onLaunchpadClick={handleLaunchpadClick}
         onBrowserClick={handleBrowserClick}
+        onBrowserHoverStart={handleBrowserHoverStart}
+        onBrowserHoverEnd={handleDockIconHoverEnd}
+        onAppHoverStart={handleAppHoverStart}
+        onAppHoverEnd={handleDockIconHoverEnd}
         isLaunchpadActive={isLaunchpadActive}
         browserTabsCount={browserTabsCount}
         homeAppIds={homeAppIds}
+        suppressAutoHide={showBrowserTabSwitcher || showAppTabSwitcher}
+      />
+
+      <BrowserTabSwitcher
+        open={showBrowserTabSwitcher}
+        onClose={closeAllSwitchers}
+        onMouseEnter={handleSwitcherHoverStart}
+        onMouseLeave={handleSwitcherHoverEnd}
+      />
+
+      <AppTabSwitcher
+        open={showAppTabSwitcher}
+        windowId={appTabSwitcherWindowId}
+        anchorX={appTabSwitcherAnchorX}
+        onClose={closeAllSwitchers}
+        onMouseEnter={handleSwitcherHoverStart}
+        onMouseLeave={handleSwitcherHoverEnd}
       />
     </>
   );
