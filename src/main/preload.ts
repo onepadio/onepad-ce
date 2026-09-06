@@ -72,6 +72,12 @@ const electronHandler = {
     get(key: string) {
       return ipcRenderer.sendSync('screenshot-get', key);
     },
+    delete(key: string) {
+      ipcRenderer.send('screenshot-delete', key);
+    },
+    flush(tabIds: string[]) {
+      return ipcRenderer.sendSync('screenshot-flush', tabIds);
+    },
   },
   capturescreenshot: {
     get(key: string) {

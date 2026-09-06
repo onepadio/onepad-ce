@@ -25,6 +25,7 @@ import { LinkService } from "../../services/link";
 import { spaceAppActions } from "../../store/spaceapp-slice";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
+import { createNavHistoryState } from "../../util/navHistory";
 
 function LinkIcon(props: any) {
   const dispatch = useDispatch();
@@ -73,11 +74,7 @@ function LinkIcon(props: any) {
         desktop: desktop.id,
         workspace: workspace.id,
         window: windowId,
-        state:{
-            url: url,
-            title: title,
-            icon: icon,
-        },
+        state: createNavHistoryState(url, title, icon),
         created: now,
         lastAccessed: now,
         sleeping: true,
@@ -106,11 +103,6 @@ function LinkIcon(props: any) {
       if(openWindows[props.id].sleeping === true){
         // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
         dispatch(appActions.showSplashScreen());
-        setTimeout(() => {
-          //dispatch(appActions.showTabsScreen());
-          // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-          dispatch(appActions.hideSplashScreen());
-        }, 1000);
       }
       return;
     }
@@ -181,13 +173,6 @@ function LinkIcon(props: any) {
             dispatch(sessionActions.setActiveWindow({data: _result}));
 
             dispatch(appActions.showSplashScreen({}));
-            setTimeout(() => {
-              //if(_tabIds.length > 1){
-              //  dispatch(appActions.showTabsScreen());
-              //}
-
-              dispatch(appActions.hideSplashScreen({}));
-            }, 1000);
 
           }).catch((error) => {
               log.error("Error:",error);

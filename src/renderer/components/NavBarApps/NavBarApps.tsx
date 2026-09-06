@@ -50,9 +50,6 @@ function NavBarApps({ apps }: NavBarAppsProps) {
       dispatch(sessionActions.setActiveWindow({ data: item }));
       if (openWindows[item.id].sleeping === true) {
         dispatch(appActions.showSplashScreen({}));
-        setTimeout(() => {
-          dispatch(appActions.hideSplashScreen({}));
-        }, 1000);
       }
     }
   }

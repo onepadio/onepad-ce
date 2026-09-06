@@ -272,6 +272,14 @@ export function closeWindow(dispatch: any, sessionActions: any, windowId: any, o
                   delete _openTabs[tab.id];
                   // @ts-expect-error TS(2571): Object is of type 'unknown'.
                   localStorage.removeItem("screenshot-"+tab.id);
+                  if (isElectron()) {
+                    try {
+                      // @ts-expect-error TS(2571): Object is of type 'unknown'.
+                      window.electronAPI?.screenshot?.delete("screenshot-" + tab.id);
+                    } catch (e) {
+                      log.error("Failed to delete screenshot", e);
+                    }
+                  }
               }
           });
           dispatch(
@@ -384,6 +392,14 @@ export function closeMultipleWindows(dispatch: any, sessionActions: any, windowI
                     delete _openTabs[tab.id];
                     // @ts-expect-error TS(2571): Object is of type 'unknown'.
                     localStorage.removeItem("screenshot-" + tab.id);
+                    if (isElectron()) {
+                      try {
+                        // @ts-expect-error TS(2571): Object is of type 'unknown'.
+                        window.electronAPI?.screenshot?.delete("screenshot-" + tab.id);
+                      } catch (e) {
+                        log.error("Failed to delete screenshot", e);
+                      }
+                    }
                 }
             });
 

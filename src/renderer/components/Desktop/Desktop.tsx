@@ -50,6 +50,8 @@ function Desktop(props) {
   const items = useSelector((state: any) => state.workspace.items);
   const openWindows = useSelector((state: any) => state.session.openWindows);
   const openTabs = useSelector((state: any) => state.session.openTabs);
+  const windowTabs = useSelector((state: any) => state.session.windowTabs);
+  const activeTabs = useSelector((state: any) => state.session.activeTabs);
   const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
 
   const user = useSelector((state: any) => state.user);
@@ -391,11 +393,17 @@ function Desktop(props) {
       );
     } else {
       dispatch(sessionActionsImport.setActiveWindow({ data: app }));
-      if (openWindows[app.id].sleeping === true) {
+      // Cover TabWindow until OPWebView finishes loading (or safety timeout)
+      const tabIds = windowTabs[app.id] || [];
+      const activeTabForApp = activeTabs[app.id];
+      const wakeTab =
+        (activeTabForApp && openTabs[activeTabForApp]) ||
+        (tabIds[0] && openTabs[tabIds[0]]);
+      if (
+        openWindows[app.id].sleeping === true ||
+        wakeTab?.sleeping === true
+      ) {
         dispatch(appActions.showSplashScreen({}));
-        setTimeout(() => {
-          dispatch(appActions.hideSplashScreen({}));
-        }, 1000);
       }
     }
   }

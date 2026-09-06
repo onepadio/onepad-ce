@@ -110,6 +110,12 @@ import TabsDropDown from "./TabsDropDown";
 import { chatAssistantActions } from "../../store/chat-assistant-slice";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { windowActions } from "../../store/window-slice";
+import {
+  canGoBackInHistory,
+  canGoForwardInHistory,
+  moveHistoryIndex,
+  scheduleTabNavHistoryPersist,
+} from "../../util/navHistory";
 
 function AddressBar(props: any) {
   const dispatch = useDispatch();
@@ -288,16 +294,53 @@ function AddressBar(props: any) {
     _webview.loadURL(openWindows[activeWindow.id].url);
   }
 
-  function goBack() {
-    let _webview = document.getElementById(webViewId);
+  function navigateHistory(direction: "back" | "forward") {
+    if (
+      !activeTabId ||
+      activeTabId === "launchpad" ||
+      !openTabs[activeTabId]?.state
+    ) {
+      return;
+    }
+
+    const tab = openTabs[activeTabId];
+    const currentIndex = tab.state.historyIndex ?? -1;
+    const newIndex =
+      direction === "back" ? currentIndex - 1 : currentIndex + 1;
+    const nextState = moveHistoryIndex(tab.state, newIndex);
+    if (nextState.historyIndex === currentIndex) {
+      return;
+    }
+
+    const _openTabs = Object.assign({}, openTabs);
+    const _tab = Object.assign({}, tab);
+    _tab.state = nextState;
+    _openTabs[activeTabId] = _tab;
+    dispatch(sessionActions.setOpenTabs({ data: _openTabs }));
+
+    scheduleTabNavHistoryPersist({
+      workspaceId: workspace?.id,
+      sessionId: workspaceState?.currentSession?.id,
+      isInSession: sessionState?.isInSession,
+      tabId: activeTabId,
+      tabType: tab.type,
+      navState: nextState,
+    });
+
+    const _webview = document.getElementById(webViewId);
     // @ts-expect-error TS(2531): Object is possibly 'null'.
-    if (_webview.canGoBack()) _webview.goBack();
+    if (_webview?.loadURL) {
+      // @ts-expect-error
+      _webview.loadURL(nextState.url);
+    }
+  }
+
+  function goBack() {
+    navigateHistory("back");
   }
 
   function goForward() {
-    let _webview = document.getElementById(webViewId);
-    // @ts-expect-error TS(2531): Object is possibly 'null'.
-    _webview.goForward();
+    navigateHistory("forward");
   }
 
   function reload() {
@@ -835,46 +878,11 @@ function AddressBar(props: any) {
       setNavFwdDisabled(true);
       return;
     }
-    let _webview = document.getElementById(webViewId);
-    if (_webview === null || _webview === undefined) return;
 
-    // Add event listener for dom-ready
-    const handleDomReady = () => {
-      let backButton = document.getElementById(backButtonId);
-      let forwardButton = document.getElementById(forwardButtonId);
-      try {
-        // @ts-expect-error
-        if (_webview && _webview.canGoBack()) {
-          setNavBackDisabled(false);
-        } else {
-          setNavBackDisabled(true);
-        }
-
-        // @ts-expect-error
-        if (_webview && _webview.canGoForward()) {
-          setNavFwdDisabled(false);
-        } else {
-          setNavFwdDisabled(true);
-        }
-      } catch (e) {
-        log.error(e);
-      }
-    };
-
-    // Add event listener
-    _webview.addEventListener("dom-ready", handleDomReady);
-
-    // Initial check if already ready
-    // @ts-expect-error
-    if (_webview.isReady) {
-      handleDomReady();
-    }
-
-    // Cleanup
-    return () => {
-      _webview.removeEventListener("dom-ready", handleDomReady);
-    };
-  }, [activeTab, webViewId]);
+    const tabState = openTabs[activeTabId]?.state;
+    setNavBackDisabled(!canGoBackInHistory(tabState));
+    setNavFwdDisabled(!canGoForwardInHistory(tabState));
+  }, [activeTab, activeTabId, openTabs]);
 
   useEffect(() => {
     if (activeTab.id === "launchpad") {

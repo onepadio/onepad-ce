@@ -3,8 +3,8 @@ import ScreenshotService from './screenshot';
 
 /**
  * Background Screenshot Manager
- * Automatically captures screenshots of all active tabs at regular intervals
- * Components should retrieve cached screenshots, not trigger captures
+ * Captures the active tab at regular intervals so switchers/previews
+ * always have a recent cached image — including after the tab sleeps.
  */
 class ScreenshotManager {
   private intervalId: NodeJS.Timeout | null = null;
@@ -24,12 +24,10 @@ class ScreenshotManager {
     log.info('ScreenshotManager: Starting background screenshot service');
     this.isRunning = true;
 
-    // Take initial screenshots
-    this.captureAllActiveTabScreenshots(store);
+    this.captureActiveTabScreenshot(store);
 
-    // Set up periodic captures
     this.intervalId = setInterval(() => {
-      this.captureAllActiveTabScreenshots(store);
+      this.captureActiveTabScreenshot(store);
     }, this.captureInterval);
   }
 
@@ -46,90 +44,63 @@ class ScreenshotManager {
   }
 
   /**
-   * Capture screenshots for all active tabs
+   * Capture screenshot for the currently active tab only.
+   * Hidden / sleeping tabs must not be captured — empty captures would
+   * overwrite the last good preview used by App/Browser tab switchers.
    */
-  private captureAllActiveTabScreenshots(store: any) {
+  private captureActiveTabScreenshot(store: any) {
     try {
       const state = store.getState();
       const openTabs = state.session?.openTabs || {};
-      
-      if (!openTabs || Object.keys(openTabs).length === 0) {
-        log.debug('ScreenshotManager: No open tabs to capture');
+      const activeTabId = state.session?.activeTabId;
+      const tab = activeTabId ? openTabs[activeTabId] : null;
+
+      if (!tab?.id) {
+        log.debug('ScreenshotManager: No active tab to capture');
         return;
       }
 
-      let capturedCount = 0;
-      let skippedCount = 0;
-
-      Object.values(openTabs).forEach((tab: any) => {
-        // Skip tabs without IDs
-        if (!tab?.id) {
-          skippedCount++;
-          return;
-        }
-
-        // Skip external windows and xapps (they use separate windows)
-        if (tab.location === 'external' || tab.type === 'xapp') {
-          skippedCount++;
-          return;
-        }
-
-        // Skip sleeping tabs (they don't have active webviews)
-        if (tab.sleeping) {
-          skippedCount++;
-          return;
-        }
-
-        // Skip tabs with media playing (to avoid interrupting playback)
-        if (tab.mediaPlaying) {
-          skippedCount++;
-          return;
-        }
-
-        // Validate webContentsId before capturing
-        if (typeof tab.webContentsId !== 'number') {
-          log.warn(`ScreenshotManager: Tab ${tab.id} has invalid webContentsId:`, tab.webContentsId);
-          skippedCount++;
-          return;
-        }
-
-        // Capture screenshot for this tab
-        ScreenshotService.capture(tab.webContentsId, tab.id, 'ScreenshotManager');
-        capturedCount++;
-      });
-
-      log.info(
-        `ScreenshotManager: Captured ${capturedCount} screenshots, skipped ${skippedCount} tabs`
-      );
-      
-      // Log diagnostic info about tabs with/without webContentsId
-      const tabsWithWebContentsId = Object.values(openTabs).filter(
-        (tab: any) => typeof tab.webContentsId === 'number'
-      );
-      const tabsWithoutWebContentsId = Object.values(openTabs).filter(
-        (tab: any) => typeof tab.webContentsId !== 'number'
-      );
-      
-      log.info(`ScreenshotManager: ${tabsWithWebContentsId.length} tabs with webContentsId, ${tabsWithoutWebContentsId.length} tabs without`);
-      
-      if (tabsWithoutWebContentsId.length > 0) {
-        log.warn('Tabs without webContentsId:', tabsWithoutWebContentsId.map((tab: any) => ({
-          id: tab.id,
-          url: tab.state?.url,
-          type: tab.type
-        })));
+      if (tab.location === 'external' || tab.type === 'xapp') {
+        return;
       }
+
+      if (tab.sleeping) {
+        log.debug(`ScreenshotManager: Active tab ${tab.id} is sleeping, skip`);
+        return;
+      }
+
+      if (tab.mediaPlaying) {
+        return;
+      }
+
+      if (typeof tab.webContentsId !== 'number') {
+        log.warn(`ScreenshotManager: Tab ${tab.id} has invalid webContentsId:`, tab.webContentsId);
+        return;
+      }
+
+      ScreenshotService.capture(tab.webContentsId, tab.id, 'ScreenshotManager');
+      log.debug(`ScreenshotManager: Captured active tab ${tab.id}`);
     } catch (error) {
-      log.error('ScreenshotManager: Error capturing screenshots:', error);
+      log.error('ScreenshotManager: Error capturing screenshot:', error);
     }
   }
 
   /**
-   * Manually trigger a screenshot capture for all tabs (useful for testing or immediate updates)
+   * Capture a specific awake tab (e.g. right before sleep).
+   */
+  captureTab(tab: any, source = 'ScreenshotManager') {
+    if (!tab?.id || tab.sleeping) return;
+    if (tab.location === 'external' || tab.type === 'xapp') return;
+    if (typeof tab.webContentsId !== 'number') return;
+    ScreenshotService.capture(tab.webContentsId, tab.id, source);
+  }
+
+  /**
+   * Manually trigger a screenshot capture for the active tab
    */
   captureNow(store: any) {
     log.debug('ScreenshotManager: Manual capture triggered');
-    this.captureAllActiveTabScreenshots(store);
+    this.captureActiveTabScreenshot(store);
   }
 
   /**

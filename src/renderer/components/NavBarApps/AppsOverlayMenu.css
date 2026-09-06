@@ -195,6 +195,32 @@
   color: #fff;
 }
 
+/* Link opened a new tab — draw attention to the related dock icon */
+.app-menu-item-pulse {
+  animation: appMenuItemPulse 0.85s ease-out;
+  z-index: 2;
+}
+
+@keyframes appMenuItemPulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.55);
+  }
+  35% {
+    transform: translateY(-6px) scale(1.12);
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    background-color: rgba(59, 130, 246, 0.45);
+  }
+  70% {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: none;
+  }
+}
+
 .app-menu-item.active::before {
   content: '';
   position: absolute;
@@ -205,6 +231,19 @@
   height: 3px;
   background-color: #87cefa;
   border-radius: 2px;
+}
+
+/* Open + awake (non-sleeping) but not focused — macOS-style running dot */
+.app-menu-item .app-running-indicator {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #87cefa;
+  pointer-events: none;
 }
 
 .app-menu-icon {

@@ -28,6 +28,7 @@ import { itemsDb } from "../../data/store";
 import { ReactSVG } from 'react-svg';
 import { v4 as uuidv4 } from 'uuid';
 import { aiAppsActions } from "renderer/store/ai-slice";
+import { createNavHistoryState } from "../../util/navHistory";
 import WorkspaceMenu from "../WorkspaceMenu/WorkspaceMenu";
 import NavBarAppsVertical from "../NavBarApps/NavBarAppsVertical";
 import { activateBrowser } from "../../hubs/WindowService";
@@ -257,11 +258,7 @@ function SideBar() {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,
@@ -279,11 +276,7 @@ function SideBar() {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,

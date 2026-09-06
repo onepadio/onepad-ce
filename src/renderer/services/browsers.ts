@@ -119,4 +119,31 @@ export default class BrowserStateService {
         return await BrowserRepository.getBrowserStateByWorkspaceId(workspaceId);
     }
 
+    static async patchTabNavHistory(workspaceId: any, tabId: any, navState: any) {
+        const browserState: any = await BrowserRepository.getBrowserStateByWorkspaceId(workspaceId);
+        if (!browserState?.state?.openTabs?.[tabId]) {
+            return null;
+        }
+
+        const state = Object.assign({}, browserState.state);
+        const openTabs = Object.assign({}, state.openTabs);
+        const tab = Object.assign({}, openTabs[tabId]);
+        const tabState = Object.assign({}, tab.state);
+
+        tabState.url = navState.url ?? tabState.url;
+        if (navState.title !== undefined) {
+            tabState.title = navState.title;
+        }
+        tabState.history = navState.history ?? tabState.history ?? [];
+        tabState.historyIndex =
+            navState.historyIndex ?? tabState.historyIndex ?? -1;
+
+        tab.state = tabState;
+        tab.url = tabState.url;
+        openTabs[tabId] = tab;
+        state.openTabs = openTabs;
+
+        return BrowserRepository.update(browserState.id, state);
+    }
+
 }

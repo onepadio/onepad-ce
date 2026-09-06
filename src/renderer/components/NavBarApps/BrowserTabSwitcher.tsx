@@ -144,7 +144,11 @@ function BrowserTabSwitcher({
       <button
         key={tabId}
         type="button"
-        className={clsx("browser-tab-switcher-tile", isActive && "active")}
+        className={clsx(
+          "browser-tab-switcher-tile",
+          isActive && "active",
+          tab.sleeping && "sleeping"
+        )}
         onClick={() => handleSelectTab(tab)}
         title={tab.state?.title || tab.state?.url || ""}
       >

@@ -114,10 +114,22 @@ function TabSleeperHub() {
                 // @ts-expect-error TS(2571): Object is of type 'unknown'.
                 delete _openTabs[tab.id];
               }
-        
-              // Screenshots are now handled by ScreenshotManagerHub
-              // No need to capture here - components will retrieve cached screenshots
             });
+
+            // Keep last good previews on disk for sleeping tabs (switchers read cache)
+            if (isElectron()) {
+              try {
+                const sleepingIds = Object.values(_openTabs)
+                  // @ts-expect-error
+                  .filter((t: any) => t?.sleeping && t?.id)
+                  // @ts-expect-error
+                  .map((t: any) => t.id);
+                // @ts-expect-error
+                window.electronAPI?.screenshot?.flush?.(sleepingIds);
+              } catch (e) {
+                log.error("TabSleeperHub: screenshot flush failed", e);
+              }
+            }
         
             // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
             dispatch(appActions.updateScreenShotStatusVersion());

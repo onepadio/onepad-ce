@@ -187,8 +187,16 @@ function TilesBar(){
         }
 
       }
-      // Delete screenshot
+      // Delete screenshot (memory + disk + localStorage)
       localStorage.removeItem("screenshot-"+tab.id);
+      if (isElectron()) {
+        try {
+          // @ts-expect-error
+          window.electronAPI?.screenshot?.delete("screenshot-" + tab.id);
+        } catch (e) {
+          log.error("Failed to delete screenshot", tab.id, e);
+        }
+      }
 
     }
 

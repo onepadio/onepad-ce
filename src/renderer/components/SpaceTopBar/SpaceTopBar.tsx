@@ -141,12 +141,11 @@ function SpaceTopBar(){
         dispatch(sessionActions.setActiveWindow({data: item}));
         if(openWindows[item.id].sleeping === true){
           dispatch(appActions.showSplashScreen({}));
-          setTimeout(() => {
-              if(windowTabs[item.id].length > 1){
-                dispatch(appActions.showTabsScreen({}));
-              }
-              dispatch(appActions.hideSplashScreen({}));
-          }, 1000);
+          if(windowTabs[item.id]?.length > 1){
+            setTimeout(() => {
+              dispatch(appActions.showTabsScreen({}));
+            }, 1000);
+          }
         }
       }
     }

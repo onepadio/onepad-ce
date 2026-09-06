@@ -182,6 +182,14 @@ function ElectronHub() {
             url: _url,
           })
         );
+        // Indicate on the dock which app/browser received the new tab from a link
+        if (activeWindow?.id) {
+          dispatch(
+            windowServiceActions.pulseDockIcon({
+              windowId: activeWindow.id,
+            })
+          );
+        }
 
         break;
       case "handleCloseTab":

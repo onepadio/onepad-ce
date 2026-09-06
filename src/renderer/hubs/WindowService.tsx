@@ -23,6 +23,7 @@ import { musicPlayerActions } from "../store/musicplayer-slice";
 import { chatActions } from "../store/chat-slice";
 import { windowServiceActions } from "../store/window-service-slice";
 import { appActions } from "../store/app-slice";
+import screenshotManager from "../services/screenshotManager";
 
 // @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
 import globe_icon from '../images/globe_icon_96.png';
@@ -30,6 +31,7 @@ import AppService from "../services/app";
 import XAppService from "../services/xapp";
 import LinkService from "../services/link";
 import { openInternalWindow as openInternalWindowUtil } from "../services/window";
+import { createNavHistoryState } from "../util/navHistory";
 
 
 function WindowService() {
@@ -316,11 +318,7 @@ function WindowService() {
       workspace: workspace.id,
       window: windowId,
       webContentsId: undefined,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       partition: getPartitionId(workspace.id),
     };
   }
@@ -344,11 +342,7 @@ function WindowService() {
         desktop: desktop.id,
         workspace: workspace.id,
         window: windowId,
-        state:{
-            url: url,
-            title: title,
-            icon: icon,
-        },
+        state: createNavHistoryState(url, title, icon),
         lastAccessed: new Date().getTime(),
         sleeping: true,
     }
@@ -456,11 +450,7 @@ function WindowService() {
           workspace: workspace.id,
           window: _window.id,
           webContentsId: undefined,
-          state: {
-            url: _url,
-            title: "",
-            icon: _window.data.icon,
-          },
+          state: createNavHistoryState(_url, "", _window.data.icon),
           created: now,
           lastAccessed: now,
           sleeping: false,
@@ -539,11 +529,7 @@ function WindowService() {
       workspace: workspace.id,
       window: windowId,
       webContentsId: undefined,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       lastAccessed: new Date().getTime(),
       sleeping: false,
     };
@@ -588,14 +574,10 @@ function WindowService() {
       if (tab.id === undefined || tab.window !== windowId) return;
       if (!tab.sleeping) {
         let _tab = Object.assign({}, _openTabs[tab.id]);
-        //if (
-        //  _tab.mediaPlaying === undefined ||
-        //  !_tab.mediaPlaying ||
-        //  _suspendTabs
-        //) {
-          _tab.sleeping = true;
-          _openTabs[tab.id] = _tab;
-        //}
+        // Prefer last good cached preview; empty captures are rejected in main
+        screenshotManager.captureTab(_tab, 'WindowService.sleepTabs');
+        _tab.sleeping = true;
+        _openTabs[tab.id] = _tab;
       }
       // Delete tab if window not found
       if (
@@ -608,10 +590,19 @@ function WindowService() {
         );
         delete _openTabs[tab.id];
       }
-
-      // Screenshots are now handled by ScreenshotManagerHub
-      // No need to capture here - components will retrieve cached screenshots
     });
+
+    if (isElectron()) {
+      try {
+        const sleepingIds = Object.values(_openTabs)
+          .filter((t: any) => t?.sleeping && t?.id && t.window === windowId)
+          .map((t: any) => t.id);
+        // @ts-expect-error
+        window.electronAPI?.screenshot?.flush?.(sleepingIds);
+      } catch (e) {
+        log.error("WindowService: screenshot flush failed", e);
+      }
+    }
 
     // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
     dispatch(appActions.updateScreenShotStatusVersion());
@@ -873,11 +864,7 @@ function WindowService() {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       lastAccessed: new Date().getTime(),
       sleeping: true,
     };

@@ -1,8 +1,8 @@
 .splash-screen.full-screen{
-    top: 72px !important;
+    top: 36px !important;
     left: 48px !important;
     width: calc(100vw - 48px) !important;
-    height: calc(100vh - 108px) !important;
+    height: calc(100vh - 36px) !important;
     border-radius: unset !important;
 }
 
@@ -10,8 +10,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #252525;
-    z-index: 213;
+    background-color: #292e36;
+    /* Above TabWindow (.app-window: 988); below SideBar (1067), AI canvas (999), AppsOverlayMenu (1999) */
+    z-index: 990;
     position: absolute;
     top: 160px !important;
     left: 0px !important;
@@ -20,6 +21,7 @@
     transition: all 0.5s ease;
     color: white;
     border-radius: 0px;
+    pointer-events: auto;
 }
 
 .splash-screen.extended{
@@ -32,8 +34,8 @@
 }
 
 .splash-screen.tabs-mode{
-    top: 72px !important;
-    height: calc(100vh - 120px) !important;
+    top: 36px !important;
+    height: calc(100vh - 36px) !important;
 }
 
 .splash-screen.space-mode{
@@ -41,4 +43,38 @@
     height: calc(100vh - 144px) !important;
     left: 32vw !important;
     width: calc(68vw - 5px) !important;
+}
+
+/* Match TabWindow webview when left sidebar is present */
+.splash-screen.with-left-bar{
+    left: 42px !important;
+    width: calc(100vw - 42px) !important;
+}
+
+body.sidebar-auto-hide .splash-screen.with-left-bar{
+    left: 0 !important;
+    width: 100vw !important;
+}
+
+/* Match TabWindow resize when AI Assistants canvas is open */
+.splash-screen.chat-assistant-open{
+    width: calc(60vw) !important;
+    transition: width 0.1s ease;
+}
+
+.splash-screen.with-left-bar.chat-assistant-open{
+    width: calc(60vw - 42px) !important;
+    transition: width 0.1s ease;
+}
+
+body.sidebar-auto-hide .splash-screen.with-left-bar.chat-assistant-open{
+    width: calc(60vw) !important;
+}
+
+.splash-screen.full-screen.chat-assistant-open{
+    width: calc(60vw - 48px) !important;
+}
+
+.splash-screen.full-screen.with-left-bar.chat-assistant-open{
+    width: calc(60vw - 42px) !important;
 }

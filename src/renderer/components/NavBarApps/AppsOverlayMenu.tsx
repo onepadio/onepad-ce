@@ -49,19 +49,56 @@ function AppsOverlayMenu({
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
   const openWindows = useSelector((state: any) => state.session.openWindows);
+  const openTabs = useSelector((state: any) => state.session.openTabs);
+  const windowTabs = useSelector((state: any) => state.session.windowTabs);
   const isSidebarOpen = useSelector((state: any) => state.sidebar.isOpen);
   const pinnedApps = desktop?.state?.pinnedApps || [];
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [hideMode, setHideMode] = useState<HideMode>('always-on-top');
   const [manuallyHidden, setManuallyHidden] = useState(false);
+  const [pulsingWindowId, setPulsingWindowId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const suppressAutoHideRef = useRef(suppressAutoHide);
+  const pulseClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const dockPulseWindowId = useSelector(
+    (state: any) => state.windowService.dockPulseWindowId
+  );
+  const dockPulseToken = useSelector(
+    (state: any) => state.windowService.dockPulseToken
+  );
 
   useEffect(() => {
     suppressAutoHideRef.current = suppressAutoHide;
   }, [suppressAutoHide]);
+
+  // Animate the related dock icon when a link opens a new tab
+  useEffect(() => {
+    if (!dockPulseToken || !dockPulseWindowId) return;
+
+    setPulsingWindowId(dockPulseWindowId);
+    // Make sure the dock is visible briefly in auto-hide mode
+    if (hideMode === "auto-hide") {
+      setIsVisible(true);
+    }
+
+    if (pulseClearTimeoutRef.current) {
+      clearTimeout(pulseClearTimeoutRef.current);
+    }
+    pulseClearTimeoutRef.current = setTimeout(() => {
+      setPulsingWindowId(null);
+      pulseClearTimeoutRef.current = null;
+    }, 900);
+
+    return () => {
+      if (pulseClearTimeoutRef.current) {
+        clearTimeout(pulseClearTimeoutRef.current);
+        pulseClearTimeoutRef.current = null;
+      }
+    };
+  }, [dockPulseToken, dockPulseWindowId, hideMode]);
 
   // While a switcher is open, cancel pending hide and keep the dock visible
   useEffect(() => {
@@ -270,6 +307,18 @@ function AppsOverlayMenu({
     return app.type === "app" || app.type === "xapp" ? app.data.name : app.data.title;
   };
 
+  /** True when the window has at least one non-sleeping tab (webview still alive). */
+  const hasAwakeTab = (appId: string) => {
+    const tabIds = windowTabs[appId];
+    if (!Array.isArray(tabIds) || tabIds.length === 0) {
+      return openWindows[appId] != null && openWindows[appId].sleeping !== true;
+    }
+    return tabIds.some((tabId: string) => {
+      const tab = openTabs[tabId];
+      return tab != null && tab.sleeping !== true;
+    });
+  };
+
   // Filter out browser type apps
   const filteredApps = apps.filter(app => app.type !== "browser");
 
@@ -345,7 +394,9 @@ function AppsOverlayMenu({
           </button>
           
           <button
-            className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""}`}
+            className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""} ${
+              pulsingWindowId?.startsWith("browser_") ? "app-menu-item-pulse" : ""
+            }`}
             onClick={onBrowserClick}
             onMouseEnter={() => {
               setHoveredApp("browser");
@@ -369,10 +420,14 @@ function AppsOverlayMenu({
           
           {filteredApps.map((app) => {
             const isHomeApp = homeAppIds.includes(app.id);
+            const isActive = activeWindowId === app.id;
+            const isRunning = hasAwakeTab(app.id);
             return (
             <button
               key={app.id}
-              className={`app-menu-item ${activeWindowId === app.id ? "active" : ""}`}
+              className={`app-menu-item ${isActive ? "active" : ""} ${
+                pulsingWindowId === app.id ? "app-menu-item-pulse" : ""
+              }`}
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 onSelectApp(app.id, rect.left + rect.width / 2);
@@ -478,6 +533,10 @@ function AppsOverlayMenu({
                 <span className="home-badge">
                   <House size={8} fill="white" color="white" />
                 </span>
+              )}
+              {/* Running indicator when ≥1 tab is awake; active bar already covers focus */}
+              {isRunning && !isActive && (
+                <span className="app-running-indicator" aria-hidden="true" />
               )}
               {hoveredApp === app.id && (
                 <div className="app-tooltip">{getAppTitle(app)}</div>

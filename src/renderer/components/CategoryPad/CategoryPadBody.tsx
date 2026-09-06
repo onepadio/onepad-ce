@@ -20,6 +20,7 @@ import "./CategoryPad.css";
 import "../LaunchIcon/LaunchIcon.css";
 
 import defaultIcon from "../../images/default_icon.png";
+import { createNavHistoryState } from "../../util/navHistory";
 
 interface CategoryPadBodyProps {
   category: "favourites" | "search" | "social";
@@ -97,11 +98,7 @@ function CategoryPadBody({ category }: CategoryPadBodyProps) {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,
@@ -119,11 +116,7 @@ function CategoryPadBody({ category }: CategoryPadBodyProps) {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,

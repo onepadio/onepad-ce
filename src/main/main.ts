@@ -60,6 +60,14 @@ import { createMasterKeyIfNotExists, getMasterKey, encryptFunc, decryptFunc } fr
 import passwordCrypto from './passwordCrypto';
 import { SPContextMenu, SPShortContextMenu } from './contextMenu';
 import downloadManager from './downloadManager';
+import {
+  saveScreenshotToDisk,
+  loadScreenshotFromDisk,
+  deleteScreenshotFromDisk,
+  flushScreenshotsToDisk,
+  normalizeScreenshotKey,
+  isValidScreenshotDataUrl,
+} from './screenshotStore';
 
 const store = new Store();
 
@@ -783,15 +791,24 @@ ipcMain.on(
         wc.capturePage()
           .then((image) => {
             const key: string = 'screenshot-' + data.tab;
-            if (image) {
-              screenShots[key] = image.toDataURL();
-              console.log('Screenshot captured and stored:', {
-                key: key,
-                tabId: data.tab,
-                webContentsId: data.id,
-                totalScreenshots: Object.keys(screenShots).length
-              });
+            if (!image || image.isEmpty()) {
+              console.log('Screenshot skipped (empty image):', key);
+              return;
             }
+            const dataUrl = image.toDataURL();
+            // Never overwrite a good cached preview with a blank/hidden capture
+            if (!isValidScreenshotDataUrl(dataUrl)) {
+              console.log('Screenshot skipped (invalid data URL):', key);
+              return;
+            }
+            screenShots[key] = dataUrl;
+            saveScreenshotToDisk(key, dataUrl);
+            console.log('Screenshot captured and stored:', {
+              key: key,
+              tabId: data.tab,
+              webContentsId: data.id,
+              totalScreenshots: Object.keys(screenShots).length
+            });
           })
           .catch((err) => {
             console.log('Error capturing screenshot:', err);
@@ -1171,14 +1188,43 @@ ipcMain.handle('get-all-tabs-memory', async () => {
 });
 
 ipcMain.on('screenshot-get', async (event, val) => {
-  const result = screenShots[val];
+  const key = normalizeScreenshotKey(val);
+  let result = screenShots[key];
+  if (!isValidScreenshotDataUrl(result)) {
+    result = undefined;
+    delete screenShots[key];
+  }
+  if (!result) {
+    const fromDisk = loadScreenshotFromDisk(key);
+    if (fromDisk) {
+      screenShots[key] = fromDisk;
+      result = fromDisk;
+    }
+  }
   console.log('screenshot-get request:', {
     requestedKey: val,
     found: result ? 'Yes' : 'No',
     totalScreenshots: Object.keys(screenShots).length,
     availableKeys: Object.keys(screenShots).slice(0, 5) // Show first 5 keys
   });
-  event.returnValue = result;
+  event.returnValue = result || null;
+});
+
+ipcMain.on('screenshot-delete', async (_event, val) => {
+  const key = normalizeScreenshotKey(val);
+  delete screenShots[key];
+  deleteScreenshotFromDisk(key);
+});
+
+ipcMain.on('screenshot-flush', async (event, tabIds) => {
+  try {
+    const ids = Array.isArray(tabIds) ? tabIds : [];
+    const saved = flushScreenshotsToDisk(screenShots, ids);
+    event.returnValue = { saved };
+  } catch (error) {
+    log.error('screenshot-flush failed', error);
+    event.returnValue = { saved: 0, error: String(error) };
+  }
 });
 
 ipcMain.on('capture-screenshot', async (event, val) => {
@@ -1198,11 +1244,18 @@ ipcMain.on('capture-screenshot', async (event, val) => {
   wc.capturePage()
     .then((image) => {
       const key: string = 'screenshot-' + val.tab;
-      if (image) {
-        screenShots[key] = image.toDataURL();
-        //log.debug('screenshot captured', image.toDataURL());
-        event.returnValue = image.toDataURL();
+      if (!image || image.isEmpty()) {
+        event.returnValue = null;
+        return;
       }
+      const dataUrl = image.toDataURL();
+      if (!isValidScreenshotDataUrl(dataUrl)) {
+        event.returnValue = null;
+        return;
+      }
+      screenShots[key] = dataUrl;
+      saveScreenshotToDisk(key, dataUrl);
+      event.returnValue = dataUrl;
     })
     .catch((err) => {
       console.log('Error capturing screenshot:', err);

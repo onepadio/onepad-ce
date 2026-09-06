@@ -1,15 +1,11 @@
-import { v4 as uuidv4 } from "uuid";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 import { appActions } from "../../store/app-slice";
 
-import {
-    Spinner,
-  } from "reactstrap";
-
 import "./SplashScreen.css"
+
+const SPLASH_MAX_MS = 8000;
 
 function SplashScreen(props: any) {
     const dispatch = useDispatch();
@@ -32,12 +28,16 @@ function SplashScreen(props: any) {
 
     const tabsBarVisualMode = useSelector((state: any) => state.tabsBar.mode);
 
+    const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen);
+
     const [windowIcon, setWindowIcon] = useState("");
     const [progressValue, setProgressValue] = useState(0);
     const domId = "splash-screen-id";
+    const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const container = document.getElementById(domId);
+        if (!container) return;
         if(showSidebar){
             container.classList.add("resized-webview-container");
         }else{
@@ -48,6 +48,7 @@ function SplashScreen(props: any) {
 
     useEffect(() => {
         const container = document.getElementById(domId);
+        if (!container) return;
         if(isExtended){
             container.classList.add("extended");
         }else{
@@ -57,6 +58,7 @@ function SplashScreen(props: any) {
 
     useEffect(() => {
         const container = document.getElementById(domId);
+        if (!container) return;
 
         if(!isSharedAppsEnabled){
             container.classList.remove("no-bottom-bar");
@@ -82,6 +84,13 @@ function SplashScreen(props: any) {
 
     useEffect(() => {
         const domElement = document.getElementById(domId);
+        if (!domElement) return;
+
+        if (safetyTimeoutRef.current) {
+            clearTimeout(safetyTimeoutRef.current);
+            safetyTimeoutRef.current = null;
+        }
+
         if(isVisible){
             domElement.classList.remove("d-none");
             setProgressValue(0.1);
@@ -106,11 +115,24 @@ function SplashScreen(props: any) {
             setTimeout(() => {
                 setProgressValue(1);
             }, 700);
+
+            // Fallback if OPWebView never reports load (offline / hang)
+            safetyTimeoutRef.current = setTimeout(() => {
+                dispatch(appActions.hideSplashScreen({}));
+                safetyTimeoutRef.current = null;
+            }, SPLASH_MAX_MS);
         }else{
             domElement.classList.add("d-none");
         }
+
+        return () => {
+            if (safetyTimeoutRef.current) {
+                clearTimeout(safetyTimeoutRef.current);
+                safetyTimeoutRef.current = null;
+            }
+        };
     }
-    , [isVisible]);
+    , [isVisible, dispatch]);
 
     useEffect (() => {
         let _window = openWindows[activeWindowId];
@@ -123,10 +145,19 @@ function SplashScreen(props: any) {
                 setWindowIcon("icon_128x128.png");
             }
         }
-    }, [activeWindowId]);
+    }, [activeWindowId, openWindows]);
 
     return (
-        <div id={domId} className={"d-none splash-screen d-flex flex-col justify-content-center " + (isFullScreen ? "full-screen":"") + " "+tabsBarVisualMode }>
+        <div
+            id={domId}
+            className={
+                "d-none splash-screen d-flex flex-col justify-content-center " +
+                (isFullScreen ? "full-screen " : "") +
+                tabsBarVisualMode +
+                (isSharedAppsEnabled ? " with-left-bar" : "") +
+                (isAIAssistantOpen ? " chat-assistant-open" : "")
+            }
+        >
             <img className="splash-screen__icon" width={64} src={windowIcon} alt="logo" />
             <br/>
             <div className="splash-screen__text">Loading...</div>

@@ -188,7 +188,11 @@ function AppTabSwitcher({
       <button
         key={tabId}
         type="button"
-        className={clsx("app-tab-switcher-tile", isActive && "active")}
+        className={clsx(
+          "app-tab-switcher-tile",
+          isActive && "active",
+          tab.sleeping && "sleeping"
+        )}
         onClick={() => handleSelectTab(tab)}
         title={tab.state?.title || tab.state?.url || ""}
       >

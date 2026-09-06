@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { openInternalWindow} from '../services/window'
 import { windowServiceActions } from "../store/window-service-slice";
+import { createNavHistoryState } from "./navHistory";
 
 // @ts-expect-error
 import globe_icon from '../images/globe_icon_96.png';
@@ -27,10 +28,6 @@ export function handleSearchEngine(
             dispatch(sessionActions.setActiveWindow({data: openWindows[_link.id]}));
             if(openWindows[_link.id].sleeping === true){
                 dispatch(appActions.showSplashScreen());
-                setTimeout(() => {
-                    //dispatch(appActions.showTabsScreen());
-                    dispatch(appActions.hideSplashScreen());
-                }, 1000);
             }
         }else{
             handleOpenLinkWindow(_link, _url, links, openWindows, isLocal, dispatch, sessionActions, appActions, desktop, workspace, openTabs, windowTabs, sessionState);
@@ -109,12 +106,6 @@ function handleOpenLinkWindow(
 
             dispatch(sessionActions.setActiveWindow({data: _result}));
             dispatch(appActions.showSplashScreen());
-            setTimeout(() => {
-              //if(_tabIds.length > 1){
-              //  dispatch(appActions.showTabsScreen());
-              //}
-              dispatch(appActions.hideSplashScreen());
-            }, 1000);
         },
     );
 }
@@ -129,11 +120,7 @@ function linkTab(windowId: any, url: any, icon: any, title: any, desktop: any, w
         desktop: desktop.id,
         workspace: workspace.id,
         window: windowId,
-        state:{
-            url: url,
-            title: title,
-            icon: icon,
-        },
+        state: createNavHistoryState(url, title, icon),
         created: now,
         lastAccessed: now,
         sleeping: true,
@@ -234,9 +221,6 @@ export function handleSearch(
                 dispatch(sessionActions.setActiveWindow({data: openWindows[_link.id]}));
                 if(openWindows[_link.id].sleeping === true){
                     dispatch(appActions.showSplashScreen());
-                    setTimeout(() => {
-                        dispatch(appActions.hideSplashScreen());
-                    }, 1000);
                 }
             }else{
                 // open new link window
@@ -251,9 +235,6 @@ export function handleSearch(
                 dispatch(sessionActions.setActiveWindow({data: openWindows[_app.id]}));
                 if(openWindows[_app.id].sleeping === true){
                     dispatch(appActions.showSplashScreen());
-                    setTimeout(() => {
-                        dispatch(appActions.hideSplashScreen());
-                    }, 1000);
                 }
             }else{
                 log.debug("Open new App");

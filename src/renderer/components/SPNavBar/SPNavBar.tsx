@@ -13,6 +13,7 @@ import { chatActions } from "../../store/chat-slice";
 import { musicPlayerActions } from "../../store/musicplayer-slice";
 import { utilityAppsActions } from "../../store/utility-slice";
 import { cornerWindowActions } from "../../store/corner-window-slice";
+import { createNavHistoryState } from "../../util/navHistory";
 
 import { selectWorkspaceByName } from "../../services/workspace";
 import { WorkspaceService } from "../../services/workspace";
@@ -123,11 +124,7 @@ function SPNavBar() {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,
@@ -152,11 +149,7 @@ function SPNavBar() {
       desktop: desktop.id,
       workspace: workspace.id,
       window: windowId,
-      state: {
-        url: url,
-        title: title,
-        icon: icon,
-      },
+      state: createNavHistoryState(url, title, icon),
       created: now,
       lastAccessed: now,
       sleeping: true,

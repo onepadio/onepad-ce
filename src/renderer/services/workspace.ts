@@ -536,6 +536,10 @@ export class WorkspaceService{
         return _workspaceId;
     }
 
+    static async patchTabNavHistory(workspaceId: any, tabId: any, navState: any) {
+        return WorkspaceRepository.patchTabNavHistory(workspaceId, tabId, navState);
+    }
+
     static async updateConfig(workspaceId: any, config: any){
         let _workspaceId = await WorkspaceRepository.updateConfig(workspaceId, config);
         return _workspaceId;

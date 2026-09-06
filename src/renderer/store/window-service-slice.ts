@@ -8,6 +8,9 @@ const windowServiceSlice = createSlice({
     serviceAction: "",
     newTabWindowId: "",
     newTabUrl: "",
+    /** Window id whose dock icon should animate (link-opened new tab) */
+    dockPulseWindowId: "",
+    dockPulseToken: 0,
     closeTabId: "",
     closeWindowId: "",
     showCloseWindowConfirmation: false,
@@ -36,6 +39,11 @@ const windowServiceSlice = createSlice({
         state.newTabUrl = action.payload.url;
         state.serviceAction = "newTab";
         state.serviceActionId = uuidv4();
+    },
+    /** Briefly animate the dock icon for the given window (e.g. link opened a new tab). */
+    pulseDockIcon(state, action) {
+        state.dockPulseWindowId = action.payload.windowId || "";
+        state.dockPulseToken = Date.now();
     },
     openRemoteApp(state, action) {
         state.newRemoteApp.name = action.payload.name;

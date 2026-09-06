@@ -344,6 +344,19 @@ function App() {
       return;
     }
 
+    if (!openTabs[activeTabId]) {
+      return;
+    }
+
+    // Wake sleeping tab so Home remounts TabWindow / OPWebView (splash covers until load)
+    if (openTabs[activeTabId].sleeping === true) {
+      let _wokenTabs = Object.assign({}, openTabs);
+      let _wokenTab = Object.assign({}, _wokenTabs[activeTabId]);
+      _wokenTab.sleeping = false;
+      _wokenTabs[activeTabId] = _wokenTab;
+      dispatch(sessionActions.setOpenTabs({ data: _wokenTabs }));
+    }
+
     let _activeTabs = Object.assign({}, activeTabs);
     _activeTabs[openTabs[activeTabId].window] = activeTabId;
     dispatch(sessionActions.setActiveTabs({data: _activeTabs}));

@@ -255,6 +255,12 @@
   display: block;
 }
 
+.browser-tab-switcher-tile.sleeping .browser-tab-switcher-tile-preview img,
+.browser-tab-switcher-tile.sleeping .browser-tab-switcher-tile-placeholder img {
+  filter: grayscale(100%);
+  opacity: 0.85;
+}
+
 .browser-tab-switcher-tile-placeholder {
   width: 100%;
   height: 100%;

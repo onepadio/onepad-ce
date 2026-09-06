@@ -71,12 +71,19 @@ export function truncateTabTitle(tab: any, maxLen = 24): string {
 
 export function getTabScreenshot(tabId: string): string | null {
   try {
+    const isValid = (value: unknown): value is string =>
+      typeof value === "string" &&
+      value.startsWith("data:image/") &&
+      value.length > 100;
+
     if (isElectron()) {
       // @ts-expect-error
       const storeSS = window.electronAPI?.screenshot?.get("screenshot-" + tabId);
-      if (storeSS) return storeSS;
+      if (isValid(storeSS)) return storeSS;
     }
-    return localStorage.getItem("screenshot-" + tabId);
+
+    const fromLocal = localStorage.getItem("screenshot-" + tabId);
+    return isValid(fromLocal) ? fromLocal : null;
   } catch (error) {
     log.error("Error retrieving tab screenshot:", error);
     return null;

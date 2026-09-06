@@ -12,6 +12,10 @@ import "./OPWebView.css";
 import { modalActions } from "../../store/modal-slice";
 import { generateFormDetectionScript, parseLoginDetection } from "../../utils/formDetection";
 import PasswordService from "../../services/password";
+import {
+  applyNavigationToTabState,
+  scheduleTabNavHistoryPersist,
+} from "../../util/navHistory";
 
 function OPWebView(props: any) {
   const dispatch = useDispatch();
@@ -31,13 +35,35 @@ function OPWebView(props: any) {
   const openTabs = useSelector((state: any) => state.session.openTabs);
   
   const openWindows = useSelector((state: any) => state.session.openWindows);
+
+  const isInSession = useSelector((state: any) => state.session.isInSession);
+  const workspaceId = useSelector(
+    (state: any) => state.workspace.selectedWorkspace?.id
+  );
+  const currentSessionId = useSelector(
+    (state: any) => state.workspace.currentSession?.id
+  );
   
   // Use ref to always access latest openTabs in event handlers
   const openTabsRef = useRef(openTabs);
   useEffect(() => {
     openTabsRef.current = openTabs;
   }, [openTabs]);
-  
+
+  const persistContextRef = useRef({
+    isInSession,
+    workspaceId,
+    currentSessionId,
+    activeTabId,
+  });
+  useEffect(() => {
+    persistContextRef.current = {
+      isInSession,
+      workspaceId,
+      currentSessionId,
+      activeTabId,
+    };
+  }, [isInSession, workspaceId, currentSessionId, activeTabId]);
   const isSessionFullScreen = useSelector((state: any) => state.session.isFullScreen);
   const personId = useSelector((state: any) => state.app.personId);
 
@@ -100,6 +126,8 @@ function OPWebView(props: any) {
 
   function handleLoad() {
     log.debug("handleLoad....");
+    // Dismiss splash once the page (iframe/webview) has loaded
+    dispatch(appActions.hideSplashScreen({}));
   }
 
   function validURLHttps(str: any) {
@@ -155,10 +183,20 @@ function OPWebView(props: any) {
       props.setCurrentUrl(url);
     }
 
-    let _openTabs = Object.assign({}, openTabs);
-    let _tab = Object.assign({}, _openTabs[props.tabId]);
-    let _state = Object.assign({}, _tab.state);
-    _state.url = url;
+    const _openTabs = Object.assign({}, openTabsRef.current);
+    const _tab = Object.assign({}, _openTabs[props.tabId]);
+    if (!_tab || !_tab.id) {
+      return;
+    }
+
+    let title = "";
+    try {
+      title = webview.getTitle?.() || _tab.state?.title || "";
+    } catch {
+      title = _tab.state?.title || "";
+    }
+
+    const _state = applyNavigationToTabState(_tab.state || {}, url, title);
     _tab.state = _state;
     _openTabs[props.tabId] = _tab;
     dispatch(
@@ -166,6 +204,18 @@ function OPWebView(props: any) {
         data: _openTabs,
       })
     );
+
+    const persistCtx = persistContextRef.current;
+    if (props.tabId === persistCtx.activeTabId) {
+      scheduleTabNavHistoryPersist({
+        workspaceId: persistCtx.workspaceId,
+        sessionId: persistCtx.currentSessionId,
+        isInSession: persistCtx.isInSession,
+        tabId: props.tabId,
+        tabType: _tab.type,
+        navState: _state,
+      });
+    }
   }
 
   function goHome() {
@@ -628,6 +678,7 @@ function OPWebView(props: any) {
             props.setProgress(100);
           }, 1000);
         }
+        dispatch(appActions.hideSplashScreen({}));
       });
 
       webview.addEventListener("media-started-playing", (event: any) => {
@@ -653,6 +704,10 @@ function OPWebView(props: any) {
       });
 
       webview.addEventListener("did-fail-load", (event: any) => {
+        // Don't leave splash up on main-frame load failure
+        if (event.isMainFrame !== false) {
+          dispatch(appActions.hideSplashScreen({}));
+        }
         if(event.errorCode === -102 || event.errorCode === -105 || 
            event.errorCode === -106 || event.errorCode === -107 || 
            event.errorCode === -109 || event.errorCode === -113 || 

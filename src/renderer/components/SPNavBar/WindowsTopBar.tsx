@@ -337,14 +337,12 @@ function WindowsTopBar() {
       if (openWindows[item.id].sleeping === true) {
         // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
         dispatch(appActions.showSplashScreen());
-        setTimeout(() => {
-          if (windowTabs[item.id].length > 1) {
+        if (windowTabs[item.id]?.length > 1) {
+          setTimeout(() => {
             // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
             dispatch(appActions.showTabsScreen());
-          }
-          // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-          dispatch(appActions.hideSplashScreen());
-        }, 1000);
+          }, 1000);
+        }
       }
     }
 

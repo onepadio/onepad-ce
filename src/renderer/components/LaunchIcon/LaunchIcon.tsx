@@ -24,6 +24,7 @@ import AppService from '../../services/app';
 import { selectWorkspace } from '../../services/workspace';
 import { spaceAppActions } from '../../store/spaceapp-slice';
 import { windowServiceActions } from '../../store/window-service-slice';
+import { createNavHistoryState } from '../../util/navHistory';
 
 function LaunchIcon(props: any) {
     const dispatch = useDispatch();
@@ -94,15 +95,12 @@ function LaunchIcon(props: any) {
             desktop: desktop.id,
             workspace: workspace.id,
             window: windowId,
-            state:{
-                url: url,
-                title: title,
-                icon: icon,
-            },
+            state: createNavHistoryState(url, title, icon),
             created: now,
             lastAccessed: now,
             sleeping: true,
             isolated: isolated,
+            partition: undefined as string | undefined,
         }
     }
 
@@ -117,15 +115,12 @@ function LaunchIcon(props: any) {
             desktop: desktop.id,
             workspace: workspace.id,
             window: windowId,
-            state:{
-                url: url,
-                title: title,
-                icon: icon,
-            },
+            state: createNavHistoryState(url, title, icon),
             created: now,
             lastAccessed: now,
             sleeping: true,
             isolated: isolated,
+            partition: undefined as string | undefined,
         }
     }
 
@@ -208,11 +203,6 @@ function LaunchIcon(props: any) {
                 if(openWindows[props.id] && openWindows[props.id].sleeping === true){
                     // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                     dispatch(appActions.showSplashScreen());
-                    setTimeout(() => {
-                        //dispatch(appActions.showTabsScreen());
-                        // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                        dispatch(appActions.hideSplashScreen());
-                    }, 1000);
                 }
                 return;
             }
@@ -284,13 +274,6 @@ function LaunchIcon(props: any) {
                         dispatch(sessionActions.setActiveWindow({data: _result}));
                         // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                         dispatch(appActions.showSplashScreen());
-                        setTimeout(() => {
-                            //if(_tabIds.length > 1){
-                            // dispatch(appActions.showTabsScreen());
-                            //}
-                            // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                            dispatch(appActions.hideSplashScreen());
-                        }, 1000);
 
                         if(props.windowConfig.type === WindowType.External){
                             // @Todo: Move to external window

@@ -87,6 +87,7 @@ import PasswordSavePrompt from "../../components/PasswordSavePrompt/PasswordSave
 import LaunchPadLocal from "../../components/LaunchPadLocal/LaunchPadLocal";
 import SpaceTopBar from "../../components/SpaceTopBar/SpaceTopBar";
 import WindowService from "../../hubs/WindowService";
+import PersistOpenStateHub from "../../hubs/PersistOpenStateHub";
 import DesktopContainer from "../../components/DesktopContainer/DesktopContainer";
 import SyncHub from "../../hubs/SyncHub";
 import CloudService from "../../hubs/CloudService";
@@ -725,6 +726,7 @@ function Home() {
       }
       <ElectronHub />
       <WindowService />
+      <PersistOpenStateHub />
       <WorkspaceHub />
       <CloudService />
       <ScreenshotManagerHub />

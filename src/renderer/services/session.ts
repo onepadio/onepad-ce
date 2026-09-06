@@ -215,4 +215,8 @@ export class SessionService{
         return _sessionId;
     }
 
+    static async patchTabNavHistory(sessionId: any, tabId: any, navState: any) {
+        return SessionRepository.patchTabNavHistory(sessionId, tabId, navState);
+    }
+
 }

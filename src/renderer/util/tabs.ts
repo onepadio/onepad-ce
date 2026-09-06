@@ -127,9 +127,15 @@ export function closeTab(tab: any, dispatch: any, openTabs: any, windowTabs: any
       }
 
     }
-    // Delete screenshot
+    // Delete screenshot (memory + disk + localStorage)
     localStorage.removeItem("screenshot-"+tab.id);
     if(isElectron()){
+      try {
+        // @ts-expect-error
+        window.electronAPI?.screenshot?.delete("screenshot-"+tab.id);
+      } catch (e) {
+        log.error("Failed to delete screenshot", tab.id, e);
+      }
       // @ts-expect-error
       window.electronAPI.send("toMain", {
         action: "close-tab",

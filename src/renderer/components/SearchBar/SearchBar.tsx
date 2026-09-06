@@ -26,6 +26,7 @@ import './SearchBar.css'
 
 import { itemsDb } from "../../data/store";
 import { utilityAppItemsDb, utilityAppSearch } from "../UtilityAppsCanvas/utility_apps";
+import { createNavHistoryState } from "../../util/navHistory";
 
 function SearchBar(props: any){
     const dispatch = useDispatch();
@@ -115,11 +116,6 @@ function SearchBar(props: any){
                     if(openWindows[_link.id].sleeping === true){
                         // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                         dispatch(appActions.showSplashScreen());
-                        setTimeout(() => {
-                            //dispatch(appActions.showTabsScreen());
-                            // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                            dispatch(appActions.hideSplashScreen());
-                        }, 1000);
                     }
                 }else{
                     // open new link window
@@ -135,11 +131,6 @@ function SearchBar(props: any){
                     if(openWindows[_app.id].sleeping === true){
                         // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                         dispatch(appActions.showSplashScreen());
-                        setTimeout(() => {
-                            //dispatch(appActions.showTabsScreen());
-                            // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                            dispatch(appActions.hideSplashScreen());
-                        }, 1000);
                     }
                 }else{
                     log.debug("Open new App");
@@ -182,11 +173,6 @@ function SearchBar(props: any){
                 if(openWindows[_link.id].sleeping === true){
                     // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                     dispatch(appActions.showSplashScreen());
-                    setTimeout(() => {
-                        //dispatch(appActions.showTabsScreen());
-                        // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                        dispatch(appActions.hideSplashScreen());
-                    }, 1000);
                 }
             }else{
                 handleOpenLinkWindow(_link, _url);
@@ -270,13 +256,6 @@ function SearchBar(props: any){
                 dispatch(sessionActions.setActiveWindow({data: _result}));
                 // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                 dispatch(appActions.showSplashScreen());
-                setTimeout(() => {
-                  //if(_tabIds.length > 1){
-                  //  dispatch(appActions.showTabsScreen());
-                  //}
-                  // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-                  dispatch(appActions.hideSplashScreen());
-                }, 1000);
             },
         );
     }
@@ -291,11 +270,7 @@ function SearchBar(props: any){
             desktop: desktop.id,
             workspace: workspace.id,
             window: windowId,
-            state:{
-                url: url,
-                title: title,
-                icon: icon,
-            },
+            state: createNavHistoryState(url, title, icon),
             created: now,
             lastAccessed: now,
             sleeping: true,
