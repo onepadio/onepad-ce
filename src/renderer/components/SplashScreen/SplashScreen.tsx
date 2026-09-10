@@ -12,19 +12,15 @@ function SplashScreen(props: any) {
 
     const isVisible = useSelector((state: any) => state.app.splashScreenVisible);
 
-    const showSidebar = useSelector((state: any) => state.window.showSidebar);
+
 
     const isSharedAppsEnabled = useSelector((state: any) => state.settings.isSharedAppsEnabled);
-
-    const isBottomNavBarVisible = useSelector((state: any) => state.view.isBottomNavBarVisible);
 
     const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
 
     const openWindows = useSelector((state: any) => state.session.openWindows);
 
     const isFullScreen = useSelector((state: any) => state.session.isFullScreen);
-
-    const isExtended = useSelector((state: any) => state.view.isExtended);
 
     const tabsBarVisualMode = useSelector((state: any) => state.tabsBar.mode);
 
@@ -35,52 +31,7 @@ function SplashScreen(props: any) {
     const domId = "splash-screen-id";
     const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
-        const container = document.getElementById(domId);
-        if (!container) return;
-        if(showSidebar){
-            container.classList.add("resized-webview-container");
-        }else{
-            container.classList.remove("resized-webview-container");
-        }
 
-    }, [showSidebar]);
-
-    useEffect(() => {
-        const container = document.getElementById(domId);
-        if (!container) return;
-        if(isExtended){
-            container.classList.add("extended");
-        }else{
-            container.classList.remove("extended");
-        }
-    }, [isExtended]);
-
-    useEffect(() => {
-        const container = document.getElementById(domId);
-        if (!container) return;
-
-        if(!isSharedAppsEnabled){
-            container.classList.remove("no-bottom-bar");
-            setTimeout(() => {
-                container.classList.add("no-tab-and-bottom-bar");
-            }, 100);
-        }else{
-            if(isBottomNavBarVisible){
-                container.classList.remove("no-tab-and-bottom-bar");
-                container.classList.remove("no-bottom-bar");
-                setTimeout(() => {
-                    container.classList.add("no-tab-bar");
-                }, 100);
-            }else{
-                container.classList.remove("no-tab-bar");
-                setTimeout(() => {
-                    container.classList.add("no-tab-and-bottom-bar");
-                }, 100);
-            }
-        }
-
-    }, [isSharedAppsEnabled, isBottomNavBarVisible]);
 
     useEffect(() => {
         const domElement = document.getElementById(domId);
