@@ -15,7 +15,7 @@ import { windowActions } from "../../store/window-slice";
 import { closeTab } from "../../util/tabs";
 import { createBrowserGroup } from "../../util/browser";
 import { closeWindow } from "../../services/window";
-import { syncBrowserWindowsIfNeeded } from "../../util/browserWindows";
+import { syncBrowserWindowsIfNeeded, getSameSpaceBrowserWindowIds, resolveBrowserWindowId } from "../../util/browserWindows";
 import {
   buildGroups,
   switchBrowserTab,
@@ -135,11 +135,20 @@ function BrowserVerticalTabBar() {
 
   function handleCloseGroup(windowId: string, e: React.MouseEvent) {
     e.stopPropagation();
-    const filtered = (browserWindows || []).filter((id: string) => id !== windowId);
+    const closedWorkspace = openWindows[windowId]?.workspace;
+    const remaining = (browserWindows || [])
+      .map(resolveBrowserWindowId)
+      .filter((id): id is string => id != null && id !== windowId);
+    const sameSpace = getSameSpaceBrowserWindowIds(
+      browserWindows,
+      openWindows,
+      closedWorkspace,
+      windowId
+    );
 
-    if (filtered.length > 0) {
-      const nextId = filtered.at(-1);
-      if (openWindows[nextId]) {
+    if (sameSpace.length > 0) {
+      const nextId = sameSpace.at(-1);
+      if (nextId && openWindows[nextId]) {
         dispatch(sessionActions.setActiveWindow({ data: openWindows[nextId] }));
         dispatch(sessionActions.setActiveBrowserWindowId({ data: nextId }));
       }
@@ -151,7 +160,7 @@ function BrowserVerticalTabBar() {
       );
     }
 
-    dispatch(sessionActions.setBrowserWindows({ data: filtered }));
+    dispatch(sessionActions.setBrowserWindows({ data: remaining }));
     closeWindow(
       dispatch,
       sessionActions,

@@ -235,7 +235,7 @@ function SidebarWindow(props: any){
                     // @ts-expect-error
                     allowpopups="false"
                     partition={"persist:sidebar-"+userId}
-                    style={{width: "100%", height: "calc(100% - 40px)"}}
+                    style={{width: "calc(100% - 4px)", height: "calc(100% - 48px)"}}
                   ></webview>
                 );
               })

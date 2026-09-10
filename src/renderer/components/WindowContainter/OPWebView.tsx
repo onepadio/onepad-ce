@@ -860,6 +860,13 @@ function OPWebView(props: any) {
   }, [isTabGroupsEnabled, activeTab, windowTabs, activeWindowId, activeTabId, props.tabId]);
 
   // Render iframe for non-Electron or webview for Electron
+  const deviceModeClass =
+    props.deviceMode === "phone"
+      ? " device-phone"
+      : props.deviceMode === "tablet"
+        ? " device-tablet"
+        : "";
+
   const renderContent = () => {
     if (sleepWebView) {
       return <></>;
@@ -875,7 +882,7 @@ function OPWebView(props: any) {
         return (
           <iframe
             id={webViewId}
-            className={"webview d-none m-1 " + (isFullScreen ? "full-screen" : "")}
+            className={"webview d-none m-1 " + (isFullScreen ? "full-screen" : "") + deviceModeClass}
             src={startUrl}
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
             onLoad={() => handleLoad()}
@@ -894,7 +901,7 @@ function OPWebView(props: any) {
         return (
           <webview
             id={webViewId}
-            className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "")}
+            className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "") + deviceModeClass}
             // @ts-expect-error
             autosize="on"
             src={startUrl}
@@ -910,7 +917,7 @@ function OPWebView(props: any) {
       return (
         <webview
           id={webViewId}
-          className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "")}
+          className={"webview d-none m-1 "+ (isFullScreen ? "full-screen" : "") + deviceModeClass}
           // @ts-expect-error
           autosize="on"
           src={startUrl}
@@ -927,7 +934,7 @@ function OPWebView(props: any) {
       return (
         <iframe
           id={webViewId}
-          className={"webview m-1 " + (isFullScreen ? "full-screen" : "")}
+          className={"webview m-1 " + (isFullScreen ? "full-screen" : "") + deviceModeClass}
           src={startUrl}
           sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"
           onLoad={() => handleLoad()}
@@ -945,7 +952,7 @@ function OPWebView(props: any) {
       return (
         <webview
           id={webViewId}
-          className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "")}
+          className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "") + deviceModeClass}
           // @ts-expect-error
           autosize="on"
           src={startUrl}
@@ -961,7 +968,7 @@ function OPWebView(props: any) {
     return (
       <webview
         id={webViewId}
-        className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "")}
+        className={"webview m-1 "+ (isFullScreen  ? "full-screen" : "") + deviceModeClass}
         // @ts-expect-error
         autosize="on"
         src={startUrl}

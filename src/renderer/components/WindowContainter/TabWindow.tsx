@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 import isElectron from "is-electron";
@@ -23,6 +23,14 @@ import {
 
 import LoadingBar from 'react-top-loading-bar'
 import OPWebView from "./OPWebView";
+import DevicePreviewShell from "./DevicePreviewShell";
+
+type DeviceMode = 'desktop' | 'phone' | 'tablet';
+
+const DEVICE_SIZES = {
+  phone: { width: 390, height: 844, deviceScaleFactor: 3 },
+  tablet: { width: 820, height: 1180, deviceScaleFactor: 2 },
+} as const;
 
 function TabWindow(this, props) {
   const dispatch = useDispatch();
@@ -75,6 +83,104 @@ function TabWindow(this, props) {
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [isProcessRunning, setIsProcessRunning] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
+  const [isLandscape, setIsLandscape] = useState(false);
+  const deviceShellId = "device-shell-" + props.tabId;
+
+  const openTabsRef = useRef(openTabs);
+  useEffect(() => {
+    openTabsRef.current = openTabs;
+  }, [openTabs]);
+
+  useEffect(() => {
+    if (!isElectron() || !window.electronAPI?.receive) {
+      return;
+    }
+
+    const handleDeviceModeChanged = (_event: any, data: {
+      webContentsId: number;
+      mode: DeviceMode;
+    }) => {
+      const tab = openTabsRef.current[props.tabId];
+      if (!tab || tab.webContentsId !== data.webContentsId) {
+        return;
+      }
+      setIsLandscape(data.mode !== 'desktop');
+      setDeviceMode(data.mode || 'desktop');
+    };
+
+    window.electronAPI.receive('device-mode-changed', handleDeviceModeChanged);
+    return () => {
+      window.electronAPI.removeListener('device-mode-changed', handleDeviceModeChanged);
+    };
+  }, [props.tabId]);
+
+  // Keep phone/tablet preview centered and uniformly scaled to fit the container
+  useEffect(() => {
+    const container = document.getElementById(webViewContainerId);
+    const shellEl = document.getElementById(deviceShellId) as HTMLElement | null;
+    const webviewEl = document.getElementById(webViewId) as HTMLElement | null;
+
+    if (deviceMode === 'desktop') {
+      if (webviewEl) {
+        webviewEl.style.width = '';
+        webviewEl.style.height = '';
+        webviewEl.style.zoom = '';
+      }
+      return;
+    }
+
+    if (!container || !shellEl) {
+      return;
+    }
+
+    const base = DEVICE_SIZES[deviceMode];
+    const naturalW = isLandscape ? base.height : base.width;
+    const naturalH = isLandscape ? base.width : base.height;
+
+    const fit = () => {
+      const availW = Math.max(container.clientWidth - 48, 120);
+      const availH = Math.max(container.clientHeight - 48, 120);
+      const scale = Math.min(1, availW / naturalW, availH / naturalH);
+      shellEl.style.width = `${naturalW}px`;
+      shellEl.style.height = `${naturalH}px`;
+      shellEl.style.zoom = String(scale);
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [deviceMode, isLandscape, webViewContainerId, webViewId, deviceShellId]);
+
+  async function handleRotateDevice() {
+    if (deviceMode === 'desktop') {
+      return;
+    }
+
+    const nextLandscape = !isLandscape;
+    setIsLandscape(nextLandscape);
+
+    const tab = openTabsRef.current[props.tabId];
+    if (!tab?.webContentsId || !window.electronAPI?.invoke) {
+      return;
+    }
+
+    const base = DEVICE_SIZES[deviceMode];
+    const width = nextLandscape ? base.height : base.width;
+    const height = nextLandscape ? base.width : base.height;
+
+    try {
+      await window.electronAPI.invoke('set-device-emulation', {
+        webContentsId: tab.webContentsId,
+        width,
+        height,
+        deviceScaleFactor: base.deviceScaleFactor,
+      });
+    } catch (error) {
+      log.error('Failed to rotate device emulation', error);
+    }
+  }
 
   useEffect(() => {
     log.debug("tab mounted");
@@ -379,7 +485,7 @@ function TabWindow(this, props) {
     }
 
     <div id={props.tabId} className="app-window hidden-tab">
-      <div id={webViewContainerId} className={`${isExtended ? "webview-container d-none extended" : "webview-container " + tabsBarVisualMode}${props.type === "remote" ? " remote" : ""}${isSharedAppsEnabled ? " with-left-bar" : ""}${isAIAssistantOpen ? " chat-assistant-open" : ""}`}>
+      <div id={webViewContainerId} className={`${isExtended ? "webview-container d-none extended" : "webview-container " + tabsBarVisualMode}${props.type === "remote" ? " remote" : ""}${isSharedAppsEnabled ? " with-left-bar" : ""}${isAIAssistantOpen ? " chat-assistant-open" : ""}${deviceMode !== "desktop" ? ` device-mode device-${deviceMode}` : ""}`}>
         {
           props.type === "remote" && !isProcessRunning ? (
             <div className="d-flex justify-content-center align-middle h-100 bg-dark">
@@ -401,26 +507,34 @@ function TabWindow(this, props) {
               </div>
             </div>
           ) : (
-            <OPWebView
-              type={props.type}
-              ref={(instance) => { this.child = instance; }}
-              windowId={props.windowId}
-              tabId={props.tabId}
-              partition={props.partition}
-              startUrl={props.url}
-              workspaceId={props.workspaceId}
-              desktopId={props.desktopId}
-              sleeping={props.sleeping}
-              location={props.location}
-              isolated={props.isolated ? true : false}
-              isProcessRunning={isProcessRunning}
-              checkProcess={checkProcess}
-              setProgress={setProgress}
-              setMediaPlaying={setMediaPlaying}
-              setCurrentUrl={setCurrentUrl}
-              setTitle={setTitle}
-              setCurrentFavIcon={setCurrentFavIcon}
-            />
+            <DevicePreviewShell
+              deviceMode={deviceMode}
+              shellId={deviceShellId}
+              isLandscape={isLandscape}
+              onRotate={handleRotateDevice}
+            >
+              <OPWebView
+                type={props.type}
+                ref={(instance) => { this.child = instance; }}
+                windowId={props.windowId}
+                tabId={props.tabId}
+                partition={props.partition}
+                startUrl={props.url}
+                workspaceId={props.workspaceId}
+                desktopId={props.desktopId}
+                sleeping={props.sleeping}
+                location={props.location}
+                isolated={props.isolated ? true : false}
+                isProcessRunning={isProcessRunning}
+                checkProcess={checkProcess}
+                setProgress={setProgress}
+                setMediaPlaying={setMediaPlaying}
+                setCurrentUrl={setCurrentUrl}
+                setTitle={setTitle}
+                setCurrentFavIcon={setCurrentFavIcon}
+                deviceMode={deviceMode}
+              />
+            </DevicePreviewShell>
           )
         }
       </div>

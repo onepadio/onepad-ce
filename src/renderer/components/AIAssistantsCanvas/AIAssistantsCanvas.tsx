@@ -126,6 +126,7 @@ function AIAssistantsCanvas(){
       let _offcanvas = document.getElementById("ai-offcanvas-"+windowId);
       if(_window){
         if(isOpen){
+          document.body.classList.add("ai-canvas-open");
           let _previousItemId = undefined;
           if(localStorage.getItem("ai-window-state") !== undefined && localStorage.getItem("ai-window-state") !== null){
             let _state = JSON.parse(localStorage.getItem("ai-window-state"));
@@ -167,6 +168,7 @@ function AIAssistantsCanvas(){
             }, 200);
           }
         }else{
+          document.body.classList.remove("ai-canvas-open");
           if(localStorage.getItem("ai-window-state") !== undefined && localStorage.getItem("ai-window-state") !== null){
             let _state = JSON.parse(localStorage.getItem("ai-window-state"));
             _state[activeCategory] = activePlayer;
@@ -205,13 +207,8 @@ function AIAssistantsCanvas(){
     }, []);
 
     useEffect(() => {
-      if(scopes.length > 1){
-       setWebviewHeight("calc(100% - 40px)");
-       setScope("space");
-      }else{
-        setWebviewHeight("calc(100vh - 56px)");
-        setScope(scopes[0]);
-      }
+      setWebviewHeight("calc(100vh - 164px)");
+      setScope(scopes[0]);
     }, [scopes,webviewUrl]);
 
     useEffect(() => {

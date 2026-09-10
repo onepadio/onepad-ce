@@ -1,6 +1,6 @@
 .apps-overlay-menu {
   position: fixed;
-  bottom: 36px;
+  bottom: 6px;
   left: 64px;
   width: calc(100vw - 128px) !important;
   z-index: 1999 !important;
@@ -22,64 +22,6 @@
   transform: translateY(0);
   opacity: 1;
   pointer-events: auto;
-}
-
-.apps-overlay-hide-button {
-  position: absolute;
-  bottom: -24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
-  height: 20px;
-  background-color: rgba(91, 94, 98, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: none;
-  border-radius: 0 0 8px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  z-index: 2000;
-}
-
-.apps-overlay-hide-button:hover {
-  background-color: rgba(91, 94, 98, 0.95);
-}
-
-.apps-overlay-show-button {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
-  height: 20px;
-  background-color: rgba(91, 94, 98, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  z-index: 1998;
-  animation: pulseShowButton 2s ease-in-out infinite;
-}
-
-.apps-overlay-show-button:hover {
-  background-color: rgba(91, 94, 98, 0.95);
-  animation: none;
-}
-
-@keyframes pulseShowButton {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 .apps-overlay-trigger-indicator {
@@ -282,6 +224,14 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.apps-overlay-home-divider {
+  width: 1px;
+  height: 28px;
+  background-color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
 /* Context menu styles */
 .context-menu {
   background: #2c2c2c;
@@ -321,4 +271,9 @@
 
 .context-menu-item svg {
   flex-shrink: 0;
+}
+
+body.ai-canvas-openx .apps-overlay-trigger-indicator{
+  left: 30% !important;
+  transform: translateX(-50%) !important;
 }

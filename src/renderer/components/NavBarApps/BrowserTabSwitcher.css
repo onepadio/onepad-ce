@@ -9,7 +9,7 @@
 /* Half-height panel above AppsOverlayMenu — same glass language as AppTabSwitcher */
 .browser-tab-switcher-panel {
   position: fixed;
-  bottom: 108px;
+  bottom: 80px;
   left: 64px;
   width: calc(100vw - 128px);
   height: 50vh;

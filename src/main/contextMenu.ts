@@ -1,15 +1,105 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, WebContents } from 'electron';
 import contextMenu from 'electron-context-menu';
 
-export function SPContextMenu(
-  contents: {
-    canGoBack: any;
-    goBack: () => void;
-    canGoForward: any;
-    goForward: () => void;
-    reload: () => void;
-    executeJavaScript: (arg0: string) => void;
+type DeviceMode = 'phone' | 'tablet' | 'desktop';
+
+const PHONE_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+const TABLET_USER_AGENT =
+  'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+const DEVICE_PROFILES = {
+  phone: {
+    userAgent: PHONE_USER_AGENT,
+    // Landscape by default
+    emulation: {
+      screenPosition: 'mobile' as const,
+      screenSize: { width: 844, height: 390 },
+      viewSize: { width: 844, height: 390 },
+      viewPosition: { x: 0, y: 0 },
+      deviceScaleFactor: 3,
+      scale: 1,
+    },
   },
+  tablet: {
+    userAgent: TABLET_USER_AGENT,
+    // Landscape by default
+    emulation: {
+      screenPosition: 'mobile' as const,
+      screenSize: { width: 1180, height: 820 },
+      viewSize: { width: 1180, height: 820 },
+      viewPosition: { x: 0, y: 0 },
+      deviceScaleFactor: 2,
+      scale: 1,
+    },
+  },
+};
+
+/** Per-webContents desktop UA snapshot so we can restore after mobile mode */
+const desktopUserAgents = new WeakMap<object, string>();
+const deviceModes = new WeakMap<object, DeviceMode>();
+
+function getDesktopUserAgent(contents: WebContents): string {
+  const stored = desktopUserAgents.get(contents);
+  if (stored) return stored;
+
+  const chromeVersion = process.versions.chrome;
+  if (chromeVersion) {
+    return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+  }
+  return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+}
+
+function notifyDeviceModeChanged(
+  mainWindow: BrowserWindow,
+  contents: WebContents,
+  mode: DeviceMode
+) {
+  const profile = mode === 'desktop' ? null : DEVICE_PROFILES[mode];
+  mainWindow.webContents.send('device-mode-changed', {
+    webContentsId: contents.id,
+    mode,
+    width: profile?.emulation.viewSize.width ?? null,
+    height: profile?.emulation.viewSize.height ?? null,
+  });
+}
+
+function applyDeviceMode(
+  contents: WebContents,
+  mode: DeviceMode,
+  mainWindow: BrowserWindow
+) {
+  if (mode === 'desktop') {
+    contents.disableDeviceEmulation();
+    contents.setUserAgent(getDesktopUserAgent(contents));
+    deviceModes.set(contents, 'desktop');
+    notifyDeviceModeChanged(mainWindow, contents, mode);
+    contents.reload();
+    return;
+  }
+
+  if (!desktopUserAgents.has(contents)) {
+    try {
+      const current = contents.getUserAgent();
+      if (current && !current.includes('iPhone') && !current.includes('iPad')) {
+        desktopUserAgents.set(contents, current);
+      }
+    } catch {
+      // fall back to generated desktop UA
+    }
+  }
+
+  const profile = DEVICE_PROFILES[mode];
+  contents.setUserAgent(profile.userAgent);
+  contents.enableDeviceEmulation(profile.emulation);
+  deviceModes.set(contents, mode);
+  notifyDeviceModeChanged(mainWindow, contents, mode);
+  contents.reload();
+}
+
+export function SPContextMenu(
+  contents: WebContents,
   mainWindow: BrowserWindow
 ) {
   return contextMenu({
@@ -77,7 +167,7 @@ export function SPContextMenu(
       {
         label: 'Back',
         click: async () => {
-          if (contents.canGoBack) {
+          if (contents.canGoBack()) {
             contents.goBack();
           }
         },
@@ -85,7 +175,7 @@ export function SPContextMenu(
       {
         label: 'Forward',
         click: async () => {
-          if (contents.canGoForward) {
+          if (contents.canGoForward()) {
             contents.goForward();
           }
         },
@@ -95,6 +185,30 @@ export function SPContextMenu(
         click: async () => {
           contents.reload();
         },
+      },
+      {
+        label: 'View As...',
+        submenu: [
+          {
+            label: 'Phone',
+            type: 'radio',
+            checked: deviceModes.get(contents) === 'phone',
+            click: () => applyDeviceMode(contents, 'phone', mainWindow),
+          },
+          {
+            label: 'Tablet',
+            type: 'radio',
+            checked: deviceModes.get(contents) === 'tablet',
+            click: () => applyDeviceMode(contents, 'tablet', mainWindow),
+          },
+          { type: 'separator' },
+          {
+            label: 'Desktop Site',
+            type: 'radio',
+            checked: !deviceModes.get(contents) || deviceModes.get(contents) === 'desktop',
+            click: () => applyDeviceMode(contents, 'desktop', mainWindow),
+          },
+        ],
       },
       {
         label: 'Search for “{selection}”',

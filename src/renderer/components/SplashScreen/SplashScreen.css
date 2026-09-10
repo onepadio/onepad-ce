@@ -1,5 +1,5 @@
 .splash-screen.full-screen{
-    top: 36px !important;
+    top: 40px !important;
     left: 48px !important;
     width: calc(100vw - 48px) !important;
     height: calc(100vh - 36px) !important;
@@ -20,8 +20,9 @@
     height: calc(100vh - 210px) !important;
     transition: all 0.5s ease;
     color: white;
-    border-radius: 0px;
+    border-radius: 12px !important;
     pointer-events: auto;
+    opacity: 1 !important;
 }
 
 .splash-screen.extended{
@@ -34,8 +35,29 @@
 }
 
 .splash-screen.tabs-mode{
-    top: 36px !important;
-    height: calc(100vh - 36px) !important;
+    top: 40px !important;
+    height: calc(100vh - 44px) !important;
+}
+
+/* Match TabWindow height when apps overlay is always-visible */
+body.apps-overlay-docked .splash-screen {
+    height: calc(100vh - 210px - 72px) !important;
+}
+
+body.apps-overlay-docked .splash-screen.extended {
+    height: calc(100vh - 104px - 72px) !important;
+}
+
+body.apps-overlay-docked .splash-screen.tabs-mode {
+    height: calc(100vh - 36px - 72px) !important;
+}
+
+body.apps-overlay-docked .splash-screen.space-mode {
+    height: calc(100vh - 144px - 72px) !important;
+}
+
+body.apps-overlay-docked .splash-screen.full-screen {
+    height: calc(100vh - 36px - 72px) !important;
 }
 
 .splash-screen.space-mode{
@@ -47,8 +69,8 @@
 
 /* Match TabWindow webview when left sidebar is present */
 .splash-screen.with-left-bar{
-    left: 42px !important;
-    width: calc(100vw - 42px) !important;
+    left: 60px !important;
+    width: calc(100vw - 64px) !important;
 }
 
 body.sidebar-auto-hide .splash-screen.with-left-bar{
@@ -63,7 +85,7 @@ body.sidebar-auto-hide .splash-screen.with-left-bar{
 }
 
 .splash-screen.with-left-bar.chat-assistant-open{
-    width: calc(60vw - 42px) !important;
+    width: calc(60vw - 56px) !important;
     transition: width 0.1s ease;
 }
 
@@ -72,9 +94,9 @@ body.sidebar-auto-hide .splash-screen.with-left-bar.chat-assistant-open{
 }
 
 .splash-screen.full-screen.chat-assistant-open{
-    width: calc(60vw - 48px) !important;
+    width: calc(60vw - 56px) !important;
 }
 
 .splash-screen.full-screen.with-left-bar.chat-assistant-open{
-    width: calc(60vw - 42px) !important;
+    width: calc(60vw - 56px) !important;
 }

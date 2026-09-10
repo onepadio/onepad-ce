@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowClockwise,
   ArrowUpRightCircle,
+  ArrowUpRightSquare,
   BoxArrowUp,
   ChevronLeft,
   ChevronRight,
@@ -186,7 +187,7 @@ function RemoteAppMenu() {
         onMouseEnter={() => showElement("open-in-new-window")}
         onMouseLeave={() => hideElement("open-in-new-window")}
       >
-        <Window color="white" size={20} />
+        <ArrowUpRightSquare color="white" size={20} />
         {onElement === "open-in-new-window" ? (
           <Tooltip
             isOpen={true}

@@ -222,7 +222,7 @@ export function handleWindowClosed(
   }
 }
 
-export function closeWindow(dispatch: any, sessionActions: any, windowId: any, openWindows: any, openTabs: any, activeTabs: any, windowTabs: any, desktop: any, isExternalWindowMode: any){
+export function closeWindow(dispatch: any, sessionActions: any, windowId: any, openWindows: any, openTabs: any, activeTabs: any, windowTabs: any, desktop: any, isExternalWindowMode: any, activeWindowId?: any){
   if(isExternalWindowMode && isElectron()){
       // @ts-expect-error
       window.electronAPI.send("toMain", {
@@ -237,7 +237,12 @@ export function closeWindow(dispatch: any, sessionActions: any, windowId: any, o
             })
           );
 
-          if(openWindows[windowId].type !== "browser"){
+          // Only switch to launchpad when closing the active app. Closing a
+          // background window should leave the current view unchanged.
+          if(
+            openWindows[windowId].type !== "browser" &&
+            (activeWindowId == null || activeWindowId === windowId)
+          ){
             //dispatch(sessionActions.goBackToPreviousWindow({data: {
             //    desktopId: desktop.id,
             //  }}));

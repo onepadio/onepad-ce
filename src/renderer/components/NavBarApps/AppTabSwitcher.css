@@ -9,7 +9,7 @@
 /* Sits just above AppsOverlayMenu (bottom: 36px, ~60px tall content) */
 .app-tab-switcher-strip {
   position: fixed;
-  bottom: 108px;
+  bottom: 80px;
   left: 64px;
   width: calc(100vw - 128px);
   z-index: 1998;

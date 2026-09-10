@@ -40,6 +40,8 @@ body.addressbar-auto-hide .app-window{
     background-color: #292e36;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0px 0px 12px 12px;
 }
 
 .app-window .webview-container.remote{
@@ -54,13 +56,14 @@ body.addressbar-auto-hide .app-window{
 }
 
 .app-window .webview-container.tabs-mode{
-    top: 0px;
-    height: calc(100vh - 75px);
+    top: 4px;
+    height: calc(100vh - 84px);
 }
 
 /* Full height when address bar is auto-hidden (relative to 36px top chrome) */
 body.addressbar-auto-hide .app-window .webview-container.tabs-mode{
-    height: calc(100vh - 36px);
+    height: calc(100vh - 44px);
+    border-radius: 12px !important;
 }
 
 .app-window.hidden-tab .webview-container.tabs-mode{
@@ -74,16 +77,41 @@ body.addressbar-auto-hide .app-window .webview-container.tabs-mode{
     width: calc(68vw - 5px);
 }
 
+/* Always-visible apps overlay: shrink webview so content isn't under the dock */
+body.apps-overlay-docked .app-window .webview-container {
+    height: calc(100vh - 210px - 76px);
+}
+
+body.apps-overlay-docked .app-window .webview-container.extended {
+    height: calc(100vh - 92px - 76px);
+}
+
+body.apps-overlay-docked .app-window .webview-container.tabs-mode {
+    height: calc(100vh - 75px - 76px);
+}
+
+body.addressbar-auto-hide.apps-overlay-docked .app-window .webview-container.tabs-mode {
+    height: calc(100vh - 36px - 76px);
+}
+
+body.apps-overlay-docked .app-window .webview-container.space-mode {
+    height: calc(100vh - 144px - 76px);
+}
+
+body.apps-overlay-docked .app-window .webview-container.full-screen {
+    height: calc(100vh - 144px - 76px);
+}
+
 /* Webview container resizing when chat assistant is open */
 .app-window .webview-container.chat-assistant-open {
     width: calc(60vw) !important;
-    transition: width 0.1s ease;
+    transition: width 0.1s ease, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Webview container with left bar and chat assistant */
 .app-window .webview-container.with-left-bar.chat-assistant-open {
-    width: calc(60vw - 42px) !important; /* 42px left bar + 400px chat width */
-    transition: width 0.1s ease;
+    width: calc(60vw - 56px) !important; /* 56px left bar + 400px chat width */
+    transition: width 0.1s ease, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-window .activate-effects{
@@ -91,14 +119,14 @@ body.addressbar-auto-hide .app-window .webview-container.tabs-mode{
 }
 
 .app-window .with-left-bar{
-    left: 42px !important;
-    width: calc(100vw - 42px) !important;
+    left: 60px !important;
+    width: calc(100vw - 64px) !important;
 }
 
 /* Full-bleed layout when left sidebar is in auto-hide mode */
 body.sidebar-auto-hide .app-window .with-left-bar{
-    left: 0 !important;
-    width: 100vw !important;
+    left: 4px !important;
+    width: calc(100vw - 8px) !important;
 }
 
 body.sidebar-auto-hide .app-window .webview-container.with-left-bar.chat-assistant-open {

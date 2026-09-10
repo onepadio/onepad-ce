@@ -1123,6 +1123,38 @@ ipcMain.handle('get-user-agent', async () => {
   }
 });
 
+ipcMain.handle(
+  'set-device-emulation',
+  async (
+    _event,
+    payload: {
+      webContentsId: number;
+      width: number;
+      height: number;
+      deviceScaleFactor?: number;
+    }
+  ) => {
+    try {
+      const wc = webContents.fromId(payload.webContentsId);
+      if (!wc || wc.isDestroyed()) {
+        return false;
+      }
+      wc.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: payload.width, height: payload.height },
+        viewSize: { width: payload.width, height: payload.height },
+        viewPosition: { x: 0, y: 0 },
+        deviceScaleFactor: payload.deviceScaleFactor ?? 2,
+        scale: 1,
+      });
+      return true;
+    } catch (error) {
+      log.error('Error setting device emulation:', error);
+      return false;
+    }
+  }
+);
+
 ipcMain.handle('get-tab-memory-info', async (event, webContentsId) => {
   try {
     const wc = webContents.fromId(webContentsId);

@@ -58,7 +58,7 @@ function SideBar() {
   const [hideMode, setHideMode] = useState<HideMode>('always-on-top');
 
   const isLaunchpad = activeWindowId === "launchpad" || activeWindow?.id === "launchpad";
-  const shouldAutoHide = (isLaunchpad || hideMode === 'auto-hide') && !isSidebarWindowOpen;
+  const shouldAutoHide = (hideMode === 'auto-hide'); // && !isSidebarWindowOpen;
   const [isVisible, setIsVisible] = useState(true);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,7 +71,7 @@ function SideBar() {
   }
 
   function scheduleHide() {
-    if (!shouldAutoHide) return;
+    if (!shouldAutoHide || isSidebarWindowOpen) return;
     if (hideTimeoutRef.current) return;
     hideTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
@@ -709,7 +709,7 @@ function SideBar() {
         id="globalAppsMenu"
         ref={menuRef}
         className={`d-flex flex-column justify-content-start global-apps-menu ${isVisible ? "visible" : "hidden"}`}
-        onContextMenu={handleContextMenu}
+        
         onMouseLeave={(e) => {
           if (!shouldAutoHide) return;
           // Moving into the vertical tab bar — keep apps sidebar open

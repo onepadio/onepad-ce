@@ -47,6 +47,26 @@ export function getBrowserWindowIds(
   return ordered;
 }
 
+/**
+ * Browser window ids in the same space as `workspaceId`, optionally excluding one window.
+ * Falls back to all remaining ids when workspaceId is missing.
+ */
+export function getSameSpaceBrowserWindowIds(
+  browserWindows: any[],
+  openWindows: Record<string, any>,
+  workspaceId?: string | null,
+  excludeWindowId?: string
+): string[] {
+  return (browserWindows || [])
+    .map(resolveBrowserWindowId)
+    .filter((id): id is string => id != null)
+    .filter((id) => id !== excludeWindowId)
+    .filter((id) => {
+      if (!workspaceId) return true;
+      return openWindows[id]?.workspace === workspaceId;
+    });
+}
+
 /** Keep browserWindows registry in sync when legacy windows exist but are not registered. */
 export function syncBrowserWindowsIfNeeded(
   browserWindows: any[],

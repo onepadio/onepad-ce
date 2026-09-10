@@ -42,13 +42,13 @@ const electronHandler = {
   },
   fromMain: (callback: any) => ipcRenderer.on('fromMain', callback),
   receive: (channel: string, callback: any) => {
-    const validChannels = ['fromMain', 'download-event'];
+    const validChannels = ['fromMain', 'download-event', 'device-mode-changed'];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, callback);
     }
   },
   removeListener: (channel: string, callback: any) => {
-    const validChannels = ['fromMain', 'download-event'];
+    const validChannels = ['fromMain', 'download-event', 'device-mode-changed'];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeListener(channel, callback);
     }
@@ -105,7 +105,8 @@ const electronHandler = {
       'get-tab-memory-info',
       'get-all-tabs-memory',
       'fetch-website-metadata',
-      'get-user-agent'
+      'get-user-agent',
+      'set-device-emulation'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

@@ -2,14 +2,18 @@
     background-color: #1b1b1b;
     color: white;
     position: absolute;
-    top:36px;
-    right: calc(-40% + 4px);
+    top:40px;
+    right: calc(-40%);
     z-index: 999;
-    height: calc(100vh - 36px);
+    height: calc(100vh - 44px);
+    border-radius: 12px;
+    width: calc(40% - 12px) !important;
+    transition: width 0.1s ease, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ai-canvas-open{
-    right: 0px !important;
+    right: 4px !important;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ai-canvas-content{
@@ -33,8 +37,8 @@
     z-index: 998;
     backdrop-filter: blur(1px);
     -webkit-backdrop-filter: blur(1px);
-    left: 42px !important;
-    width: calc(100% - 42px) !important;
+    left: 56px !important;
+    width: calc(100% - 56px) !important;
 }
 
 .ai-sidebar{
@@ -46,6 +50,7 @@
     background-color: #1b1b1b;
     border-left: 1px solid #2a2b2a;
     border-right: 1px solid #2a2b2a;
+    border-radius: 12px 0px 0px 12px;
 }
 
 .ai-canvas .active{
@@ -107,4 +112,8 @@
     width: 100%;
     height: 36px;
     background-color: #1b1b1b;
+}
+
+body.apps-overlay-docked .ai-canvas{
+    height: calc(100vh - 36px - 74px);
 }

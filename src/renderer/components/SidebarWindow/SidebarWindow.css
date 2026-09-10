@@ -2,14 +2,15 @@
     background-color: #1b1b1b;
     color: white;
     position: absolute;
-    top: 36px;
-    left: 56px;
+    top: 40px;
+    left: 60px;
     z-index: 1999;
-    height: calc(100vh - 36px);
+    height: calc(100vh - 44px);
     transition: all 0.25s linear;
     opacity: 0;
     display: none !important;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
 }
 
 .sidebar-canvas-open{
@@ -85,4 +86,13 @@
 
 .hidden {
     display: none !important;
+}
+
+.sidebar-webview{
+    border-radius: 12px;
+    padding: 4px;
+}
+
+body.apps-overlay-docked .sidebar-canvas{
+    height: calc(100vh - 40px - 72px);
 }

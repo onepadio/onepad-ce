@@ -186,7 +186,8 @@ function WindowService() {
             activeTabs,
             windowTabs,
             desktop,
-            isExternalWindowMode
+            isExternalWindowMode,
+            activeWindowId
           );
         }, () => {
           log.error("closeWindow", "Failed to reset window state");
@@ -230,7 +231,8 @@ function WindowService() {
             activeTabs,
             windowTabs,
             desktop,
-            isExternalWindowMode
+            isExternalWindowMode,
+            activeWindowId
           );
         }, () => {
           log.error("sleepWindow", "Failed to save window state");

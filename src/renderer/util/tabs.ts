@@ -8,6 +8,10 @@ import { closeWindow } from "../services/window";
 import BrowserStateService from "../services/browsers";
 import XAppService from "../services/xapp";
 import { windowServiceActions } from "renderer/store/window-service-slice";
+import {
+  getSameSpaceBrowserWindowIds,
+  resolveBrowserWindowId,
+} from "./browserWindows";
 
 export function newTabForActiveWindow(dispatch: any, workspace: any, desktop: any, windowTabs: any, openTabs: any, activeTabs: any, activeWindow: any, isolated = false){
   let _url = activeWindow.data.customUrl !== undefined && activeWindow.data.customUrl !== "" ? activeWindow.data.customUrl : activeWindow.data.startUrl;
@@ -50,29 +54,39 @@ export function closeTab(tab: any, dispatch: any, openTabs: any, windowTabs: any
       }else{
         // remote or browser
         if(openWindows[tab.window].type === "browser"){
-          if(browserWindows.length === 1){
+          const closedWorkspace =
+            openWindows[tab.window]?.workspace ?? tab.workspace;
+          const remaining = (browserWindows || [])
+            .map(resolveBrowserWindowId)
+            .filter((id): id is string => id != null && id !== tab.window);
+          const sameSpace = getSameSpaceBrowserWindowIds(
+            browserWindows,
+            openWindows,
+            closedWorkspace,
+            tab.window
+          );
+
+          log.debug("close browser window", openWindows[tab.window]);
+          log.debug("sameSpace remaining", sameSpace.length);
+
+          if (sameSpace.length === 0) {
             dispatch(sessionActions.getBackToLaunchPad({data: {
               desktopId: desktop.id,
             }}));
-            log.debug("Closing last browser window: ",tab.workspace);
-            BrowserStateService.deleteBrowserStateByWorkspaceId(tab.workspace).then((res) => {
+            log.debug("Closing last browser window in space: ", closedWorkspace);
+            BrowserStateService.deleteBrowserStateByWorkspaceId(closedWorkspace).then((res) => {
               log.debug("deleteBrowserStateByWorkspaceId", res);
             }).catch((err) => {
               log.error(err);
             });
+          } else {
+            const nextId = sameSpace.at(-1);
+            if (nextId && openWindows[nextId]) {
+              dispatch(sessionActions.setActiveWindow({data: openWindows[nextId]}));
+              dispatch(sessionActions.setActiveBrowserWindowId({data: nextId}));
+            }
           }
-          log.debug("close browser window", openWindows[tab.window]);
-          let _browserWindows = Object.assign([], browserWindows);
-          let filtered = _browserWindows.filter((item: any) => item !== tab.window);
-          log.debug("filtered", filtered.length);
-          log.debug("filtered-1", filtered.at(-1));
-          log.debug("openWindows[filtered.at(-1)]", openWindows[filtered.at(-1)]);
-          log.debug("windowTabs[filtered.at(-1)]", windowTabs[filtered.at(-1)]);
-          if(filtered.length > 0){
-            dispatch(sessionActions.setActiveWindow({data: openWindows[filtered.at(-1)]}));
-            dispatch(sessionActions.setActiveBrowserWindowId({data: filtered.at(-1)}));
-          }
-          dispatch(sessionActions.setBrowserWindows({data: filtered}));
+          dispatch(sessionActions.setBrowserWindows({data: remaining}));
         }
         closeWindow(dispatch, sessionActions, tab.window, openWindows, openTabs, activeTabs, windowTabs, desktop, isExternalWindowMode);
       }

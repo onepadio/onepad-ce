@@ -58,7 +58,7 @@
 .sidebar-trigger-indicator {
   position: absolute;
   top: 50%;
-  left: 0;
+  left: 4px;
   transform: translateY(-50%);
   width: 100%;
   height: 300px;
