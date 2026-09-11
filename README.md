@@ -2,362 +2,222 @@
 
 <div align="center">
 
-**Conquer Tab Chaos. Amplify Productivity.**
+**Chromebook simplicity on the computers you already own.**
 
-The free, open-source productivity browser that transforms overwhelming tabs and 30,000+ SaaS tools into organized, efficient workspaces.
+A free, open-source **shared OS UI** — Spaces, app grid, and dock — that runs on macOS, Windows, and Linux without wiping your OS. Same home screen later as a thin Ubuntu kiosk (USB or install-to-disk).
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](https://github.com/sigma-tech/onepad-ce)
-[![Version](https://img.shields.io/badge/version-1.0.0--beta-orange.svg)](https://github.com/sigma-tech/onepad-ce/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](https://github.com/onepadio/onepad-ce)
+[![Version](https://img.shields.io/badge/version-beta-orange.svg)](https://github.com/onepadio/onepad-ce/releases)
 
-[Website](https://onepad.io) • [Documentation](https://docs.onepad.io) • [Community](https://discord.gg/onepad) • 
+[Website](https://onepad.io) • [Roadmap](./ROADMAP.md) • [Community](https://discord.gg/onepad)
 
 </div>
 
 ---
 
-## ✨ What is OnePad?
+## What is OnePad?
 
-OnePad is a productivity browser built to solve the modern digital chaos problem. With **30,000+ SaaS tools** and **193 billion active websites**, traditional browsers create overwhelming tab chaos that kills productivity. OnePad transforms this chaos into organized **Spaces** (workspaces), giving you instant access to all your tools without the anxiety and time loss.
+Mac and Windows are full operating systems. Most people only need a home screen and a handful of apps. OnePad is that home screen: a ChromeOS-class desktop (wallpaper, Spaces, app grid, dock) on top of the OS you already have.
 
-**Perfect for:**
-- 🏢 **Remote & hybrid workers** drowning in SaaS tools and browser tabs
-- 💻 **Developers** juggling multiple projects with countless web apps
-- 🎓 **Students** managing research, courses, and online resources
-- 🚀 **Entrepreneurs** running multiple businesses with different tool stacks
-- 📊 **Professionals** who value time, organization, and mental clarity
-- 🔒 **Privacy-conscious users** who want local-first data control
+**We are not a new OS** (no kernel). **We are not a productivity browser** competing with Arc. We are a thin shell whose UI *is* the product.
 
----
+| Surface | What you do | Who it is for |
+| --- | --- | --- |
+| **App** on Mac / Windows / Linux | Install CE; keep your OS, printers, MDM, Office | Anyone who cannot wipe the machine |
+| **OnePad image** (planned) | Boot USB or install to disk; OnePad *is* the session | Cheap PCs, labs, “I would have bought a Chromebook” |
 
-## 🎯 The Problem We Solve
+Unlike [ChromeOS Flex](https://chromeos.google/products/chromeos-flex/), you do **not** have to wipe the disk to try the simple desktop. Install the app and keep Windows or macOS. The Ubuntu kiosk image is optional for labs and machines that should boot only OnePad.
 
-Modern work and remote/hybrid environments have created a productivity crisis:
-
-- ⏰ **Time Loss** - Hours wasted every week hunting through tabs and switching between tools
-- 🧠 **Mental Overload** - Anxiety and stress from managing thousands of SaaS tools across dozens of tabs  
-- 🌪️ **Disorganized Chaos** - Multiple browser windows, lost bookmarks, and context switching that kills focus
-- 📉 **Productivity Drain** - More time spent organizing than actually working
-
-**The stats are staggering:**
-- 30,080+ SaaS companies (and growing daily)
-- 193 billion active websites to manage
-- 28% of the world population now works remotely
-- Traditional browsers weren't built for this level of complexity
-
-**OnePad is the solution.** Purpose-built for the modern productivity challenge.
+**Built for:**
+- People who find Mac and Windows too much OS
+- Students, families, shop and office staff who live in web apps
+- Privacy-conscious users who want local-first data
+- Anyone who wants Chromebook simplicity without Google’s account or new hardware
 
 ---
 
-## 🚀 Key Features
+## Why this exists
 
-### 🎯 **Organize with Spaces**
-Transform tab chaos into organized workspaces. Separate work, personal projects, and hobbies into distinct Spaces that keep everything in its place. No more hunting through dozens of tabs.
+- Traditional OSes bury the apps people actually use under Settings, Finder, and window chaos
+- Work already lives in SaaS and the browser — the rest of the OS is leftover complexity
+- ChromeOS Flex solves simplicity by replacing the OS; many people cannot or will not do that
 
-### 🏪 **One-Click App Access via App Store**
-Browse our curated app store and add SaaS tools instantly. No more hunting through bookmarks or endless tabs to find what you need. Your most-used tools are always one click away.
-
-### ⚡ **Streamlined Workflows**
-Beautiful LaunchPad interface puts all your apps at your fingertips. Search, organize by category, and access everything instantly. Focus on work, not tab management.
-
-### 📌 **Quick Access to Favorites**
-Pin your most-used apps for instant access. Reduce time searching and get back to being productive. Your workflow, optimized.
-
-### 🎨 **Custom Organization**
-Drag-and-drop to arrange apps your way. Your personalized layout saves automatically, so you always know where to find things. Make OnePad truly yours.
-
-### 🔐 **Privacy-First Design**
-Your data stays on your device. Local-first architecture means you control your information without sacrificing productivity. No cloud tracking or data collection.
-
-### 🌐 **All Apps in One Place**
-Stop switching between browser windows. Manage all your SaaS tools, tabs, and sessions in one unified interface. Embedded web views for seamless app usage.
-
-### 🔍 **Intelligent Search**
-Find any app or workspace instantly with smart search. Stop wasting time clicking through tabs. Get to what you need in seconds.
-
-### 🎯 **Persistent Sessions**
-Your workspaces remember your layout and sessions. Pick up exactly where you left off, every time. No more setup time when you restart.
-
-### 🌙 **Beautiful Themes**
-Dark mode and custom themes for comfortable all-day productivity. Your eyes will thank you.
+OnePad keeps the host OS and puts a simple home screen on top of it.
 
 ---
 
-## 📥 Installation
+## Features (Community Edition)
 
-### Download Pre-built Binaries
+- **Spaces** — Separate work, school, and personal into distinct desktops
+- **App grid & LaunchPad** — Curated SaaS catalog; pin and rearrange apps
+- **Embedded apps** — Web tools open in-place, not as another browser window
+- **Local-first** — Layout and data stay on your device (IndexedDB)
+- **Password manager** — Local vault; Safari import
+- **Themes & backgrounds** — Make the shell feel like *your* desktop
+- **Search** — Find apps and Spaces quickly
+- **Session persistence** — Pick up where you left off
+
+Coming (see [ROADMAP.md](./ROADMAP.md)): multi-device sync (Plus), Ubuntu kiosk ISO, remote/metered apps, curated publish path for small web apps.
+
+---
+
+## Open core
+
+This repo is **Community Edition (AGPLv3)**. The local home screen stays free.
+
+| Free forever (CE) | Paid / proprietary (later) |
+| --- | --- |
+| Spaces, grid, dock, themes | Multi-device sync of the same desktop |
+| Local app catalog, pin/reorder | Accounts, encrypted backup |
+| Local webviews, password manager | Remote app execution (metered) |
+| Sideload any URL as an app | Fleet / kiosk admin, SSO |
+| `.deb` / AppImage; Ubuntu kiosk image (same binary) | Commercial license for AGPL-averse orgs |
+
+---
+
+## Installation
+
+### Download
 
 **macOS:**
 ```bash
-# Intel Macs
+# Intel
 curl -L https://onepad.io/download/mac-x64 -o OnePad.dmg
 
-# Apple Silicon (M1/M2/M3)
+# Apple Silicon
 curl -L https://onepad.io/download/mac-arm64 -o OnePad.dmg
 ```
 
 **Windows:**
 ```powershell
-# Download installer
 curl -L https://onepad.io/download/windows -o OnePad-Setup.exe
 ```
 
 **Linux:**
 ```bash
-# Debian/Ubuntu (.deb)
+# Debian/Ubuntu
 curl -L https://onepad.io/download/linux-deb -o onepad.deb
 sudo dpkg -i onepad.deb
 
-# AppImage (universal)
+# AppImage
 curl -L https://onepad.io/download/linux-appimage -o OnePad.AppImage
 chmod +x OnePad.AppImage
 ./OnePad.AppImage
 ```
 
-### Package Managers
-
-**macOS (Homebrew):**
-```bash
-brew install --cask onepad
-```
-
-**Windows (Chocolatey):**
-```powershell
-choco install onepad
-```
-
-**Linux (Snap):**
-```bash
-snap install onepad
-```
+Or download from [onepad.io](https://onepad.io) / [GitHub Releases](https://github.com/onepadio/onepad-ce/releases).
 
 ---
 
-## 🛠️ Development Setup
+## Development
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm 7+
-- **Git**
-- Platform-specific build tools:
-  - **macOS:** Xcode Command Line Tools
-  - **Windows:** Visual Studio Build Tools
-  - **Linux:** build-essential
+- Node.js 18+ and npm 7+
+- Git
+- Platform build tools (Xcode CLT / VS Build Tools / `build-essential`)
 
-### Clone and Install
+### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/sigma-tech/onepad-ce.git
+git clone https://github.com/onepadio/onepad-ce.git
 cd onepad-ce
-
-# Install dependencies
 npm install
-
-# Start development server
 npm start
 ```
 
-### Available Scripts
+### Scripts
 
 ```bash
-npm start              # Start in development mode
-npm run dev            # Alias for start
-npm run build          # Build for production
-npm run package        # Package for current platform
-npm run package:mac    # Package for macOS
-npm run package:win    # Package for Windows
-npm run package:linux  # Package for Linux
-npm run lint           # Run ESLint
-npm run test           # Run tests
+npm start              # Development
+npm run build          # Production build
+npm run package        # Package current platform
+npm run package:mac    # macOS
+npm run package:win    # Windows
+npm run package:linux  # Linux (.deb / AppImage)
+npm run dev:kiosk      # Kiosk mode (fullscreen shell)
+npm run lint
+npm run test
 ```
 
-### Project Structure
+### Layout
 
 ```
 onepad-ce/
 ├── src/
-│   ├── main/              # Electron main process
-│   │   ├── main.ts        # Main entry point
-│   │   ├── mainWindow.ts  # Window management
-│   │   └── ...
-│   └── renderer/          # React frontend
-│       ├── components/    # UI components
-│       ├── store/         # Redux state management
-│       ├── services/      # Business logic
-│       ├── repository/    # Data access layer (IndexedDB)
-│       └── index.tsx      # Renderer entry point
-├── assets/               # Icons, images, etc.
-├── release/              # Build output
-├── package.json
-└── electron.vite.config.ts
+│   ├── main/           # Electron main process
+│   └── renderer/       # React UI (Spaces, grid, webviews)
+├── assets/
+├── release/            # Build output
+├── ROADMAP.md
+└── package.json
 ```
 
 ---
 
-## 🤝 Contributing
+## How we compare
 
-We love contributions! OnePad Community Edition is open source and welcomes improvements from the community.
-
-### How to Contribute
-
-1. **Fork the repository**
-2. **Create a feature branch:** `git checkout -b feature/amazing-feature`
-3. **Make your changes** and commit: `git commit -m 'Add amazing feature'`
-4. **Push to your fork:** `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
-
-### Contribution Guidelines
-
-- Follow the existing code style (ESLint config)
-- Write clear commit messages
-- Add tests for new features
-- Update documentation as needed
-- Be respectful and constructive in discussions
-
-### Development Guidelines
-
-- Use **TypeScript** for type safety
-- Follow **functional component** patterns in React
-- Keep components small and reusable
-- Use **Redux Toolkit** for state management
-- Write **clean, self-documenting code**
-
-**See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.**
+| | OnePad | ChromeOS Flex | Arc / Station / Wavebox |
+| --- | --- | --- | --- |
+| Simple home screen | Yes | Yes | Browser / multi-app shell |
+| Keep existing OS | **Yes (app)** | No — installs over the disk | Yes |
+| Optional bootable image | Planned (Ubuntu kiosk) | Yes (the product) | No |
+| Open source | AGPLv3 | No | No |
+| Local-first / no Google account | Yes | Google account | Varies |
+| Platforms | Mac, Windows, Linux | x86_64 PCs | Varies |
 
 ---
 
-## 🏗️ Architecture
+## Roadmap
 
-**Frontend:**
-- Electron 33+
-- React 18 with TypeScript
-- Redux Toolkit for state management
-- Dexie for IndexedDB (local database)
-- TailwindCSS + Bootstrap for styling
+Product direction, open core, Ubuntu kiosk stack, and phased plan: **[ROADMAP.md](./ROADMAP.md)**.
 
-**Backend (Local):**
-- IndexedDB for data persistence
-- Electron Store for user preferences
-- Local-first architecture
-
+Short version: earn the home screen → sync the same desktop across devices → optional remote apps → curated publish for indie web apps → fleet/lab images. No kernel fork, no coin, no “we are building an OS.”
 
 ---
 
-## 🆚 OnePad vs Alternatives
+## Contributing
 
-| Feature | OnePad | Arc Browser | Station | Wavebox | Regular Browser |
-|---------|--------|-------------|---------|---------|-----------------|
-| **Purpose-built for productivity** | ✅ | ⚠️ Partial | ✅ | ✅ | ❌ |
-| **Organized Spaces/Workspaces** | ✅ | ⚠️ Profiles | ✅ | ✅ | ❌ Tab chaos |
-| **Built-in App Store** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Cross-platform** | ✅ Win/Mac/Linux | ⚠️ Mac only | ✅ | ✅ | ✅ |
-| **Open source** | ✅ AGPLv3 | ❌ | ❌ | ❌ | ⚠️ Varies |
-| **Privacy-focused** | ✅ Local-first | ⚠️ | ⚠️ | ⚠️ | ⚠️ Varies |
-| **Offline-first** | ✅ Full functionality | ✅ | ✅ | ✅ | ✅ |
-| **Custom organization** | ✅ Drag & drop | ⚠️ Limited | ⚠️ | ⚠️ | ❌ |
-| **Price** | **Free** (open source) | Free | $6-10/mo | $10-20/mo | Free |
+Issues and PRs welcome.
 
-**Why OnePad?** The only free, open-source productivity browser that solves tab chaos with organized Spaces and a built-in app store.
+1. Fork → feature branch → PR
+2. Match existing TypeScript / React style
+3. Keep the CE home screen free; paid features belong in proprietary cloud services, not behind AGPL paywalls
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) when present. Use clear commit messages and keep changes focused.
 
 ---
 
-## 📜 License
+## License
 
-OnePad Community Edition is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+**GNU Affero General Public License v3.0 (AGPL-3.0-or-later).**
 
 ```
 Copyright (C) 2026 Sigma Technologies Ltd
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
 ```
 
-**See [LICENSE](./LICENSE) for the complete license text.**
+See [LICENSE](./LICENSE).
 
-### Why AGPLv3?
-
-We chose AGPLv3 to:
-- ✅ Keep the community edition free and open source
-- ✅ Prevent competitors from creating proprietary forks
-- ✅ Ensure cloud service providers share their improvements
-- ✅ Support a sustainable dual-licensing business model
-
-**Commercial licensing** is available for organizations that cannot comply with AGPLv3. Contact us at [contact@onepad.io](mailto:contact@onepad.io).
+AGPL keeps CE free, blocks silent proprietary forks of the shell, and supports dual licensing. **Commercial licensing:** [contact@onepad.io](mailto:contact@onepad.io).
 
 ---
 
-## 🌟 Support the Project
+## Community
 
-Help us fight tab chaos and improve productivity for everyone.
-
-### Ways to Help
-
-- ⭐ **Star this repository** - Show your support and help others discover OnePad
-- 🐛 **Report bugs** via [GitHub Issues](https://github.com/sigma-tech/onepad-ce/issues)
-- 💡 **Suggest features** that would boost your productivity in [Discussions](https://github.com/sigma-tech/onepad-ce/discussions)
-- 🔧 **Contribute code** through Pull Requests
-- 📖 **Improve documentation** - Help others get started faster
-- 💬 **Help others** in the community forums
-- 🎨 **Share your workspace** designs and productivity tips
-- 📣 **Spread the word** - Help remote workers escape tab chaos
-
-### Sponsorship
-
-Support ongoing development:
-- **GitHub Sponsors:** [github.com/sponsors/sigma-tech](https://github.com/sponsors/sigma-tech)
-- **Open Collective:** [opencollective.com/onepad](https://opencollective.com/onepad)
-
----
-
-## 🌐 Community
-
-Join our growing community:
-
-- **Website:** [onepad.io](https://onepad.io)
-- **Discord:** [discord.gg/onepad](https://discord.gg/onepad)
-- **Twitter:** [@onepad_io](https://twitter.com/onepad_io)
-- **GitHub Discussions:** [github.com/sigma-tech/onepad-ce/discussions](https://github.com/sigma-tech/onepad-ce/discussions)
-- **Email:** [contact@onepad.io](mailto:contact@onepad.io)
-
----
-
-## 🙏 Acknowledgments
-
-OnePad Community Edition is built with these amazing open source projects:
-
-- [Electron](https://www.electronjs.org/) - Cross-platform desktop apps
-- [React](https://react.dev/) - UI framework
-- [Redux Toolkit](https://redux-toolkit.js.org/) - State management
-- [Dexie.js](https://dexie.org/) - IndexedDB wrapper
-- [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS
-
-Special thanks to our contributors and the open source community!
-
----
-
-## 📞 Contact
-
-**Sigma Technologies Ltd**
-- Email: [contact@onepad.io](mailto:contact@onepad.io)
 - Website: [onepad.io](https://onepad.io)
-- GitHub: [@sigma-tech](https://github.com/sigma-tech)
+- Discord: [discord.gg/onepad](https://discord.gg/onepad)
+- GitHub: [onepadio/onepad-ce](https://github.com/onepadio/onepad-ce)
+- Email: [contact@onepad.io](mailto:contact@onepad.io)
+
+Support: star the repo, file issues, try it as your home screen for a week and tell us whether you still Alt-Tab to Chrome.
 
 ---
 
-<div align="center">
+## Acknowledgments
 
-**Made with ❤️ by Sigma Technologies Ltd and the OnePad Community**
+Built with [Electron](https://www.electronjs.org/), [React](https://react.dev/), [Redux Toolkit](https://redux-toolkit.js.org/), [Dexie.js](https://dexie.org/), and the open-source community.
 
-*Stop wasting time in tab chaos. Start being productive with OnePad.*
+---
 
-[⬆ back to top](#onepad)
-
-</div>
+**Sigma Technologies Ltd** · [onepad.io](https://onepad.io) · [contact@onepad.io](mailto:contact@onepad.io)
