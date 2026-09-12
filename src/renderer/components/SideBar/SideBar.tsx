@@ -33,6 +33,7 @@ import WorkspaceMenu from "../WorkspaceMenu/WorkspaceMenu";
 import NavBarAppsVertical from "../NavBarApps/NavBarAppsVertical";
 import { activateBrowser } from "../../hubs/WindowService";
 import { windowActions } from "renderer/store/window-slice";
+import { sidebarActions } from "../../store/sidebar-slice";
 import {
   SIDEBAR_AUTOHIDE_EVENT,
   isNodeInVerticalTabBar,
@@ -52,6 +53,7 @@ function SideBar() {
   const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
   const activeWindow = useSelector((state: any) => state.session.activeWindow);
   const isSidebarWindowOpen = useSelector((state: any) => state.sidebar.isOpen);
+  const openedApps = useSelector((state: any) => state.sidebar.openedApps);
   const showTabSidebar = useSelector((state: any) => state.window.showSidebar);
 
   type HideMode = 'always-on-top' | 'auto-hide';
@@ -135,17 +137,17 @@ function SideBar() {
       document.body.removeChild(menu);
     });
 
+    const canCloseAll = Object.keys(openedApps || {}).length > 0;
+
     const menu = document.createElement("div");
     menu.className = "sidebar-context-menu context-menu";
     menu.innerHTML = `
-      <div class="context-menu-item toggle-hide-mode">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          ${hideMode === 'auto-hide'
-            ? '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>'
-            : '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>'
-          }
+      <div class="context-menu-item close-all-item${!canCloseAll ? " disabled" : ""}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
         </svg>
-        <span>${hideMode === 'auto-hide' ? 'Disable Auto-Hide' : 'Enable Auto-Hide'}</span>
+        <span>Close All</span>
       </div>
     `;
 
@@ -178,11 +180,11 @@ function SideBar() {
     menu.style.left = `${xPosition}px`;
     menu.style.opacity = "1";
 
-    menu.querySelector(".toggle-hide-mode")?.addEventListener("click", () => {
-      const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
-      setHideMode(newMode);
-      localStorage.setItem('sidebar-hide-mode', newMode);
-      document.body.removeChild(menu);
+    menu.querySelector(".close-all-item")?.addEventListener("click", () => {
+      if (canCloseAll) {
+        dispatch(sidebarActions.closeAllOpenedApps());
+        document.body.removeChild(menu);
+      }
     });
 
     menu.addEventListener("mouseleave", () => {
@@ -709,7 +711,7 @@ function SideBar() {
         id="globalAppsMenu"
         ref={menuRef}
         className={`d-flex flex-column justify-content-start global-apps-menu ${isVisible ? "visible" : "hidden"}`}
-        
+        onContextMenu={handleContextMenu}
         onMouseLeave={(e) => {
           if (!shouldAutoHide) return;
           // Moving into the vertical tab bar — keep apps sidebar open

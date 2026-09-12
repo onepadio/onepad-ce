@@ -1,5 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+export interface SidebarOpenedApp {
+  appId: string;
+  url: string;
+  title: string;
+  icon: string;
+  userAgent: string;
+}
+
 const sidebarSlice = createSlice({
   name: "sidebar",
   initialState: {
@@ -14,6 +22,7 @@ const sidebarSlice = createSlice({
     fade: true,
     width: "45%",
     scopes: ["profile"],
+    openedApps: {} as Record<string, SidebarOpenedApp>,
   },
   reducers: {
     setUrl(state, action) {
@@ -63,11 +72,43 @@ const sidebarSlice = createSlice({
         state.appId = action.payload.appId;
         state.icon = action.payload.icon || "";
         state.userAgent = action.payload.userAgent || "";
+
+        if (action.payload.appId && action.payload.url && !state.openedApps[action.payload.appId]) {
+          state.openedApps[action.payload.appId] = {
+            appId: action.payload.appId,
+            url: action.payload.url,
+            title: action.payload.title,
+            icon: action.payload.icon || "",
+            userAgent: action.payload.userAgent || "",
+          };
+        }
       }
     },
     close(state) {
       state.isOpen = false;
-    }
+    },
+    removeOpenedApp(state, action) {
+      const appId = action.payload;
+      if (appId && state.openedApps[appId]) {
+        delete state.openedApps[appId];
+      }
+      if (state.appId === appId) {
+        state.appId = "";
+        state.webviewUrl = "";
+        state.title = "";
+        state.icon = "";
+        state.userAgent = "";
+      }
+    },
+    closeAllOpenedApps(state) {
+      state.isOpen = false;
+      state.openedApps = {};
+      state.appId = "";
+      state.webviewUrl = "";
+      state.title = "";
+      state.icon = "";
+      state.userAgent = "";
+    },
   },
 });
 

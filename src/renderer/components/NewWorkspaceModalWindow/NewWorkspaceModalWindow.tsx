@@ -3,32 +3,28 @@ import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 import { v4 as uuidv4 } from "uuid";
 
-import { addWorkspace } from "../../api/WorkspaceApi";
-import {
-  updateWorkspaces,
-  selectTheLatestWorkspace,
-} from "../../services/workspace";
 import { WorkspaceService } from "../../services/workspace";
 import DesktopService from "../../services/desktop";
-import { UsersService } from "../../services/users";
 import { workspaceActions } from "../../store/workspace-slice";
 import { modalActions } from "../../store/modal-slice";
 
 import { Button, Form, FormGroup, Label, Input, Row, Col } from "reactstrap";
 import Modal from "../lib/Modal";
-import { Stage, Layer, Circle, Text, Rect } from 'react-konva';
+import { WorkspaceBootstrapIcon, WorkspaceBootstrapIconBadge, WORKSPACE_ICON_LIST } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
+import { RefreshCcw } from "react-feather";
 
 import "./NewWorkspaceModalWindow.css";
 import { getGoogleFavicon } from "../../services/favicon";
-// @ts-expect-error
 import defaultIcon from '../../images/default_icon.png'
-import { RefreshCcw } from "react-feather";
+
+function generateRandomColor() {
+  return "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0");
+}
 
 function NewWorkspaceModalWindow(props: any) {
   const dispatch = useDispatch();
 
   const isNewWorkspaceModalOpen = useSelector(
-
     (state: any) => state.modal.isNewWorkspaceModalOpen
   );
 
@@ -43,9 +39,9 @@ function NewWorkspaceModalWindow(props: any) {
   const [siteUrl, setSiteUrl] = useState("https://");
   const [isCustomIconUrl, setIsCustomIconUrl] = useState(false);
   const [customIconUrl, setCustomIconUrl] = useState("");
-  const [iconType, setIconType] = useState("color");
-  const [color, setColor] = useState("#000000");
-  const [spaceAlias, setSpaceAlias] = useState("");
+  const [iconType, setIconType] = useState("bootstrap");
+  const [selectedIcon, setSelectedIcon] = useState("Folder");
+  const [color, setColor] = useState(generateRandomColor);
   const [isSyncEnabled, setIsSyncEnabled] = useState(false);
 
   function save() {
@@ -53,15 +49,17 @@ function NewWorkspaceModalWindow(props: any) {
       return;
     }
 
-    let _config = iconType === "color" ? {
-      iconType: iconType,
-      color: color,
-      alias: spaceAlias,
-    } : {
-      iconType: iconType,
-      icon: icon,
-      alias: spaceAlias,
-    };
+    let _config =
+      iconType === "bootstrap"
+        ? {
+            iconType: iconType,
+            icon: selectedIcon,
+            color: color,
+          }
+        : {
+            iconType: iconType,
+            icon: icon,
+          };
     // @ts-expect-error
     WorkspaceService.newWorkspace(name, false, isSyncEnabled, false, profileId, userId, _config).then(
       (workspaceId) => {
@@ -69,12 +67,6 @@ function NewWorkspaceModalWindow(props: any) {
           (desktop) => {
             WorkspaceService.getWorkspace(workspaceId).then((workspace) => {
               dispatch(workspaceActions.addWorkspace({ workspace: workspace }));
-              //WorkspaceService.selectWorkspaceById(dispatch, workspaceId, workspaceState, sessionStateData).then(
-              //  () => {
-              //    UsersService.setLastWorkspace(userId, workspaceId);
-              //    toggle();
-              //  }
-              //);
               toggle();
               props.onClose(true);
             });
@@ -97,6 +89,14 @@ function NewWorkspaceModalWindow(props: any) {
     setSiteUrl("https://");
     setIsCustomIconUrl(false);
     setCustomIconUrl("");
+    setIconType("bootstrap");
+    setSelectedIcon("Folder");
+    setColor(generateRandomColor());
+    setIsSyncEnabled(false);
+  }
+
+  function randomColor() {
+    setColor(generateRandomColor());
   }
 
   function validURL(str) {
@@ -128,10 +128,6 @@ function NewWorkspaceModalWindow(props: any) {
     setIcon("");
   }
 
-  function randomColor() {
-    setColor("#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"));
-  }
-
   function onSyncSwitchChange() {
     setIsSyncEnabled(!isSyncEnabled);
   }
@@ -149,26 +145,16 @@ function NewWorkspaceModalWindow(props: any) {
         fetchIcon.classList.remove("d-none");
       }
     } else {
-      randomColor();
       fetchIcon.classList.add("d-none");
       iconUrl.classList.add("d-none");
       customIconUrlField.classList.add("d-none");
     }
-  }, [iconType]);
-
-  useEffect(() => {
-    // check if name single word
-    if (name.split(" ").length > 1) {
-      setSpaceAlias(name.split(" ")[0].toUpperCase().charAt(0) + name.split(" ")[1].toUpperCase().charAt(0));
-    } else {
-      setSpaceAlias(name.toUpperCase().slice(0, 2));
-    }
-  }, [name]);
+  }, [iconType, isCustomIconUrl]);
 
   useEffect(() => {
     try {
       if(isCustomIconUrl){
-        if(validURL(isCustomIconUrl)){
+        if(validURL(customIconUrl)){
           setIcon(customIconUrl);
         }
       }else{
@@ -208,23 +194,11 @@ function NewWorkspaceModalWindow(props: any) {
                               onError={(e) => onIconLoadError(e)}
                             ></img>
                           ) : (
-                                                        // @ts-expect-error Konva Stage children type issue
-                                                        <Stage width={40} height={40}>
-                              <Layer>
-                                <Rect
-                                  x={5}
-                                  y={5}
-                                  width={30}
-                                  height={30}
-                                  fill={color}
-                                  shadowBlur={10}
-                                  cornerRadius={5}
-                                />
-                              </Layer>
-                              <Layer>
-                                <Text x={10} y={14} text={spaceAlias} fontSize={16} fill='white'/>
-                              </Layer>
-                            </Stage>
+                            <WorkspaceBootstrapIconBadge
+                              name={selectedIcon}
+                              size={48}
+                              backgroundColor={color}
+                            />
                           )
                         }
                   </FormGroup>
@@ -249,22 +223,51 @@ function NewWorkspaceModalWindow(props: any) {
                   </FormGroup>
                   <FormGroup className="align-left">
                     <Label for="iconType">Icon</Label>
-                    <div className="d-flex">
-                      <Input
-                        type="select"
-                        name="iconType"
-                        id="iconType"
-                        value={iconType}
-                        onChange={(e) => setIconType(e.target.value)}
-                      >
-                        <option value="color">Random Color</option>
-                        <option value="image">Image</option>
-                      </Input>
-                      <Button className="ml-2" onClick={() => randomColor()}>
-                        <RefreshCcw size={16} />
-                      </Button>
-                    </div>
+                    <Input
+                      type="select"
+                      name="iconType"
+                      id="iconType"
+                      value={iconType}
+                      onChange={(e) => setIconType(e.target.value)}
+                    >
+                      <option value="bootstrap">Select Icon</option>
+                      <option value="image">Image</option>
+                    </Input>
                   </FormGroup>
+                  {iconType === "bootstrap" && (
+                    <>
+                      <FormGroup className="align-left">
+                        <Label>Background color</Label>
+                        <div className="d-flex align-items-center">
+                          <Input
+                            type="color"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            className="workspace-color-input"
+                          />
+                          <Button className="ml-2" onClick={() => randomColor()} title="Random color">
+                            <RefreshCcw size={16} />
+                          </Button>
+                        </div>
+                      </FormGroup>
+                      <FormGroup className="align-left">
+                        <Label>Choose an icon</Label>
+                        <div className="icon-grid">
+                          {WORKSPACE_ICON_LIST.map((iconName) => (
+                            <button
+                              key={iconName}
+                              type="button"
+                              title={iconName}
+                              className={`icon-button ${selectedIcon === iconName ? "selected" : ""}`}
+                              onClick={() => setSelectedIcon(iconName)}
+                            >
+                              <WorkspaceBootstrapIcon name={iconName} size={20} />
+                            </button>
+                          ))}
+                        </div>
+                      </FormGroup>
+                    </>
+                  )}
                   <FormGroup id={"space-fetch-icon"} className="align-left d-none">
                     <Label for="startUrl">
                       Fetch from site

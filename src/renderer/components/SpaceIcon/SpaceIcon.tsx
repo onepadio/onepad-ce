@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { modalActions } from "../../store/modal-slice";
 import { Stage } from "@react-three/drei";
 import { Layer, Rect, Text } from "react-konva";
+import { WorkspaceBootstrapIconBadge } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 
 function SpaceIcon() {
@@ -21,6 +22,16 @@ function SpaceIcon() {
                 alt=""
                 // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
                 onClick={() => dispatch(modalActions.toggleSpacePad()) }
+              />
+            );
+          } else if (workspace?.config && workspace.config.iconType === "bootstrap") {
+            icon.current = (
+              <WorkspaceBootstrapIconBadge
+                name={workspace.config.icon}
+                size={32}
+                backgroundColor={workspace.config.color}
+                className="spacepad-icon"
+                onClick={() => dispatch(modalActions.toggleSpacePad({})) }
               />
             );
           } else {

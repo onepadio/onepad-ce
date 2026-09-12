@@ -56,6 +56,10 @@
   padding: 4px;
 }
 
+.navbar-apps-vertical .launch-icon.grayscale {
+  filter: grayscale(100%);
+}
+
 /* Active app indicator - left blue line */
 .navbar-apps-vertical .menu-icon.active {
   position: relative;

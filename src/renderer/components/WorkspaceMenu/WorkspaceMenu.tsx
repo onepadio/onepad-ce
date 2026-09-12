@@ -447,7 +447,7 @@ function WorkspaceMenu({
             </DropdownToggle>
             <DropdownMenu dark>
                 <DropdownItem disabled={isInSession} onClick={toggleRenameSpaceModal}>
-                    Rename
+                    Edit
                 </DropdownItem>
                 {
                     selectedWorkspace.isDefault !== 1 && (

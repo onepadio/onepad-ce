@@ -9,14 +9,6 @@ import { itemsDb } from "../../data/store";
 import "./SidebarWindow.css"
 import clsx from "clsx";
 
-interface SidebarApp {
-  appId: string;
-  url: string;
-  title: string;
-  icon: string;
-  userAgent: string;
-}
-
 function SidebarWindow(props: any){
     const dispatch = useDispatch();
     const route = useSelector((state: any) => state.session.route);
@@ -49,6 +41,8 @@ function SidebarWindow(props: any){
 
     const scopes = useSelector((state: any) => state.sidebar.scopes);
 
+    const openedApps = useSelector((state: any) => state.sidebar.openedApps);
+
 
     const workspaceState = useSelector((state: any) => state.workspace);
 
@@ -57,9 +51,6 @@ function SidebarWindow(props: any){
     const [windowId] = useState(uuidv4());
     const [defaultUserAgent, setDefaultUserAgent] = useState("");
     const [userAgentLoaded, setUserAgentLoaded] = useState(false);
-    
-    // Track all opened apps with their webviews
-    const [openedApps, setOpenedApps] = useState<Record<string, SidebarApp>>({});
 
     useEffect(() => {
       const fetchUserAgent = async () => {
@@ -98,32 +89,6 @@ function SidebarWindow(props: any){
         }
       }
     }, [isOpen, windowId]);
-
-    // Add new app to openedApps when appId/url changes
-    useEffect(() => {
-      if (appId && webviewUrl && isOpen) {
-        setOpenedApps(prev => {
-          // If app already exists, don't add it again
-          if (prev[appId]) {
-            log.debug("App already in openedApps, switching to it:", appId);
-            return prev;
-          }
-          
-          // Add new app
-          log.debug("Adding new app to openedApps:", appId, webviewUrl);
-          return {
-            ...prev,
-            [appId]: {
-              appId,
-              url: webviewUrl,
-              title,
-              icon: "",
-              userAgent
-            }
-          };
-        });
-      }
-    }, [appId, webviewUrl, title, isOpen, userAgent]);
 
     function handleClose() {
       dispatch(sidebarActions.close());

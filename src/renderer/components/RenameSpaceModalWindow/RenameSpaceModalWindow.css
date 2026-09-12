@@ -1,7 +1,51 @@
 .rename-space-modal{
-    width: 400px;
+    width: 500px;
 }
 
 .align-left{
     text-align: left;
- }
+}
+
+.rename-space-modal .workspace-color-input {
+  width: 48px;
+  height: 36px;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.rename-space-modal .icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.rename-space-modal .icon-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.rename-space-modal .icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.rename-space-modal .icon-button.selected {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.2);
+}

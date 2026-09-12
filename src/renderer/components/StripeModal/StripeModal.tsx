@@ -45,7 +45,6 @@ function StripeModalWindow(props: any) {
   const priceId = useSelector((state: any) => state.app.priceId);
 
   const _stripeKey = (version.includes("beta") || version.includes("dev")) ? stripeKey.test : stripeKey.live;
-  // const stripeKey = (version.includes("beta") || version.includes("dev")) ? "pk_test_36kVIoR3YhN4OX3MtrqjdvfG" : "pk_live_98EweSpekgs8AdGDRjqHPt2v";
   const [stripePromise, setStripePromise] = useState(() => loadStripe(_stripeKey))
 
   const [clientSecret, setClientSecret] = useState('');

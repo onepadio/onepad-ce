@@ -14,6 +14,7 @@ import "../Person/FrostedDragBar.css";
 import { Button, Spinner } from "reactstrap";
 import * as Icon from 'react-feather';
 import { Grid, PlusCircle } from "react-bootstrap-icons";
+import { WorkspaceBootstrapIconBadge } from "../../components/WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 import { WorkspaceService } from "../../services/workspace";
 import { UsersService } from "../../services/users";
@@ -176,6 +177,12 @@ export default function SpaceSelection() {
                                 className="space-icon-image"
                                 src={workspace.config.icon}
                                 alt={workspace.name}
+                              />
+                            ) : workspace.config && workspace.config.iconType === "bootstrap" ? (
+                              <WorkspaceBootstrapIconBadge
+                                name={workspace.config.icon}
+                                size={48}
+                                backgroundColor={workspace.config.color}
                               />
                             ) : (
                               <div

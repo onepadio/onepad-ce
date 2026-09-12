@@ -12,7 +12,7 @@ import { openAppWindow } from '../../services/window'
 import { Platform } from "../../enum";
 
 import "./SpaceTopBar.css";
-import { Button, ListGroup, ListGroupItem, Spinner, Tooltip } from "reactstrap";
+import { Button, ListGroup, ListGroupItem, Spinner } from "reactstrap";
 import WaffleMenuIcon from '../Icons/WaffleMenuIcon';
 
 import {
@@ -27,6 +27,7 @@ import { spaceSideBarActions } from "../../store/space-sidebar-slice";
 import { UsersService } from "../../services/users";
 import { Stage, Layer, Circle, Text, Rect } from 'react-konva';
 import WorkspaceMenu from "../WorkspaceMenu/WorkspaceMenu";
+import { WorkspaceBootstrapIconBadge } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 function SpaceTopBar(){
     const dispatch = useDispatch();
@@ -91,8 +92,6 @@ function SpaceTopBar(){
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
 
     const[onElement, setOnElement] = useState("");
-    const [tooltipOpen, setTooltipOpen] = useState(true);
-    const toggle = () => setTooltipOpen(!tooltipOpen);
 
 
     const toggleShowLaunchPad = () => {
@@ -175,6 +174,13 @@ function SpaceTopBar(){
     function workspaceItem(workspace){
       let _icon = workspace.config && workspace.config.iconType === "image" ? (
                 <img width={32} className="web-icon" src={workspace.config.icon} alt="" onClick={() => onWorkspaceSelect(workspace.id)}/>
+      ) : workspace.config && workspace.config.iconType === "bootstrap" ? (
+                <WorkspaceBootstrapIconBadge
+                  name={workspace.config.icon}
+                  size={32}
+                  backgroundColor={workspace.config.color}
+                  onClick={() => onWorkspaceSelect(workspace.id)}
+                />
       ) : (
                 <Stage width={32} height={32} onClick={() => onWorkspaceSelect(workspace.id)}>
           <Layer>
@@ -211,13 +217,9 @@ function SpaceTopBar(){
           </div>
           {
             onElement === workspace.id ? (
-              <Tooltip
-                isOpen={true}
-                target={"ws-"+workspace.id}
-                toggle={toggle}
-              >
-                {workspace.name}
-              </Tooltip>
+              <div className="d-flex justify-content-start align-items-center workspace-name">
+                <div className="ml-1 w-100">{workspace.name}</div>
+              </div>
             ) : ( <></>)
           }
 

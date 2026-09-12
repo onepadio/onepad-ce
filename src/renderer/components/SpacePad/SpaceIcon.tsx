@@ -9,6 +9,7 @@ import * as Icon from "react-feather";
 import clsx from "clsx";
 
 import { Stage, Layer, Circle, Text, Rect } from "react-konva";
+import { WorkspaceBootstrapIconBadge } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 import "./SpaceIcon.css";
 import {
@@ -176,6 +177,15 @@ function SpaceIcon(props) {
           className="web-icon"
           src={_workspace.config.icon}
           alt=""
+          onClick={() => handleOnClick()}
+        />
+      );
+    } else if (_workspace.config && _workspace.config.iconType === "bootstrap") {
+      return (
+        <WorkspaceBootstrapIconBadge
+          name={_workspace.config.icon}
+          size={48}
+          backgroundColor={_workspace.config.color}
           onClick={() => handleOnClick()}
         />
       );

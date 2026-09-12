@@ -10,6 +10,7 @@ import {
   processWindows,
 } from "../../services/window";
 import { House } from "react-bootstrap-icons";
+import { WorkspaceBootstrapIconBadge } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 function SpaceSwitcher() {
   const dispatch = useDispatch();
@@ -121,22 +122,26 @@ function SpaceSwitcher() {
 
   const renderSpaceIcon = (workspace: any) => {
     const isActive = workspace.id === currentWorkspace.id;
+    const iconClassName = `space-switcher-icon ${isActive ? "active" : ""}`;
 
+    let iconContent;
     if (workspace.config && workspace.config.iconType === "image") {
-      return (
-        <div
-          className={`space-switcher-icon ${isActive ? "active" : ""}`}
-          onClick={() => handleWorkspaceSwitch(workspace.id)}
-          title={workspace.name}
-        >
-          <img
-            width={28}
-            height={28}
-            className="space-icon-img"
-            src={workspace.config.icon}
-            alt={workspace.name}
-          />
-        </div>
+      iconContent = (
+        <img
+          width={28}
+          height={28}
+          className="space-icon-img"
+          src={workspace.config.icon}
+          alt={workspace.name}
+        />
+      );
+    } else if (workspace.config && workspace.config.iconType === "bootstrap") {
+      iconContent = (
+        <WorkspaceBootstrapIconBadge
+          name={workspace.config.icon}
+          size={28}
+          backgroundColor={workspace.config.color}
+        />
       );
     } else {
       const color =
@@ -150,39 +155,44 @@ function SpaceSwitcher() {
           ? workspace.config.alias
           : workspace.name.toUpperCase().slice(0, 2);
 
-      return (
-        <div
-          className={`space-switcher-icon ${isActive ? "active" : ""}`}
-          onClick={() => handleWorkspaceSwitch(workspace.id)}
-          title={workspace.name}
-        >
-          <Stage width={28} height={28}>
-            <Layer>
-              <Rect
-                x={0}
-                y={0}
-                width={28}
-                height={28}
-                fill={color}
-                cornerRadius={4}
-              />
-            </Layer>
-            <Layer>
-              <Text
-                x={0}
-                y={6}
-                width={28}
-                align="center"
-                text={alias}
-                fontSize={14}
-                fill="white"
-                fontStyle="bold"
-              />
-            </Layer>
-          </Stage>
-        </div>
+      iconContent = (
+        <Stage width={28} height={28}>
+          <Layer>
+            <Rect
+              x={0}
+              y={0}
+              width={28}
+              height={28}
+              fill={color}
+              cornerRadius={4}
+            />
+          </Layer>
+          <Layer>
+            <Text
+              x={0}
+              y={6}
+              width={28}
+              align="center"
+              text={alias}
+              fontSize={14}
+              fill="white"
+              fontStyle="bold"
+            />
+          </Layer>
+        </Stage>
       );
     }
+
+    return (
+      <div
+        className={iconClassName}
+        onClick={() => handleWorkspaceSwitch(workspace.id)}
+        data-name={workspace.name}
+      >
+        {iconContent}
+        <span className="space-switcher-tooltip">{workspace.name}</span>
+      </div>
+    );
   };
 
   return (
@@ -190,11 +200,12 @@ function SpaceSwitcher() {
       <div
         className={`space-switcher-icon home-button ${currentWorkspace.id === homeWorkspaceId ? "active" : ""}`}
         onClick={handleHomeClick}
-        title="Home"
+        data-name="Home"
       >
         <div className="space-switcher-home-icon">
           <House color="white" size={20} />
         </div>
+        <span className="space-switcher-tooltip">Home</span>
       </div>
       {activeWorkspaces.filter((workspace: any) => workspace.id !== homeWorkspaceId).map((workspace: any) => (
         <React.Fragment key={workspace.id}>

@@ -27,6 +27,7 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
   const xappsStore = useSelector((state: any) => state.app.xappsStore);
   const sidebarAppId = useSelector((state: any) => state.sidebar.appId);
   const sidebarIsOpen = useSelector((state: any) => state.sidebar.isOpen);
+  const openedApps = useSelector((state: any) => state.sidebar.openedApps);
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
 
@@ -72,11 +73,22 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
     }));
   }
 
+  function handleCloseApp(item: any) {
+    if (sidebarIsOpen && sidebarAppId === item.id) {
+      dispatch(sidebarActions.close());
+    }
+    dispatch(sidebarActions.removeOpenedApp(item.id));
+    log.info(`Closed xapp ${item.id} webview`);
+  }
+
   function handleRemoveApp(item: any) {
     // Close sidebar if this app is currently open
     if (sidebarIsOpen && sidebarAppId === item.id) {
       dispatch(sidebarActions.close());
     }
+
+    // Drop the sidebar webview for this app if it was opened
+    dispatch(sidebarActions.removeOpenedApp(item.id));
 
     // Remove from localStorage
     const xappIds = JSON.parse(localStorage.getItem(`xappIds-${profileId}`) || "[]");
@@ -98,9 +110,18 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
       document.body.removeChild(menu);
     });
 
+    const canClose = Boolean(openedApps?.[item.id]);
+
     const menu = document.createElement("div");
     menu.className = "context-menu";
     menu.innerHTML = `
+      <div class="context-menu-item close-item${!canClose ? " disabled" : ""}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+        </svg>
+        <span>Close</span>
+      </div>
       <div class="context-menu-item remove-item">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
           <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
@@ -134,7 +155,13 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
     menu.style.left = `${xPosition}px`;
     menu.style.opacity = "1";
 
-    // Handle remove click
+    menu.querySelector(".close-item")?.addEventListener("click", () => {
+      if (canClose) {
+        handleCloseApp(item);
+        document.body.removeChild(menu);
+      }
+    });
+
     menu.querySelector(".remove-item")?.addEventListener("click", () => {
       handleRemoveApp(item);
       document.body.removeChild(menu);
@@ -164,6 +191,7 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
     let _icon = "";
     let _title = item.data?.name || "App";
     const isActive = sidebarIsOpen && sidebarAppId === item.id;
+    const hasWebview = Boolean(openedApps?.[item.id]);
 
     try {
       if (!item.data?.icon || item.data.icon.length === 0) {
@@ -201,7 +229,7 @@ function NavBarAppsVertical({ apps }: NavBarAppsVerticalProps) {
             <img
               width={24}
               height={24}
-              className="launch-icon"
+              className={hasWebview ? "launch-icon" : "launch-icon grayscale"}
               src={_icon}
               alt={_title}
               onError={(e: any) => {
