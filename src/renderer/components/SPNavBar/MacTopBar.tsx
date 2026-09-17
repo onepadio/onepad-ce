@@ -25,6 +25,7 @@ import NavBarApps from "../NavBarApps/NavBarApps";
 import { windowServiceActions } from "../../store/window-service-slice";
 import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
 import SpaceSwitcher from "../SpaceSwitcher/SpaceSwitcher";
+import { shouldHideAddressBar } from "../../builtin";
 
 function MacTopBar() {
   const dispatch = useDispatch();
@@ -238,7 +239,9 @@ function MacTopBar() {
           </div>
         </div>
       </Navbar>
-      {activeTab.type !== "remote" && <AddressBar />}
+      {activeTab?.type !== "remote" && !shouldHideAddressBar(activeTab) && (
+        <AddressBar />
+      )}
     </>
   );
 }

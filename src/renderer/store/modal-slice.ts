@@ -80,6 +80,7 @@ const modalSlice = createSlice({
     isDownloadManagerOpen: false,
     isEditUserAppModalOpen: false,
     editUserAppModalData: null,
+    installTargetWorkspaceId: null,
   },
   reducers: {
     toggleAppStore(state, action) {
@@ -87,22 +88,48 @@ const modalSlice = createSlice({
     },
     openAppStore(state, action) {
       state.isAppStoreModalOpen = true;
+      if (!action.payload?.keepInstallTarget) {
+        state.installTargetWorkspaceId = null;
+      }
     },
     closeAppStore(state, action) {
       state.isAppStoreModalOpen = false;
+      if (!action.payload?.keepInstallTarget) {
+        state.installTargetWorkspaceId = null;
+      }
     },
     toggleAppStoreModal(state, action) {
-      state.isAppStoreModalOpen = !state.isAppStoreModalOpen;
+      const next = !state.isAppStoreModalOpen;
+      state.isAppStoreModalOpen = next;
+      if (!action.payload?.keepInstallTarget) {
+        state.installTargetWorkspaceId = null;
+      }
+    },
+    setInstallTargetWorkspaceId(state, action) {
+      state.installTargetWorkspaceId = action.payload ?? null;
+    },
+    clearInstallTargetWorkspaceId(state) {
+      state.installTargetWorkspaceId = null;
     },
     setSelectedAppStoreItem(state, action) {
       state.selectedAppStoreItem = action.payload;
     },
     toggleAddLaunchIconModal(state, action) {
-      state.isAddLaunchIconModalOpen = !state.isAddLaunchIconModalOpen;
+      const next = !state.isAddLaunchIconModalOpen;
+      state.isAddLaunchIconModalOpen = next;
+      if (!next) {
+        state.installTargetWorkspaceId = null;
+      }
     },
     toggleAddLinkModal(state, action) {
-      state.isAddLinkModalOpen = !state.isAddLinkModalOpen;
-      state.addLinkModalData = action.payload.data;
+      const next = !state.isAddLinkModalOpen;
+      state.isAddLinkModalOpen = next;
+      if (action.payload?.data !== undefined) {
+        state.addLinkModalData = action.payload.data;
+      }
+      if (!next) {
+        state.installTargetWorkspaceId = null;
+      }
     },
     toggleChangeBackgroundModal(state, action) {
       state.isChangeBackgroundModalOpen = !state.isChangeBackgroundModalOpen;

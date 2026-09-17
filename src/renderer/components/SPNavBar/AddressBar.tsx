@@ -788,6 +788,18 @@ function AddressBar(props: any) {
     dispatch(windowServiceActions.moveTabToExternalWindow(activeTab.id));
   }
 
+  function handleCloseActiveTab() {
+    if (
+      !activeTabId ||
+      activeTabId === "launchpad" ||
+      !activeTab ||
+      activeTab.id === "launchpad"
+    ) {
+      return;
+    }
+    dispatch(windowServiceActions.closeTab(activeTabId));
+  }
+
   function showElement(elementId: any) {
     //let wsname = document.getElementById(elementId);
     //wsname.classList.remove("d-none");
@@ -1151,6 +1163,16 @@ function AddressBar(props: any) {
               </div>
             )}
           </div>
+          <Button
+            id="close-active-tab-button"
+            className="btn btn-dark mr-2"
+            onClick={handleCloseActiveTab}
+            disabled={disabled}
+            title="Close tab"
+            aria-label="Close tab"
+          >
+            <X size={20} />
+          </Button>
         </>
       )}
     </div>

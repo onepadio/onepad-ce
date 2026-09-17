@@ -1,0 +1,30 @@
+.shared-apps-switcher-empty {
+  grid-column: 1 / -1;
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.shared-apps-switcher-app-icon {
+  padding: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shared-apps-switcher-app-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.shared-apps-switcher-add-icon {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.shared-apps-switcher-add-tile:hover .shared-apps-switcher-add-icon {
+  background: rgba(255, 255, 255, 0.1);
+}

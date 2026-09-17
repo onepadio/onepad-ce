@@ -34,8 +34,10 @@ import TabsScreen from "../../components/TabsScreen/TabsScreen";
 import SPNavBar from "../../components/SPNavBar/SPNavBar";
 import Desktop from "../../components/Desktop/Desktop";
 import TabWindow from "../../components/WindowContainter/TabWindow";
+import BuiltinAppsHost from "../../components/BuiltinApps/BuiltinAppsHost";
 import SideBar from "../../components/SideBar/SideBar";
 import SettingsCanvas from "../../components/SettingsCanvas/SettingsCanvas";
+import { shouldHideSideBars } from "../../builtin";
 
 import AppStoreModalWindow from "../../components/AppStoreModalWindow/AppStoreModalWindow";
 import NewWorkspaceModalWindow from "../../components/NewWorkspaceModalWindow/NewWorkspaceModalWindow";
@@ -515,13 +517,16 @@ function Home() {
   }
 
   function tilesBar(){
-    if(activeWindow && activeWindow.id !== "launchpad" && showSidebar && activeBar === "tiles"){
+    if(activeWindow && activeWindow.id !== "launchpad" && !shouldHideSideBars(activeWindow) && showSidebar && activeBar === "tiles"){
       return (<TilesBar />)
     }
   }
 
   function verticalBar(){
     if(activeWindow && activeWindow.id !== "launchpad" && activeBar === "tabs"){
+      if(shouldHideSideBars(activeWindow)){
+        return <></>;
+      }
       if(activeWindow.type === "browser"){
         return (<BrowserVerticalTabBar />)
       }
@@ -536,7 +541,7 @@ function Home() {
   }
 
   function windowSideBar(){
-    if(activeWindow && activeWindow.id != "launchpad"){
+    if(activeWindow && activeWindow.id != "launchpad" && !shouldHideSideBars(activeWindow)){
       return (<WindowSideBar />)
     }
   }
@@ -630,6 +635,7 @@ function Home() {
           })
         }
       </>
+      <BuiltinAppsHost />
       <SplashScreen />
       {false ? <TabsScreen /> : <></>}
       <SingInModalWindow />

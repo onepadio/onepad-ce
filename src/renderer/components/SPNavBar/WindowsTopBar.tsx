@@ -38,6 +38,7 @@ import { utilityAppsActions } from "../../store/utility-slice";
 import { chatActions } from "../../store/chat-slice";
 import { musicPlayerActions } from "../../store/musicplayer-slice";
 import isElectron from "is-electron";
+import { shouldHideAddressBar } from "../../builtin";
 import UserMenu from "../UserMenu/UserMenu";
 import { windowServiceActions } from "../../store/window-service-slice";
 import MemoryIndicator from "../MemoryIndicator/MemoryIndicator";
@@ -384,7 +385,7 @@ function WindowsTopBar() {
       onMouseEnter={() => onMouseEnter()}
       onMouseLeave={() => onMouseLeave()}
     >
-      <AddressBar />
+      {!shouldHideAddressBar(activeWindow) && <AddressBar />}
       {}
       <div className="row top-menus w-100 h-100">
         {}

@@ -1,0 +1,170 @@
+.builtin-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  color: #e5e7eb;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.builtin-window.is-fullscreen {
+  top: 40px;
+  left: 60px;
+  width: calc(100vw - 64px);
+  height: calc(100vh - 108px);
+  z-index: 107;
+}
+
+.builtin-window.is-fullscreen.chat-assistant-open {
+  width: calc(100vw - 360px);
+}
+
+.builtin-window.is-fullscreen.is-behind {
+  z-index: 107;
+}
+
+.builtin-window.is-fullscreen.is-active {
+  z-index: 108;
+}
+
+.builtin-window.is-inactive {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.builtin-window-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  min-height: 36px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: default;
+}
+
+.builtin-window-chrome-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #d1d5db;
+}
+
+.builtin-window-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.builtin-window-chrome-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.builtin-window-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.builtin-window-close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fecaca;
+}
+
+.builtin-window-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* —— Modal overlay builtins (calculator, notes) —— */
+
+.builtin-modal-root {
+  position: fixed;
+  inset: 0;
+  /* Below dock (1999) so modal icons stay clickable while the panel is open */
+  z-index: 1990;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 16px 80px;
+  pointer-events: none;
+}
+
+.builtin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  cursor: default;
+}
+
+.builtin-modal-panel {
+  position: relative;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  color: #e5e7eb;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: builtinModalIn 0.16s ease-out;
+}
+
+@keyframes builtinModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.builtin-modal-calculator {
+  width: 340px;
+  height: 480px;
+  max-height: calc(100vh - 140px);
+}
+
+.builtin-modal-notes {
+  width: min(820px, calc(100vw - 48px));
+  height: min(560px, calc(100vh - 140px));
+  max-height: calc(100vh - 140px);
+}
+
+@media (max-width: 1100px) {
+  .builtin-modal-calculator {
+    width: min(420px, calc(100vw - 48px));
+  }
+
+  .builtin-modal-notes {
+    width: min(820px, calc(100vw - 32px));
+  }
+}

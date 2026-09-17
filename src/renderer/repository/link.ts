@@ -119,4 +119,15 @@ export class LinkRepository{
         });
     }
 
+    static getAllByWorkspaceId(workspaceId: any) {
+        return new Promise((resolve, reject) => {
+            // @ts-expect-error TS(2339): Property 'links' does not exist on type 'Dexie'.
+            db.links.where('workspace').equals(workspaceId).sortBy('createdAt').then((links: any) => {
+                resolve(links);
+            }).catch((error: any) => {
+                reject(error);
+            });
+        });
+    }
+
 }

@@ -16,6 +16,7 @@ import { SpaceService } from './space';
 
 import default_bg from "../images/default_bg.jpg";
 import XAppService from './xapp';
+import { focusBuiltinWindow, isBuiltinWindow } from '../builtin';
 
 export const LOCAL_WORKSPACE_ID = "device";
 export const LOCAL_WORKSPACE_NAME = "Device";
@@ -60,7 +61,15 @@ function dispatchWorkspaceFocus(
         return;
     }
 
-    dispatch(sessionActions.setActiveWindow({ data: openWindows[windowId] }));
+    const win = openWindows[windowId];
+
+    // Built-in native apps (Terminal, …) — no openTabs; restore synthetic tab
+    if (isBuiltinWindow(win)) {
+        focusBuiltinWindow(dispatch, win);
+        return;
+    }
+
+    dispatch(sessionActions.setActiveWindow({ data: win }));
 
     const savedTabId = savedState?.activeTabId || savedState?.activeTab?.id;
     if (savedTabId && savedTabId !== "launchpad" && openTabs[savedTabId]) {

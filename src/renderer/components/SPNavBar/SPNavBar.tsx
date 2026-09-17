@@ -23,6 +23,7 @@ import { Navbar, Button, ListGroup, ListGroupItem } from "reactstrap";
 import "./SPNavBar.css";
 import UserMenu from "../UserMenu/UserMenu";
 import { openAppWindow, openInternalWindow } from "../../services/window";
+import { focusBuiltinWindow, isBuiltinWindow } from "../../builtin";
 // @ts-expect-error
 import defaultIcon from "../../images/default_icon.png";
 
@@ -221,11 +222,24 @@ function SPNavBar() {
         activeDesktopWindows.hasOwnProperty(value) &&
         activeDesktopWindows[value] !== "launchpad"
       ) {
-        dispatch(
-          sessionActions.setActiveWindow({
-            data: openWindows[activeDesktopWindows[value]],
-          })
-        );
+        const win = openWindows[activeDesktopWindows[value]];
+        if (isBuiltinWindow(win)) {
+          focusBuiltinWindow(dispatch, win);
+        } else if (win) {
+          dispatch(
+            sessionActions.setActiveWindow({
+              data: win,
+            })
+          );
+        } else {
+          dispatch(
+            sessionActions.getBackToLaunchPad({
+              data: {
+                desktopId: value,
+              },
+            })
+          );
+        }
       } else {
         log.debug("NO ACTIVE WINDOW FOR DESKTOP:" + value);
         dispatch(

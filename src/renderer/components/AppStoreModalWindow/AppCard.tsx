@@ -41,7 +41,7 @@ function AppCard(props){
             // For user apps, just open the Add Link modal with the user app data
             dispatch(storeActions.setSearchQuery(""));
             dispatch(storeActions.setActiveCategory(1));
-            dispatch(modalActions.toggleAppStoreModal({}));
+            dispatch(modalActions.toggleAppStoreModal({ keepInstallTarget: true }));
             dispatch(modalActions.toggleAddLinkModal({data: {
                 url: props.url,
                 title: props.name,
@@ -49,7 +49,7 @@ function AppCard(props){
         }else if(selectedStore === "web"){
             dispatch(storeActions.setSearchQuery(""));
             dispatch(storeActions.setActiveCategory(1));
-            dispatch(modalActions.toggleAppStoreModal({}));
+            dispatch(modalActions.toggleAppStoreModal({ keepInstallTarget: true }));
             dispatch(modalActions.setSelectedAppStoreItem(props.id));
             dispatch(modalActions.toggleAddLaunchIconModal({}));
         }else if(selectedStore === "docker"){

@@ -54,12 +54,12 @@ import getProfileWindow from './profileWindow';
 import OPModalWindow, { OPFloatingWindow } from './modalWindow';
 import saveToDisk from './saveToDisk';
 import { execSync } from 'child_process';
-// DISABLED: Docker functionality
-// import { dockerService, DockerContainer } from './docker/docker';
+import { dockerService, DockerContainer } from './docker/docker';
 import { createMasterKeyIfNotExists, getMasterKey, encryptFunc, decryptFunc } from './crypto';
 import passwordCrypto from './passwordCrypto';
 import { SPContextMenu, SPShortContextMenu } from './contextMenu';
 import downloadManager from './downloadManager';
+import { registerPtyIpc, killAllPtys } from './ptyManager';
 import {
   saveScreenshotToDisk,
   loadScreenshotFromDisk,
@@ -427,6 +427,7 @@ app.on('render-process-gone', () => {
 
 app.on('will-quit', () => {
   console.log('will-quit');
+  killAllPtys();
   // Unregister all shortcuts
   globalShortcut.unregisterAll();
 });
@@ -1392,6 +1393,8 @@ ipcMain.handle('password-check-storage-backend', async (event) => {
   }
 });
 
+registerPtyIpc();
+
 // Fetch website metadata
 ipcMain.handle('fetch-website-metadata', async (event, url: string) => {
   try {
@@ -1507,75 +1510,183 @@ ipcMain.handle('fetch-website-metadata', async (event, url: string) => {
   }
 });
 
-// DISABLED: Docker functionality
-// ipcMain.handle('get-docker-containers', async (event, includeAll: boolean = false): Promise<DockerContainer[]> => {
-//   try {
-//     if (includeAll) {
-//       return await dockerService.getAllContainers();
-//     } else {
-//       return await dockerService.getRunningContainers();
-//     }
-//   } catch (error) {
-//     console.error('Error fetching Docker containers:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle(
+  'get-docker-containers',
+  async (_event, includeAll: boolean = false): Promise<DockerContainer[]> => {
+    try {
+      if (includeAll) {
+        return await dockerService.getAllContainers();
+      }
+      return await dockerService.getRunningContainers();
+    } catch (error) {
+      console.error('Error fetching Docker containers:', error);
+      throw error;
+    }
+  }
+);
 
-// // get running containers
-// ipcMain.handle('get-running-docker-containers', async (event): Promise<DockerContainer[]> => {
-//   try {
-//     return await dockerService.getRunningContainers();
-//   } catch (error) {
-//     console.error('Error fetching Docker containers:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle('get-running-docker-containers', async () => {
+  try {
+    return await dockerService.getRunningContainers();
+  } catch (error) {
+    console.error('Error fetching Docker containers:', error);
+    throw error;
+  }
+});
 
-// ipcMain.handle('run-docker-container', async (event, config: { image: string, options: string[], runCommand: string }): Promise<string> => {
-//   try {
-//     const { image, options, runCommand } = config;
-//     return await dockerService.runContainer(image, options, runCommand);
-//   } catch (error) {
-//     console.error('Error running Docker container:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle(
+  'run-docker-container',
+  async (
+    _event,
+    config: { image: string; options: string[]; runCommand: string }
+  ): Promise<string> => {
+    try {
+      const { image, options, runCommand } = config;
+      return await dockerService.runContainer(image, options, runCommand);
+    } catch (error) {
+      console.error('Error running Docker container:', error);
+      throw error;
+    }
+  }
+);
 
-// ipcMain.handle('resume-docker-container', async (event, containerId: string): Promise<void> => {
-//   try {
-//     return await dockerService.resumeContainer(containerId);
-//   } catch (error) {
-//     console.error('Error resuming Docker container:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle(
+  'resume-docker-container',
+  async (_event, containerId: string): Promise<void> => {
+    try {
+      await dockerService.resumeContainer(containerId);
+    } catch (error) {
+      console.error('Error resuming Docker container:', error);
+      throw error;
+    }
+  }
+);
 
-// ipcMain.handle('check-docker-status', async (): Promise<boolean> => {
-//   try {
-//     return await dockerService.isDockerRunning();
-//   } catch (error) {
-//     console.error('Error checking Docker status:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle('check-docker-status', async (): Promise<boolean> => {
+  try {
+    return await dockerService.isDockerRunning();
+  } catch (error) {
+    console.error('Error checking Docker status:', error);
+    throw error;
+  }
+});
 
-// ipcMain.handle('stop-docker-container', async (event, containerId: string): Promise<void> => {
-//   try {
-//     return await dockerService.stopContainer(containerId);
-//   } catch (error) {
-//     console.error('Error stopping Docker container:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle(
+  'stop-docker-container',
+  async (_event, containerId: string): Promise<void> => {
+    try {
+      await dockerService.stopContainer(containerId);
+    } catch (error) {
+      console.error('Error stopping Docker container:', error);
+      throw error;
+    }
+  }
+);
 
-// ipcMain.handle('remove-docker-container', async (event, containerId: string): Promise<void> => {
-//   try {
-//     return await dockerService.removeContainer(containerId);
-//   } catch (error) {
-//     console.error('Error removing Docker container:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle(
+  'remove-docker-container',
+  async (_event, containerId: string): Promise<void> => {
+    try {
+      await dockerService.removeContainer(containerId);
+    } catch (error) {
+      console.error('Error removing Docker container:', error);
+      throw error;
+    }
+  }
+);
 
+ipcMain.handle('get-docker-images', async () => {
+  try {
+    return await dockerService.getImages();
+  } catch (error) {
+    console.error('Error fetching Docker images:', error);
+    throw error;
+  }
+});
 
+ipcMain.handle(
+  'remove-docker-image',
+  async (_event, imageId: string): Promise<void> => {
+    try {
+      await dockerService.removeImage(imageId);
+    } catch (error) {
+      console.error('Error removing Docker image:', error);
+      throw error;
+    }
+  }
+);
 
+ipcMain.handle('get-docker-volumes', async () => {
+  try {
+    return await dockerService.getVolumes();
+  } catch (error) {
+    console.error('Error fetching Docker volumes:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle(
+  'remove-docker-volume',
+  async (_event, name: string): Promise<void> => {
+    try {
+      await dockerService.removeVolume(name);
+    } catch (error) {
+      console.error('Error removing Docker volume:', error);
+      throw error;
+    }
+  }
+);
+
+ipcMain.handle(
+  'restart-docker-container',
+  async (_event, containerId: string): Promise<void> => {
+    try {
+      await dockerService.restartContainer(containerId);
+    } catch (error) {
+      console.error('Error restarting Docker container:', error);
+      throw error;
+    }
+  }
+);
+
+ipcMain.handle(
+  'get-docker-container-logs',
+  async (
+    _event,
+    payload: { containerId: string; tail?: number }
+  ): Promise<string> => {
+    try {
+      return await dockerService.getContainerLogs(
+        payload.containerId,
+        payload.tail ?? 300
+      );
+    } catch (error) {
+      console.error('Error fetching Docker logs:', error);
+      throw error;
+    }
+  }
+);
+
+ipcMain.handle(
+  'inspect-docker-container',
+  async (_event, containerId: string) => {
+    try {
+      return await dockerService.inspectContainer(containerId);
+    } catch (error) {
+      console.error('Error inspecting Docker container:', error);
+      throw error;
+    }
+  }
+);
+
+ipcMain.handle(
+  'get-docker-container-stats',
+  async (_event, containerId: string) => {
+    try {
+      return await dockerService.getContainerStats(containerId);
+    } catch (error) {
+      console.error('Error fetching Docker stats:', error);
+      throw error;
+    }
+  }
+);

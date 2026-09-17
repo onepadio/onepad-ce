@@ -24,10 +24,16 @@ import Pages from "../Pages/Pages";
 import AppsOverlayMenu from "../NavBarApps/AppsOverlayMenu";
 import BrowserTabSwitcher from "../NavBarApps/BrowserTabSwitcher";
 import AppTabSwitcher from "../NavBarApps/AppTabSwitcher";
+import BuiltinAppsSwitcher from "../NavBarApps/BuiltinAppsSwitcher";
+import SharedAppsSwitcher from "../NavBarApps/SharedAppsSwitcher";
 import { sessionActions as sessionActionsImport } from "../../store/session-slice";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { openAppWindow } from "../../services/window";
 import { activateBrowser } from "../../hubs/WindowService";
+import {
+  isSharedAppWindow,
+} from "../../util/sharedApps";
+import { isOnlineToolWindow } from "../../builtin";
 
 const SWITCHER_HOVER_OPEN_MS = 350;
 const SWITCHER_HOVER_CLOSE_MS = 280;
@@ -75,6 +81,8 @@ function Desktop(props) {
   const [isLaunchpadActive, setIsLaunchpadActive] = useState(true);
   const [showBrowserTabSwitcher, setShowBrowserTabSwitcher] = useState(false);
   const [showAppTabSwitcher, setShowAppTabSwitcher] = useState(false);
+  const [showBuiltinAppsSwitcher, setShowBuiltinAppsSwitcher] = useState(false);
+  const [showSharedAppsSwitcher, setShowSharedAppsSwitcher] = useState(false);
   const [appTabSwitcherWindowId, setAppTabSwitcherWindowId] = useState<string | null>(null);
   const [appTabSwitcherAnchorX, setAppTabSwitcherAnchorX] = useState<number | null>(null);
   const [switcherPinned, setSwitcherPinned] = useState(false);
@@ -272,6 +280,8 @@ function Desktop(props) {
   function closeAllSwitchers() {
     clearHoverTimers();
     setShowBrowserTabSwitcher(false);
+    setShowBuiltinAppsSwitcher(false);
+    setShowSharedAppsSwitcher(false);
     closeAppTabSwitcher();
     setSwitcherPinned(false);
   }
@@ -279,13 +289,35 @@ function Desktop(props) {
   function openBrowserSwitcher(pinned: boolean) {
     clearHoverTimers();
     closeAppTabSwitcher();
+    setShowBuiltinAppsSwitcher(false);
+    setShowSharedAppsSwitcher(false);
     setShowBrowserTabSwitcher(true);
+    setSwitcherPinned(pinned);
+  }
+
+  function openBuiltinAppsSwitcher(pinned: boolean) {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+    setShowBrowserTabSwitcher(false);
+    setShowSharedAppsSwitcher(false);
+    setShowBuiltinAppsSwitcher(true);
+    setSwitcherPinned(pinned);
+  }
+
+  function openSharedAppsSwitcher(pinned: boolean) {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+    setShowBrowserTabSwitcher(false);
+    setShowBuiltinAppsSwitcher(false);
+    setShowSharedAppsSwitcher(true);
     setSwitcherPinned(pinned);
   }
 
   function openAppSwitcher(appId: string, pinned: boolean, anchorX?: number) {
     clearHoverTimers();
     setShowBrowserTabSwitcher(false);
+    setShowBuiltinAppsSwitcher(false);
+    setShowSharedAppsSwitcher(false);
     setAppTabSwitcherWindowId(appId);
     if (typeof anchorX === "number") {
       setAppTabSwitcherAnchorX(anchorX);
@@ -303,6 +335,8 @@ function Desktop(props) {
       hoverCloseTimerRef.current = null;
       if (!switcherPinnedRef.current) {
         setShowBrowserTabSwitcher(false);
+        setShowBuiltinAppsSwitcher(false);
+        setShowSharedAppsSwitcher(false);
         setShowAppTabSwitcher(false);
         setAppTabSwitcherWindowId(null);
         setAppTabSwitcherAnchorX(null);
@@ -447,57 +481,45 @@ function Desktop(props) {
     );
   }
 
-  // Build apps array from open windows
-  // Include workspace-specific apps and home workspace apps (always visible)
-  const isHomeWorkspace = workspace.id === homeWorkspaceId;
-  
-  const filteredApps = Object.values(openWindows).filter(
-    (window: any) => {
-      const isValidType = window.type === "app" || window.type === "link" || window.type === "xapp";
-      if (!isValidType) return false;
-      
-      // For xapp type, check desktop property; for others, check workspace property
-      if (window.type === "xapp") {
-        // In home workspace, show only home workspace apps
-        if (isHomeWorkspace) {
-          return window.desktop === homeWorkspaceId;
-        }
-        // In other workspaces, show both current workspace apps and home workspace apps
-        return window.desktop === homeWorkspaceId || window.desktop === workspace.id;
-      }
-      
-      // In home workspace, show only home workspace apps
-      if (isHomeWorkspace) {
-        return window.workspace === homeWorkspaceId;
-      }
-      // In other workspaces, show both current workspace apps and home workspace apps
-      return window.workspace === workspace.id || window.workspace === homeWorkspaceId;
+  function handleUtilitiesClick() {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+    setShowBrowserTabSwitcher(false);
+    setShowSharedAppsSwitcher(false);
+    if (showBuiltinAppsSwitcher) {
+      closeAllSwitchers();
+    } else {
+      openBuiltinAppsSwitcher(true);
     }
-  );
+  }
 
-  // Get home workspace app IDs to mark them with badge
-  const homeAppIds = Object.values(openWindows)
-    .filter((window: any) => {
-      if (window.type === "xapp") {
-        return window.desktop === homeWorkspaceId;
-      }
-      return window.workspace === homeWorkspaceId;
-    })
-    .map((window: any) => window.id);
+  function handleSharedAppsClick() {
+    clearHoverTimers();
+    closeAppTabSwitcher();
+    setShowBrowserTabSwitcher(false);
+    setShowBuiltinAppsSwitcher(false);
+    if (showSharedAppsSwitcher) {
+      closeAllSwitchers();
+    } else {
+      openSharedAppsSwitcher(true);
+    }
+  }
 
-  // Sort apps: home apps first, then regular apps
-  const sortedApps = [...filteredApps].sort((a: any, b: any) => {
-    const aIsHome = homeAppIds.includes(a.id);
-    const bIsHome = homeAppIds.includes(b.id);
-    
-    // If both are home or both are not, maintain original order
-    if (aIsHome === bIsHome) return 0;
-    
-    // Home apps come first
-    return aIsHome ? -1 : 1;
+  // Dock apps: current-space windows only (tools / shared apps use their menus)
+  const filteredApps = Object.values(openWindows).filter((window: any) => {
+    const isValidType =
+      window.type === "app" || window.type === "link" || window.type === "xapp";
+    if (!isValidType) return false;
+    if (isSharedAppWindow(window, homeWorkspaceId)) return false;
+    if (isOnlineToolWindow(window)) return false;
+
+    if (window.type === "xapp") {
+      return window.desktop === workspace.id;
+    }
+    return window.workspace === workspace.id;
   });
-  
-  const apps: any[] = sortedApps;
+
+  const apps: any[] = filteredApps;
 
   // Calculate browser tabs count
   const browserTabsCount = Object.values(openTabs).filter(
@@ -624,18 +646,40 @@ function Desktop(props) {
         onSelectApp={handleSelectApp}
         onLaunchpadClick={handleLaunchpadClick}
         onBrowserClick={handleBrowserClick}
+        onUtilitiesClick={handleUtilitiesClick}
+        onSharedAppsClick={handleSharedAppsClick}
         onBrowserHoverStart={handleBrowserHoverStart}
         onBrowserHoverEnd={handleDockIconHoverEnd}
         onAppHoverStart={handleAppHoverStart}
         onAppHoverEnd={handleDockIconHoverEnd}
         isLaunchpadActive={isLaunchpadActive}
+        isUtilitiesActive={showBuiltinAppsSwitcher}
+        isSharedAppsActive={showSharedAppsSwitcher}
         browserTabsCount={browserTabsCount}
-        homeAppIds={homeAppIds}
-        suppressAutoHide={showBrowserTabSwitcher || showAppTabSwitcher}
+        suppressAutoHide={
+          showBrowserTabSwitcher ||
+          showAppTabSwitcher ||
+          showBuiltinAppsSwitcher ||
+          showSharedAppsSwitcher
+        }
       />
 
       <BrowserTabSwitcher
         open={showBrowserTabSwitcher}
+        onClose={closeAllSwitchers}
+        onMouseEnter={handleSwitcherHoverStart}
+        onMouseLeave={handleSwitcherHoverEnd}
+      />
+
+      <BuiltinAppsSwitcher
+        open={showBuiltinAppsSwitcher}
+        onClose={closeAllSwitchers}
+        onMouseEnter={handleSwitcherHoverStart}
+        onMouseLeave={handleSwitcherHoverEnd}
+      />
+
+      <SharedAppsSwitcher
+        open={showSharedAppsSwitcher}
         onClose={closeAllSwitchers}
         onMouseEnter={handleSwitcherHoverStart}
         onMouseLeave={handleSwitcherHoverEnd}

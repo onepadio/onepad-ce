@@ -45,6 +45,10 @@ function AddLinkModalWindow(props: any) {
 
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
 
+  const installTargetWorkspaceId = useSelector(
+    (state: any) => state.modal.installTargetWorkspaceId
+  );
+
   const category = useSelector((state: any) => state.workspace.selectedCategory);
 
   const items = useSelector((state: any) => state.workspace.items);
@@ -202,13 +206,14 @@ function AddLinkModalWindow(props: any) {
     }
 
     // Check if workspace and desktop are available
-    if (!workspace || !workspace.id) {
+    const targetWorkspaceId = installTargetWorkspaceId || workspace?.id;
+    if (!targetWorkspaceId) {
       alert("No workspace selected. Please select a workspace first.");
       log.error("Cannot save link: workspace is not defined", workspace);
       return;
     }
 
-    if (!desktop || !desktop.id) {
+    if (!installTargetWorkspaceId && (!desktop || !desktop.id)) {
       alert("No desktop selected. Please select a desktop first.");
       log.error("Cannot save link: desktop is not defined", desktop);
       return;
@@ -223,10 +228,11 @@ function AddLinkModalWindow(props: any) {
       window.width = windowWidth;
     }
 
-    let desktopId = desktop.id;
-    if(allDesktops){
-      desktopId="all";
-    }
+    let desktopId = installTargetWorkspaceId
+      ? "all"
+      : allDesktops
+        ? "all"
+        : desktop.id;
 
     // Check if we're adding to favourites category AND location is xapps
     // Only save to xapps if explicitly coming from favourites context
@@ -275,11 +281,16 @@ function AddLinkModalWindow(props: any) {
         alert("Error saving favourite app: " + error);
       });
     } else {
-      log.debug("Saving as regular link to workspace:", workspace.id, "desktop:", desktopId);
+      log.debug("Saving as regular link to workspace:", targetWorkspaceId, "desktop:", desktopId);
       // Save as regular link
-      LinkService.save(workspace.id, desktopId, "links", title, startUrl, icon, window).then(
+      LinkService.save(targetWorkspaceId, desktopId, "links", title, startUrl, icon, window).then(
         (id) => {
           log.debug("Saved link with id:" + id);
+          if (installTargetWorkspaceId) {
+            dispatch(modalActions.clearInstallTargetWorkspaceId());
+            toggleAddLinkModal();
+            return;
+          }
           LinkService.getLinksByWorkspaceIdAndDesktopId(workspace.id, desktop.id).then((links) => {
             dispatch(workspaceActions.setLinks({ links: links }));
             toggleAddLinkModal();

@@ -1,4 +1,4 @@
-import { WindowStack, House } from "react-bootstrap-icons";
+import { WindowStack, Tools, Grid3x3Gap, CollectionFill } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
@@ -9,8 +9,15 @@ import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
 import { sidebarActions } from "../../store/sidebar-slice";
 import DesktopService from "../../services/desktop";
+import {
+  BUILTIN_APPS,
+  getOpenBuiltinApps,
+  getOpenOnlineTools,
+  isBuiltinWindow,
+  isOnlineToolWindow,
+} from "../../builtin";
+import { isSharedAppWindow } from "../../util/sharedApps";
 
-// @ts-expect-error TS(2307): Cannot find module or its corresponding type declarations.
 import defaultIcon from "../../images/default_icon.png";
 
 interface AppsOverlayMenuProps {
@@ -19,13 +26,16 @@ interface AppsOverlayMenuProps {
   onSelectApp: (appId: string, anchorX?: number) => void;
   onLaunchpadClick: () => void;
   onBrowserClick: () => void;
+  onUtilitiesClick: () => void;
+  onSharedAppsClick: () => void;
   onBrowserHoverStart?: () => void;
   onBrowserHoverEnd?: () => void;
   onAppHoverStart?: (appId: string, anchorX?: number) => void;
   onAppHoverEnd?: (appId: string) => void;
   isLaunchpadActive: boolean;
+  isUtilitiesActive?: boolean;
+  isSharedAppsActive?: boolean;
   browserTabsCount: number;
-  homeAppIds: string[];
   /** Keep dock visible in auto-hide mode while a tab switcher is open/hovered */
   suppressAutoHide?: boolean;
 }
@@ -38,21 +48,37 @@ function AppsOverlayMenu({
   onSelectApp, 
   onLaunchpadClick,
   onBrowserClick,
+  onUtilitiesClick,
+  onSharedAppsClick,
   onBrowserHoverStart,
   onBrowserHoverEnd,
   onAppHoverStart,
   onAppHoverEnd,
   isLaunchpadActive,
+  isUtilitiesActive = false,
+  isSharedAppsActive = false,
   browserTabsCount,
-  homeAppIds,
   suppressAutoHide = false,
 }: AppsOverlayMenuProps) {
   const dispatch = useDispatch();
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
+  const workspace = useSelector(
+    (state: any) => state.workspace.selectedWorkspace
+  );
   const openWindows = useSelector((state: any) => state.session.openWindows);
   const openTabs = useSelector((state: any) => state.session.openTabs);
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
   const isSidebarOpen = useSelector((state: any) => state.sidebar.isOpen);
+  const openModalIds = useSelector(
+    (state: any) => state.builtin?.openModalIds || []
+  );
+  const activeModalId = useSelector(
+    (state: any) => state.builtin?.activeModalId
+  );
+  const platform = useSelector((state: any) => state.app.platform);
+  const homeWorkspaceId = useSelector(
+    (state: any) => state.user.homeWorkspace
+  );
   const pinnedApps = desktop?.state?.pinnedApps || [];
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
@@ -318,11 +344,47 @@ function AppsOverlayMenu({
     });
   };
 
-  // Filter out browser type apps
-  const filteredApps = apps.filter(app => app.type !== "browser");
-  const homeApps = filteredApps.filter((app) => homeAppIds.includes(app.id));
-  const workspaceApps = filteredApps.filter((app) => !homeAppIds.includes(app.id));
-  const showHomeDivider = homeApps.length > 0 && workspaceApps.length > 0;
+  // Filter out browser / built-in native apps from regular dock icons
+  const builtinTypes = new Set(BUILTIN_APPS.map((a) => a.type));
+  const workspaceApps = apps.filter(
+    (app) =>
+      app.type !== "browser" &&
+      !builtinTypes.has(app.type) &&
+      !isOnlineToolWindow(app)
+  );
+  // Open tools / shared apps — indicators only (not shown as dock icons)
+  const dockOpenBuiltins = getOpenBuiltinApps(
+    openWindows,
+    workspace?.id,
+    openModalIds,
+    platform
+  );
+  const dockOpenOnlineTools = getOpenOnlineTools(openWindows, workspace?.id);
+  const hasOpenTools =
+    dockOpenBuiltins.length > 0 || dockOpenOnlineTools.length > 0;
+  const hasOpenSharedApps = Object.values(openWindows || {}).some(
+    (window: any) => {
+      if (!window || window.type === "browser") return false;
+      const isShared =
+        window.type === "xapp"
+          ? window.desktop === homeWorkspaceId
+          : window.workspace === homeWorkspaceId;
+      if (!isShared) return false;
+      return hasAwakeTab(window.id);
+    }
+  );
+
+  const activeWindow = activeWindowId ? openWindows?.[activeWindowId] : null;
+  const isToolWindowActive =
+    !!activeModalId ||
+    isBuiltinWindow(activeWindow) ||
+    isOnlineToolWindow(activeWindow);
+  const isSharedWindowActive = isSharedAppWindow(
+    activeWindow,
+    homeWorkspaceId
+  );
+  const toolsIconActive = isUtilitiesActive || isToolWindowActive;
+  const myAppsIconActive = isSharedAppsActive || isSharedWindowActive;
 
   const closeSidebarWindowIfOpen = () => {
     if (isSidebarOpen) {
@@ -331,7 +393,6 @@ function AppsOverlayMenu({
   };
 
   const renderAppButton = (app: any) => {
-    const isHomeApp = homeAppIds.includes(app.id);
     const isActive = activeWindowId === app.id;
     const isRunning = hasAwakeTab(app.id);
     return (
@@ -442,11 +503,6 @@ function AppsOverlayMenu({
             e.currentTarget.src = defaultIcon;
           }}
         />
-        {isHomeApp && (
-          <span className="home-badge">
-            <House size={8} fill="white" color="white" />
-          </span>
-        )}
         {/* Running indicator when ≥1 tab is awake; active bar already covers focus */}
         {isRunning && !isActive && (
           <span className="app-running-indicator" aria-hidden="true" />
@@ -495,6 +551,7 @@ function AppsOverlayMenu({
       >
         <div className="apps-overlay-menu-content">
           <div className="apps-overlay-menu-items">
+          {/* Fixed launchers */}
           <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={() => {
@@ -503,17 +560,64 @@ function AppsOverlayMenu({
             }}
             onMouseEnter={() => {
               setHoveredApp("launchpad");
-              // Leaving app/browser icons toward launchpad should dismiss hover switchers
               onBrowserHoverEnd?.();
             }}
             onMouseLeave={() => setHoveredApp(null)}
           >
-            <WaffleMenuIcon size={20} />
+            <Grid3x3Gap color="white" size={20} />
             {hoveredApp === "launchpad" && (
-              <div className="app-tooltip">Launchpad</div>
+              <div className="app-tooltip">Space Apps</div>
             )}
           </button>
-          
+
+          <button
+            className={`app-menu-item ${myAppsIconActive ? "active" : ""}`}
+            onClick={() => {
+              closeSidebarWindowIfOpen();
+              onSharedAppsClick();
+            }}
+            onMouseEnter={() => {
+              setHoveredApp("shared-apps");
+              onBrowserHoverEnd?.();
+            }}
+            onMouseLeave={() => setHoveredApp(null)}
+          >
+            <CollectionFill color="white" size={20} />
+            {hasOpenSharedApps && !myAppsIconActive && (
+              <span className="app-running-indicator" aria-hidden="true" />
+            )}
+            {hoveredApp === "shared-apps" && (
+              <div className="app-tooltip">My Apps</div>
+            )}
+          </button>
+
+          <button
+            className={`app-menu-item ${toolsIconActive ? "active" : ""}`}
+            onClick={() => {
+              closeSidebarWindowIfOpen();
+              onUtilitiesClick();
+            }}
+            onMouseEnter={() => {
+              setHoveredApp("utilities");
+              onBrowserHoverEnd?.();
+            }}
+            onMouseLeave={() => setHoveredApp(null)}
+          >
+            <Tools color="white" size={20} />
+            {hasOpenTools && !toolsIconActive && (
+              <span className="app-running-indicator" aria-hidden="true" />
+            )}
+            {hoveredApp === "utilities" && (
+              <div className="app-tooltip">Tools</div>
+            )}
+          </button>
+
+          <div className="apps-overlay-home-divider" aria-hidden="true" />
+
+          {/* Space apps */}
+          {workspaceApps.map((app) => renderAppButton(app))}
+
+          {/* Others — end of dock */}
           <button
             className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""} ${
               pulsingWindowId?.startsWith("browser_") ? "app-menu-item-pulse" : ""
@@ -541,12 +645,6 @@ function AppsOverlayMenu({
               <div className="app-tooltip">Others</div>
             )}
           </button>
-          
-          {homeApps.map(renderAppButton)}
-          {showHomeDivider && (
-            <div className="apps-overlay-home-divider" aria-hidden="true" />
-          )}
-          {workspaceApps.map(renderAppButton)}
         </div>
       </div>
     </div>

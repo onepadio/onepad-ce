@@ -28,6 +28,7 @@ import EditProfile from "./routes/EditProfile/EditProfile";
 import SpaceSelection from "./routes/SpaceSelection/SpaceSelection";
 import ImportService from "./services/import";
 import { Hub } from "./utils/hub";
+import { getBuiltinActiveTab, isBuiltinWindow } from "./builtin";
 
 library.add(fab);
 
@@ -201,6 +202,60 @@ function App() {
       dispatch(sessionActions.setActiveTab({data: {id: "launchpad"}}));
       _activeDesktopWindows[desktop.id] = "launchpad";
       dispatch(sessionActions.setActiveDesktopWindows({data: _activeDesktopWindows}));
+      return;
+    }
+
+    // Built-in native apps (Terminal, …): remember per-desktop; no webview tabs
+    if (isBuiltinWindow(activeWindow)) {
+      let _openWindows = Object.assign({}, openWindows);
+      let _window = Object.assign({}, _openWindows[activeWindow.id] || activeWindow);
+      _window.sleeping = false;
+      _openWindows[activeWindow.id] = _window;
+      dispatch(sessionActions.setOpenWindows({ data: _openWindows }));
+      dispatch(sessionActions.setActiveWindowTabs({ data: [] }));
+
+      const builtinTab = getBuiltinActiveTab(_window);
+      if (
+        builtinTab &&
+        (activeTab?.type !== builtinTab.type ||
+          activeTab?.window !== activeWindow.id)
+      ) {
+        dispatch(sessionActions.setActiveTab({ data: builtinTab }));
+      }
+
+      try {
+        if (isDesktopStickyMode && activeWindow.desktop !== desktop.id) {
+          let _desktop = desktops.find(
+            (_desktop_: any) => _desktop_.id === activeWindow.desktop
+          );
+          if (_desktop) {
+            WorkspaceService.switchDesktop(workspace.id, _desktop.id).then(
+              (data) => {
+                dispatch(
+                  workspaceActions.selectDesktop({ desktop: data.desktop })
+                );
+                dispatch(workspaceActions.setApps({ apps: data.apps }));
+                dispatch(workspaceActions.setLinks({ links: data.links }));
+                _activeDesktopWindows[_desktop.id] = activeWindow.id;
+                dispatch(
+                  sessionActions.setActiveDesktopWindows({
+                    data: _activeDesktopWindows,
+                  })
+                );
+              }
+            );
+          }
+        } else if (activeDesktopWindows[desktop.id] !== activeWindow.id) {
+          _activeDesktopWindows[desktop.id] = activeWindow.id;
+          dispatch(
+            sessionActions.setActiveDesktopWindows({
+              data: _activeDesktopWindows,
+            })
+          );
+        }
+      } catch (e) {
+        log.error(e);
+      }
       return;
     }
 

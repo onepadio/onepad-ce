@@ -42,13 +42,25 @@ const electronHandler = {
   },
   fromMain: (callback: any) => ipcRenderer.on('fromMain', callback),
   receive: (channel: string, callback: any) => {
-    const validChannels = ['fromMain', 'download-event', 'device-mode-changed'];
+    const validChannels = [
+      'fromMain',
+      'download-event',
+      'device-mode-changed',
+      'pty-data',
+      'pty-exit',
+    ];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, callback);
     }
   },
   removeListener: (channel: string, callback: any) => {
-    const validChannels = ['fromMain', 'download-event', 'device-mode-changed'];
+    const validChannels = [
+      'fromMain',
+      'download-event',
+      'device-mode-changed',
+      'pty-data',
+      'pty-exit',
+    ];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeListener(channel, callback);
     }
@@ -102,11 +114,25 @@ const electronHandler = {
       'remove-docker-container',
       'check-docker-status',
       'resume-docker-container',
+      'get-docker-images',
+      'remove-docker-image',
+      'get-docker-volumes',
+      'remove-docker-volume',
+      'restart-docker-container',
+      'get-docker-container-logs',
+      'inspect-docker-container',
+      'get-docker-container-stats',
       'get-tab-memory-info',
       'get-all-tabs-memory',
       'fetch-website-metadata',
       'get-user-agent',
-      'set-device-emulation'
+      'set-device-emulation',
+      'pty-create',
+      'pty-write',
+      'pty-resize',
+      'pty-kill',
+      'pty-default-cwd',
+      'pty-default-shell',
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

@@ -42,6 +42,7 @@ export default function SpaceSelection() {
   const personId = useSelector((state: any) => state.app.personId);
   const userId = useSelector((state: any) => state.user.id);
   const userName = useSelector((state: any) => state.user.name);
+  const homeWorkspaceId = useSelector((state: any) => state.user.homeWorkspace);
   const selectedPerson = useSelector((state: any) => state.app.selectedPerson);
 
   const workspaces = useSelector((state: any) => state.workspace.workspaces);
@@ -162,7 +163,11 @@ export default function SpaceSelection() {
             <div className="row d-flex justify-content-center">
               <div className="col-12 col-lg-10 col-xl-8">
                 <div className="spaces-grid">
-                  {workspaces.map((workspace: any) => (
+                  {workspaces
+                    .filter(
+                      (workspace: any) => workspace.id !== homeWorkspaceId
+                    )
+                    .map((workspace: any) => (
                     <div key={workspace.id} className="space-card-wrapper">
                       <div
                         className="space-card"

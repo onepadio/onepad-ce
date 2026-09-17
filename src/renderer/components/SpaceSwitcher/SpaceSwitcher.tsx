@@ -9,7 +9,6 @@ import {
   processOpenTabsBeforePersist,
   processWindows,
 } from "../../services/window";
-import { House } from "react-bootstrap-icons";
 import { WorkspaceBootstrapIconBadge } from "../WorkspaceConfigIcon/WorkspaceBootstrapIcon";
 
 function SpaceSwitcher() {
@@ -30,9 +29,15 @@ function SpaceSwitcher() {
   const activeTab = useSelector((state: any) => state.session.activeTab);
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const activeWindow = useSelector((state: any) => state.session.activeWindow);
-  const activeWindowId = useSelector((state: any) => state.session.activeWindowId);
-  const activeWindowTabs = useSelector((state: any) => state.session.activeWindowTabs);
-  const activeBrowserWindowId = useSelector((state: any) => state.session.activeBrowserWindowId);
+  const activeWindowId = useSelector(
+    (state: any) => state.session.activeWindowId
+  );
+  const activeWindowTabs = useSelector(
+    (state: any) => state.session.activeWindowTabs
+  );
+  const activeBrowserWindowId = useSelector(
+    (state: any) => state.session.activeBrowserWindowId
+  );
   const sessions = useSelector((state: any) => state.workspace.sessions);
   const userId = useSelector((state: any) => state.user.id);
   const workspaceState = useSelector((state: any) => state.workspace);
@@ -52,9 +57,10 @@ function SpaceSwitcher() {
     return hasActiveTabs || hasActiveWindows;
   };
 
-  // Get only active workspaces
-  const activeWorkspaces = workspaces.filter((workspace: any) =>
-    isActiveSpace(workspace.id)
+  // Active non-Home workspaces only (Home is via Shared Apps)
+  const activeWorkspaces = workspaces.filter(
+    (workspace: any) =>
+      workspace.id !== homeWorkspaceId && isActiveSpace(workspace.id)
   );
 
   const handleWorkspaceSwitch = (workspaceId: string) => {
@@ -99,7 +105,7 @@ function SpaceSwitcher() {
       sessions: _sessions,
       currentSession: {},
     })
-      .then((id) => {
+      .then(() => {
         WorkspaceService.selectWorkspaceById(
           dispatch,
           workspaceId,
@@ -112,12 +118,6 @@ function SpaceSwitcher() {
       .catch((err) => {
         log.error("onWorkspaceSwitch", err);
       });
-  };
-
-  const handleHomeClick = () => {
-    if (homeWorkspaceId) {
-      handleWorkspaceSwitch(homeWorkspaceId);
-    }
   };
 
   const renderSpaceIcon = (workspace: any) => {
@@ -197,17 +197,7 @@ function SpaceSwitcher() {
 
   return (
     <div className="space-switcher-container">
-      <div
-        className={`space-switcher-icon home-button ${currentWorkspace.id === homeWorkspaceId ? "active" : ""}`}
-        onClick={handleHomeClick}
-        data-name="Home"
-      >
-        <div className="space-switcher-home-icon">
-          <House color="white" size={20} />
-        </div>
-        <span className="space-switcher-tooltip">Home</span>
-      </div>
-      {activeWorkspaces.filter((workspace: any) => workspace.id !== homeWorkspaceId).map((workspace: any) => (
+      {activeWorkspaces.map((workspace: any) => (
         <React.Fragment key={workspace.id}>
           {renderSpaceIcon(workspace)}
         </React.Fragment>

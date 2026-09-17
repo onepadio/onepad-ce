@@ -59,7 +59,7 @@ export class LinkService {
 
     static getAllByWorkspaceId(workspaceId: any) {
         return new Promise((resolve, reject) => {
-            LinkRepository.getByWorkspaceIdAndCategoryId(workspaceId, "links").then((links) => {
+            LinkRepository.getAllByWorkspaceId(workspaceId).then((links) => {
                 resolve(links);
             }).catch((error) => {
                 reject(error);

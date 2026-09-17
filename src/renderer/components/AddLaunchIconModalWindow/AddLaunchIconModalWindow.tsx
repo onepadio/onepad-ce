@@ -38,6 +38,10 @@ function AddLaunchIconModalWindow(props: any) {
 
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
 
+  const installTargetWorkspaceId = useSelector(
+    (state: any) => state.modal.installTargetWorkspaceId
+  );
+
   const userId = useSelector((state: any) => state.user.id);
 
   const items = useSelector((state: any) => state.workspace.items);
@@ -108,9 +112,14 @@ function AddLaunchIconModalWindow(props: any) {
       window.height = windowHeight;
       window.width = windowWidth;
     }
-    let desktopId = desktop.id;
-    if (allDesktops) {
-      desktopId = "all";
+    let desktopId = installTargetWorkspaceId
+      ? "all"
+      : allDesktops
+        ? "all"
+        : desktop?.id;
+    if (!desktopId) {
+      alert("No desktop selected. Please select a desktop first.");
+      return;
     }
 
     let _customUrl = withCustomUrl ? customUrl : "";
@@ -121,8 +130,11 @@ function AddLaunchIconModalWindow(props: any) {
         : workspaces.find((w: any) => w.id === selectedWorkspaceId);
 
     if (location === "launchpad") {
-      let _workspaceId =
-        selectedWorkspaceId === "all" ? profileId : workspace.id;
+      let _workspaceId = installTargetWorkspaceId
+        ? installTargetWorkspaceId
+        : selectedWorkspaceId === "all"
+          ? profileId
+          : workspace.id;
       AppService.save(
         _workspaceId,
         desktopId,
@@ -138,6 +150,11 @@ function AddLaunchIconModalWindow(props: any) {
         useragent
       ).then((id) => {
         FavouritesService.save(id).then((favourites) => {
+          if (installTargetWorkspaceId) {
+            dispatch(modalActions.clearInstallTargetWorkspaceId());
+            toggle();
+            return;
+          }
           AppService.getAppsByWorkspaceIdAndDesktopId(
             _workspace.id,
             desktop.id

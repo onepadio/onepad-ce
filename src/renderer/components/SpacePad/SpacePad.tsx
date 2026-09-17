@@ -46,6 +46,7 @@ function SpacePad(props: any) {
   );
   
   const workspaces = useSelector((state: any) => state.workspace.workspaces);
+  const homeWorkspaceId = useSelector((state: any) => state.user.homeWorkspace);
   const recentWorkspaces = useSelector(
     
     (state: any) => state.workspace.recentWorkspaces
@@ -270,7 +271,12 @@ function SpacePad(props: any) {
                   <div className="row icons w-100">
 
                           
-                          {workspaces.map((workspace: any) => {
+                          {workspaces
+                            .filter(
+                              (workspace: any) =>
+                                workspace.id !== homeWorkspaceId
+                            )
+                            .map((workspace: any) => {
                               return (
                                   <SpaceIcon 
                                       key={workspace.id} 

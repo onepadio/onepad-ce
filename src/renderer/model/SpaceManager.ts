@@ -115,8 +115,19 @@ export class SpaceManager{
               workspaces: workspaces
             }));
             
+            // Prefer last non-Home workspace (Home is accessed via Shared Apps)
             // @ts-expect-error TS(2571): Object is of type 'unknown'.
-            let _workspaceId = user.lastWorkspace || workspaces[0].id;
+            let _workspaceId = user.lastWorkspace || workspaces[0]?.id;
+            // @ts-expect-error TS(2571): Object is of type 'unknown'.
+            if (_workspaceId && user.homeWorkspace && _workspaceId === user.homeWorkspace) {
+              const nonHome = workspaces.find(
+                // @ts-expect-error TS(2571)
+                (w: any) => w.id !== user.homeWorkspace
+              );
+              if (nonHome) {
+                _workspaceId = nonHome.id;
+              }
+            }
             WorkspaceService.selectWorkspaceById(dispatch, _workspaceId, workspaceState, sessionState ).then((workspace) => {
                 log.debug("Default workspace ready...");
                 dispatch(sessionActions.setLocation("launchpad"));

@@ -29,6 +29,7 @@ import chatAssistantSlice from "./chat-assistant-slice";
 import aiAppsSlice from "./ai-slice";
 import downloadSlice from "./download-slice";
 import webviewSlice from "./webview-slice";
+import builtinSlice from "./builtin-slice";
 
 const store = configureStore({
   reducer: {
@@ -62,6 +63,7 @@ const store = configureStore({
     ai: aiAppsSlice.reducer,
     downloads: downloadSlice.reducer,
     webview: webviewSlice.reducer,
+    builtin: builtinSlice.reducer,
   },
 });
 
