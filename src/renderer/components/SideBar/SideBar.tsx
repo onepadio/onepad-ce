@@ -82,12 +82,12 @@ function SideBar() {
     }, 500);
   }
 
-  // Load hide mode preference from localStorage on mount
+  // Migrate away from sidebar auto-hide (no longer offered in UI)
   useEffect(() => {
-    const savedMode = localStorage.getItem('sidebar-hide-mode');
-    if (savedMode === 'auto-hide' || savedMode === 'always-on-top') {
-      setHideMode(savedMode as HideMode);
+    if (localStorage.getItem('sidebar-hide-mode') === 'auto-hide') {
+      localStorage.setItem('sidebar-hide-mode', 'always-on-top');
     }
+    setHideMode('always-on-top');
   }, []);
 
   useEffect(() => {
