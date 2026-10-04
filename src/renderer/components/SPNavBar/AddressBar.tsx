@@ -117,6 +117,7 @@ import {
   moveHistoryIndex,
   scheduleTabNavHistoryPersist,
 } from "../../util/navHistory";
+import { formatRelativeTime } from "../../util/time";
 
 function AddressBar(props: any) {
   const dispatch = useDispatch();
@@ -241,9 +242,11 @@ function AddressBar(props: any) {
   const shouldAutoHide = hideMode === 'auto-hide' && activeTab?.id !== "launchpad";
   const [isVisible, setIsVisible] = useState(!shouldAutoHide);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyMenuOpen, setHistoryMenuOpen] = useState(false);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const addressBarRef = useRef<HTMLDivElement>(null);
   const settingsMenuRef = useRef<HTMLDivElement>(null);
+  const historyMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (hideTimeoutRef.current) {
@@ -281,6 +284,32 @@ function AddressBar(props: any) {
     document.addEventListener('click', closeSettings);
     return () => document.removeEventListener('click', closeSettings);
   }, [settingsOpen]);
+
+  useEffect(() => {
+    if (!historyMenuOpen) return;
+
+    const closeHistoryMenu = (e: MouseEvent) => {
+      if (
+        historyMenuRef.current &&
+        !historyMenuRef.current.contains(e.target as Node)
+      ) {
+        setHistoryMenuOpen(false);
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setHistoryMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("click", closeHistoryMenu);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("click", closeHistoryMenu);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [historyMenuOpen]);
 
   const handleToggleHideMode = () => {
     const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
@@ -342,6 +371,74 @@ function AddressBar(props: any) {
 
   function goForward() {
     navigateHistory("forward");
+  }
+
+  function navigateToHistoryIndex(targetIndex: number) {
+    if (
+      !activeTabId ||
+      activeTabId === "launchpad" ||
+      !openTabs[activeTabId]?.state
+    ) {
+      return;
+    }
+
+    const tab = openTabs[activeTabId];
+    const currentIndex = tab.state.historyIndex ?? -1;
+    if (targetIndex === currentIndex) {
+      setHistoryMenuOpen(false);
+      return;
+    }
+
+    const nextState = moveHistoryIndex(tab.state, targetIndex);
+    if (nextState.historyIndex === currentIndex) {
+      return;
+    }
+
+    const _openTabs = Object.assign({}, openTabs);
+    const _tab = Object.assign({}, tab);
+    _tab.state = nextState;
+    _openTabs[activeTabId] = _tab;
+    dispatch(sessionActions.setOpenTabs({ data: _openTabs }));
+
+    scheduleTabNavHistoryPersist({
+      workspaceId: workspace?.id,
+      sessionId: workspaceState?.currentSession?.id,
+      isInSession: sessionState?.isInSession,
+      tabId: activeTabId,
+      tabType: tab.type,
+      navState: nextState,
+    });
+
+    const _webview = document.getElementById(webViewId);
+    // @ts-expect-error TS(2531): Object is possibly 'null'.
+    if (_webview?.loadURL) {
+      // @ts-expect-error
+      _webview.loadURL(nextState.url);
+    }
+
+    setHistoryMenuOpen(false);
+  }
+
+  function getBackHistoryEntries() {
+    const tab = openTabs[activeTabId];
+    const history = tab?.state?.history || [];
+    const currentIndex = tab?.state?.historyIndex ?? -1;
+    if (currentIndex < 0 || history.length === 0) return [];
+
+    // Current first, then previous entries (newest back-target next)
+    const entries: { index: number; url: string; title: string; visitedAt?: number; isCurrent: boolean }[] = [];
+    for (let i = currentIndex; i >= 0; i--) {
+      const entry = history[i];
+      if (!entry) continue;
+      entries.push({
+        index: i,
+        url: entry.url || "",
+        title: entry.title || entry.url || "Untitled",
+        visitedAt: entry.visitedAt,
+        isCurrent: i === currentIndex,
+      });
+    }
+    return entries;
   }
 
   function reload() {
@@ -953,27 +1050,92 @@ function AddressBar(props: any) {
       >
       {activeTab.id !== "launchpad" && (
         <>
-
+          <div className="d-flex justify-content-center align-items-center position-relative">
+          <Button
+            id={"home-button-" + workspace.id}
+            className="btn btn-dark ml-3"
+            onClick={() => dispatch(windowActions.showSideBar({}))}
+          >
+            <ListTask size={20} />
+          </Button>
+          {(windowTabs[activeWindowId]?.length || 0) > 0 && (
+              <Badge
+                color="primary"
+                pill
+                className="position-absolute translate-middle"
+                style={{ top: '15px', right: '-12px' }}
+              >
+                {windowTabs[activeWindowId]?.length || 0}
+              </Badge>
+            )}
+          </div>
           <Button
             id={"home-button-" + activeTabId}
-            className="btn btn-dark ml-3"
+            className="btn btn-dark ml-2"
             onClick={() => goHome()}
             disabled={disabled}
           >
             <House size={20} />
           </Button>
-          <Button
-            id={backButtonId}
-            className="btn btn-dark"
-            onClick={() => goBack()}
-            data-bs-toggle="tooltip"
-            data-bs-placement="right"
-            title="Previous page"
-            data-bs-custom-className="custom-tooltip"
-            disabled={navBackDisabled}
-          >
-            <ChevronLeft size={20} />
-          </Button>
+          <div className="address-bar-history" ref={historyMenuRef}>
+            <Button
+              id={backButtonId}
+              className={`btn btn-dark${navBackDisabled ? " address-bar-nav-disabled" : ""}`}
+              onClick={() => {
+                if (navBackDisabled) return;
+                setHistoryMenuOpen(false);
+                goBack();
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const historyLen =
+                  openTabs[activeTabId]?.state?.history?.length || 0;
+                if (historyLen > 0) {
+                  setHistoryMenuOpen((open) => !open);
+                }
+              }}
+              data-bs-toggle="tooltip"
+              data-bs-placement="right"
+              title="Previous page (right-click for history)"
+              data-bs-custom-className="custom-tooltip"
+              aria-disabled={navBackDisabled}
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            {historyMenuOpen && (
+              <div className="address-bar-history-menu" role="menu">
+                {getBackHistoryEntries().length === 0 ? (
+                  <div className="address-bar-history-empty">No history</div>
+                ) : (
+                  getBackHistoryEntries().map((entry) => {
+                    const timeLabel = formatRelativeTime(entry.visitedAt);
+                    return (
+                      <button
+                        key={`${entry.index}-${entry.url}`}
+                        type="button"
+                        role="menuitem"
+                        className={`address-bar-history-item${
+                          entry.isCurrent ? " current" : ""
+                        }`}
+                        onClick={() => navigateToHistoryIndex(entry.index)}
+                        title={entry.url}
+                      >
+                        <span className="address-bar-history-item-title">
+                          {entry.title}
+                        </span>
+                        {timeLabel ? (
+                          <span className="address-bar-history-item-time">
+                            {timeLabel}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
           <Button
             id={forwardButtonId}
             className="btn btn-dark ml-1"

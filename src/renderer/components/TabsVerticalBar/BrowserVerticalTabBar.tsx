@@ -12,7 +12,7 @@ import {
 
 import { sessionActions } from "../../store/session-slice";
 import { windowActions } from "../../store/window-slice";
-import { closeTab } from "../../util/tabs";
+import { closeTab, newTabForActiveWindow } from "../../util/tabs";
 import { createBrowserGroup } from "../../util/browser";
 import { closeWindow } from "../../services/window";
 import { syncBrowserWindowsIfNeeded, getSameSpaceBrowserWindowIds, resolveBrowserWindowId } from "../../util/browserWindows";
@@ -26,6 +26,7 @@ import {
   requestSidebarAutoHide,
   isNodeInAppsMenu,
 } from "../../util/sidebarChrome";
+import { formatRelativeTime } from "../../util/time";
 
 import "./VerticalTabBar.css";
 import "./BrowserVerticalTabBar.css";
@@ -138,7 +139,7 @@ function BrowserVerticalTabBar() {
     const closedWorkspace = openWindows[windowId]?.workspace;
     const remaining = (browserWindows || [])
       .map(resolveBrowserWindowId)
-      .filter((id): id is string => id != null && id !== windowId);
+      .filter((id: string | null | undefined): id is string => id != null && id !== windowId);
     const sameSpace = getSameSpaceBrowserWindowIds(
       browserWindows,
       openWindows,
@@ -187,6 +188,21 @@ function BrowserVerticalTabBar() {
     );
   }
 
+  function handleNewTabInWindow(windowId: string, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    const targetWindow = openWindows[windowId];
+    if (!targetWindow) return;
+    newTabForActiveWindow(
+      dispatch,
+      workspace,
+      desktop,
+      windowTabs,
+      openTabs,
+      activeTabs,
+      targetWindow
+    );
+  }
+
   function handleMouseOver(tabId: string) {
     setHoveredTabId(tabId);
   }
@@ -216,6 +232,7 @@ function BrowserVerticalTabBar() {
     const showClose = hoveredTabId === tab.id || isActive;
     const title = truncateTabTitle(tab);
     const icon = tabIcon(tab);
+    const timeMeta = formatRelativeTime(tab.lastAccessed);
 
     const row = (
       <div
@@ -260,13 +277,18 @@ function BrowserVerticalTabBar() {
               className="align-self-center tab-item-col"
               onClick={() => handleSwitchTab(tab)}
             >
-              <div className="d-flex w-100 justify-content-start align-items-center">
-                <span className="tab-title w-100" title={tab.state?.title || tab.state?.url}>
-                  {title}
-                </span>
-                {tab.sleeping && !showClose && (
-                  <Speedometer size={14} color="gray" className="ml-1" />
-                )}
+              <div className="d-flex flex-column w-100 justify-content-start tab-title-block">
+                <div className="d-flex w-100 justify-content-start align-items-center">
+                  <span className="tab-title w-100" title={tab.state?.title || tab.state?.url}>
+                    {title}
+                  </span>
+                  {tab.sleeping && !showClose && (
+                    <Speedometer size={14} color="gray" className="ml-1" />
+                  )}
+                </div>
+                {timeMeta ? (
+                  <span className="tab-time-meta">{timeMeta}</span>
+                ) : null}
               </div>
             </Col>
 
@@ -341,16 +363,37 @@ function BrowserVerticalTabBar() {
           childCount: group.childTabIds.length,
           collapsed,
         })}
-        {!collapsed && hasChildren && (
+        {!collapsed && (
           <div className="browser-tab-children">
             {group.childTabIds.map((tabId, index) =>
               renderTabRow(openTabs[tabId], {
                 isParent: false,
                 windowId: group.windowId,
                 isFirstChild: index === 0,
-                isLastChild: index === group.childTabIds.length - 1,
+                isLastChild: false,
               })
             )}
+            <ListGroupItem
+              key={`new-tab-${group.windowId}`}
+              className={clsx(
+                "browser-tab-list-item",
+                "browser-tab-child-item",
+                "browser-tab-add-item",
+                "browser-tab-child-last",
+                !hasChildren && "browser-tab-child-first"
+              )}
+            >
+              <div className="browser-tree-branch" aria-hidden="true" />
+              <div
+                className="col-12 vertical-tab-item browser-group-child browser-tab-add-row"
+                onClick={(e) => handleNewTabInWindow(group.windowId, e)}
+              >
+                <div className="d-flex align-items-center justify-content-start w-100 px-1">
+                  <PlusCircle size={14} color="white" className="mr-2" />
+                  <span className="tab-title">New Tab</span>
+                </div>
+              </div>
+            </ListGroupItem>
           </div>
         )}
       </div>
@@ -359,6 +402,18 @@ function BrowserVerticalTabBar() {
 
   return (
     <>
+      {/* Trigger zone — only when tab bar is hidden */}
+      {!showSidebar && (
+        <div
+          id="vertical-tab-bar-trigger"
+          className="vertical-tab-bar-trigger-zone"
+          onMouseEnter={() => dispatch(windowActions.showSideBar({}))}
+          title="Show tabs"
+        >
+          <div className="vertical-tab-bar-trigger-indicator" />
+        </div>
+      )}
+
       <div
         className={clsx(
           "!m-0 fixed inset-0",
@@ -387,7 +442,7 @@ function BrowserVerticalTabBar() {
             >
               <div className="col-12 d-flex align-items-center justify-content-center py-2">
                 <PlusCircle size={20} color="white" className="mr-2" />
-                <span className="text-white">New Tab</span>
+                <span className="text-white">Tab Group</span>
               </div>
             </ListGroupItem>
           </div>

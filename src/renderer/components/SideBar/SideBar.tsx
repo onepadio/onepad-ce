@@ -728,25 +728,7 @@ function SideBar() {
           }
         }}
       >
-        <div className="d-flex justify-content-center align-items-center mr-2 mt-2">
-          <Button
-            id={"home-button-" + workspace.id}
-            className="btn btn-dark position-relative"
-            onClick={() => dispatch(windowActions.showSideBar({}))}
-          >
-            <ListTask size={20} />
-            {sideBarTabCount > 0 && (
-              <Badge
-                color="primary"
-                pill
-                className="position-absolute start-100 translate-middle"
-                style={{ top: '15px' }}
-              >
-                {sideBarTabCount}
-              </Badge>
-            )}
-          </Button>
-        </div>
+        
         <div className="global-apps-menu-content d-flex flex-column justify-content-center">
 
             

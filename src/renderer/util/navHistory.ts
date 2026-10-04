@@ -9,6 +9,8 @@ export const NAV_HISTORY_PERSIST_DEBOUNCE_MS = 400;
 export type NavHistoryEntry = {
   url: string;
   title?: string;
+  /** ms epoch when this entry was navigated to / created */
+  visitedAt?: number;
 };
 
 export type TabNavState = {
@@ -22,6 +24,14 @@ export type TabNavState = {
 
 const pendingPatches = new Map<string, ReturnType<typeof setTimeout>>();
 
+function stampEntry(
+  url: string,
+  title = "",
+  visitedAt = Date.now()
+): NavHistoryEntry {
+  return { url, title: title || "", visitedAt };
+}
+
 export function createNavHistoryState(
   url: string,
   title = "",
@@ -32,13 +42,14 @@ export function createNavHistoryState(
     url: url || "",
     title: title || "",
     icon,
-    history: hasUrl ? [{ url, title: title || "" }] : [],
+    history: hasUrl ? [stampEntry(url, title || "")] : [],
     historyIndex: hasUrl ? 0 : -1,
   };
 }
 
 export function ensureNavHistory(state: TabNavState = {}): TabNavState {
   if (Array.isArray(state.history) && typeof state.historyIndex === "number") {
+    // Leave legacy entries without visitedAt as-is
     return state;
   }
   const url = state.url || "";
@@ -51,7 +62,7 @@ export function ensureNavHistory(state: TabNavState = {}): TabNavState {
   }
   return {
     ...state,
-    history: [{ url, title: state.title || "" }],
+    history: [stampEntry(url, state.title || "")],
     historyIndex: 0,
   };
 }
@@ -102,13 +113,14 @@ export function applyNavigationToTabState(
   let history = [...(ensured.history || [])];
   let index = ensured.historyIndex ?? -1;
   const nextTitle = title ?? ensured.title ?? "";
+  const now = Date.now();
 
   if (history.length === 0 || index < 0) {
     return {
       ...ensured,
       url,
       title: nextTitle,
-      history: [{ url, title: nextTitle }],
+      history: [stampEntry(url, nextTitle, now)],
       historyIndex: 0,
     };
   }
@@ -119,6 +131,7 @@ export function applyNavigationToTabState(
       ...updated[index],
       url,
       title: nextTitle || updated[index].title || "",
+      visitedAt: now,
     };
     return {
       ...ensured,
@@ -129,6 +142,7 @@ export function applyNavigationToTabState(
     };
   }
 
+  // Back/forward: only move index — do not stamp visitedAt
   if (index > 0 && history[index - 1]?.url === url) {
     return {
       ...ensured,
@@ -149,7 +163,7 @@ export function applyNavigationToTabState(
 
   // New navigation: drop any forward entries, then push
   history = history.slice(0, index + 1);
-  history.push({ url, title: nextTitle });
+  history.push(stampEntry(url, nextTitle, now));
 
   if (history.length > MAX_NAV_HISTORY) {
     const overflow = history.length - MAX_NAV_HISTORY;

@@ -9,8 +9,7 @@ export function requestSidebarAutoHide() {
 export function isNodeInSidebarChrome(node: EventTarget | null): boolean {
   if (!(node instanceof Node)) return false;
   const appsMenu = document.getElementById("globalAppsMenu");
-  const tabBar = document.getElementById("vertical-tab-bar");
-  return !!(appsMenu?.contains(node) || tabBar?.contains(node));
+  return !!(appsMenu?.contains(node) || isNodeInVerticalTabBar(node));
 }
 
 export function isNodeInAppsMenu(node: EventTarget | null): boolean {
@@ -22,5 +21,6 @@ export function isNodeInAppsMenu(node: EventTarget | null): boolean {
 export function isNodeInVerticalTabBar(node: EventTarget | null): boolean {
   if (!(node instanceof Node)) return false;
   const tabBar = document.getElementById("vertical-tab-bar");
-  return !!tabBar?.contains(node);
+  const trigger = document.getElementById("vertical-tab-bar-trigger");
+  return !!(tabBar?.contains(node) || trigger?.contains(node) || trigger === node);
 }

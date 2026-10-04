@@ -48,6 +48,7 @@ import {
   requestSidebarAutoHide,
   isNodeInAppsMenu,
 } from "../../util/sidebarChrome";
+import { formatRelativeTime } from "../../util/time";
 
 
 function VerticalTabBar(){
@@ -357,6 +358,7 @@ function VerticalTabBar(){
       if(tab == null || tab === undefined) return;
 
       let tabTitle = tab.state.title === "" ? tab.state.url.substring(0,24).concat("...") : tab.state.title.length > 24 ? tab.state.title.substring(0,24).concat("...") : tab.state.title;
+      const timeMeta = formatRelativeTime(tab.lastAccessed);
       let _icon = "";
         try {
           if(tab.type === "app"){
@@ -377,8 +379,11 @@ function VerticalTabBar(){
                             </Col>
                             <Col xs={8} className="align-self-center tab-item-col" onClick={() => handleSwitchTab(tab)}>
                                 {}
-                                <div className="d-flex w-100 justify-content-start">
+                                <div className="d-flex flex-column w-100 justify-content-start tab-title-block">
                                     <span className="tab-title w-100">{tabTitle}</span>
+                                    {timeMeta ? (
+                                      <span className="tab-time-meta">{timeMeta}</span>
+                                    ) : null}
                                 </div>
                             </Col>
                             <Col xs={2} className="align-self-center tab-item-col">
@@ -406,8 +411,11 @@ function VerticalTabBar(){
                     </Col>
                     <Col xs={8} className="align-self-center tab-item-col" onClick={() => handleSwitchTab(tab)}>
                         {}
-                        <div className="d-flex w-100 justify-content-start">
+                        <div className="d-flex flex-column w-100 justify-content-start tab-title-block">
                             <span className="tab-title w-100">{tabTitle}</span>
+                            {timeMeta ? (
+                              <span className="tab-time-meta">{timeMeta}</span>
+                            ) : null}
                         </div>
                     </Col>
                     <Col xs={2} className="align-self-center tab-item-col">
@@ -556,6 +564,18 @@ function VerticalTabBar(){
 
     return (
       <>
+        {/* Trigger zone — only when tab bar is hidden */}
+        {!showSidebar && (
+          <div
+            id="vertical-tab-bar-trigger"
+            className="vertical-tab-bar-trigger-zone"
+            onMouseEnter={() => dispatch(windowActions.showSideBar({}))}
+            title="Show tabs"
+          >
+            <div className="vertical-tab-bar-trigger-indicator" />
+          </div>
+        )}
+
         <div
           className={clsx(
             "!m-0 fixed inset-0",
@@ -571,7 +591,7 @@ function VerticalTabBar(){
           >
 
         </div>
-        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar bg-dark w-100" onMouseLeave={(e) => closeTabSidebar(e)}>
+        <div id="vertical-tab-bar" className="d-flex justify-content-start vertical-tabbar w-100" onMouseLeave={(e) => closeTabSidebar(e)}>
 
           {tabsMenu()}
 

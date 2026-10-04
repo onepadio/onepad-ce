@@ -44,3 +44,4 @@ AuthKey_*.p8
 scripts/
 
 ROADMAP.md
+md/*

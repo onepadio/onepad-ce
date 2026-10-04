@@ -37,11 +37,11 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1100px;
+  max-width: 720px;
   height: 100%;
   padding: 10px 12px 12px;
   /* Darker translucent glass — keeps blur while protecting light text on light pages */
-  background-color: #25292f66;
+  background-color: #10111466;
   backdrop-filter: blur(48px);
   -webkit-backdrop-filter: blur(48px);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -114,14 +114,17 @@
   color: #fff;
 }
 
-.browser-tab-switcher-groups {
+/* Scrollable tree zone — all groups always visible */
+.browser-tab-switcher-tree {
+  --tree-line: rgba(255, 255, 255, 0.28);
+  --tree-indent: 22px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   padding-right: 2px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
@@ -134,134 +137,198 @@
   font-size: 13px;
 }
 
-.browser-tab-switcher-group {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  overflow: hidden;
+.browser-tab-switcher-tree-group {
   flex-shrink: 0;
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.browser-tab-switcher-group.active-group {
-  border-color: rgba(59, 130, 246, 0.45);
+.browser-tab-switcher-tree-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
-.browser-tab-switcher-group-header {
-  width: 100%;
+.browser-tab-switcher-tree-group.active-group .browser-tab-switcher-row-item.parent {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.browser-tab-switcher-tree-parent {
+  min-width: 0;
+}
+
+.browser-tab-switcher-tree-children {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.browser-tab-switcher-tree-child {
   display: flex;
+  align-items: stretch;
+  position: relative;
+  min-width: 0;
+}
+
+.browser-tab-switcher-add-tab {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border: none;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
   background: transparent;
-  color: #e5e7eb;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.15s ease;
-}
-
-.browser-tab-switcher-group-header:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.browser-tab-switcher-group-chevron {
-  display: inline-flex;
-  color: #9ca3af;
-  flex-shrink: 0;
-}
-
-.browser-tab-switcher-group-icon {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.browser-tab-switcher-group-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.browser-tab-switcher-group-count {
-  flex-shrink: 0;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
   color: #d1d5db;
   font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Horizontal scroll row of tiles — same rhythm as AppTabSwitcher */
+.browser-tab-switcher-add-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+/* Gutter that holds the └ / ├ connector */
+.browser-tab-switcher-tree-branch {
+  flex: 0 0 var(--tree-indent);
+  width: var(--tree-indent);
+  position: relative;
+  margin-left: 14px;
+  pointer-events: none;
+}
+
+.browser-tab-switcher-tree-branch::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--tree-line);
+}
+
+.browser-tab-switcher-tree-child.first .browser-tab-switcher-tree-branch::before {
+  top: -4px;
+}
+
+.browser-tab-switcher-tree-child.last .browser-tab-switcher-tree-branch::before {
+  bottom: 50%;
+}
+
+.browser-tab-switcher-tree-branch::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  height: 1px;
+  background: var(--tree-line);
+}
+
 .browser-tab-switcher-row {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0 10px 10px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.browser-tab-switcher-tile {
-  flex: 0 0 auto;
-  width: 140px;
+.browser-tab-switcher-row-item {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: 10px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 32px 6px 8px;
+  margin: 2px 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: transparent;
   color: #e5e7eb;
   cursor: pointer;
   text-align: left;
-  overflow: hidden;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.browser-tab-switcher-tile:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+.browser-tab-switcher-row:hover .browser-tab-switcher-row-item,
+.browser-tab-switcher-row-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.browser-tab-switcher-tile.active {
+.browser-tab-switcher-row-close {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  z-index: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.browser-tab-switcher-row.show-close .browser-tab-switcher-row-close {
+  display: inline-flex;
+}
+
+.browser-tab-switcher-row-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.browser-tab-switcher-row-item.active {
   border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.16);
 }
 
-.browser-tab-switcher-tile-preview {
+.browser-tab-switcher-row-item.parent {
+  font-weight: 600;
+}
+
+.browser-tab-switcher-row-item.child {
+  opacity: 0.95;
+}
+
+.browser-tab-switcher-row-preview {
+  flex: 0 0 72px;
+  width: 72px;
   aspect-ratio: 16 / 10;
-  width: 100%;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   background: #111827;
 }
 
-.browser-tab-switcher-tile-preview img {
+.browser-tab-switcher-row-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.browser-tab-switcher-tile.sleeping .browser-tab-switcher-tile-preview img,
-.browser-tab-switcher-tile.sleeping .browser-tab-switcher-tile-placeholder img {
+.browser-tab-switcher-row-item.sleeping .browser-tab-switcher-row-preview img,
+.browser-tab-switcher-row-item.sleeping .browser-tab-switcher-row-placeholder img {
   filter: grayscale(100%);
   opacity: 0.85;
 }
 
-.browser-tab-switcher-tile-placeholder {
+.browser-tab-switcher-row-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
@@ -270,39 +337,65 @@
   background: linear-gradient(145deg, #1f2937, #111827);
 }
 
-.browser-tab-switcher-tile-placeholder img {
-  width: 22px;
-  height: 22px;
+.browser-tab-switcher-row-placeholder img {
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   opacity: 0.7;
 }
 
-.browser-tab-switcher-tile-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 2px;
-  min-width: 0;
-}
-
-.browser-tab-switcher-tile-icon,
-.browser-tab-switcher-tile-icon-spacer {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  border-radius: 2px;
-  object-fit: contain;
-}
-
-.browser-tab-switcher-tile-title {
+.browser-tab-switcher-row-meta {
   flex: 1;
   min-width: 0;
-  font-size: 11px;
-  line-height: 1.2;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.browser-tab-switcher-row-icon,
+.browser-tab-switcher-row-icon-spacer {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  object-fit: contain;
+  margin-top: 2px;
+}
+
+.browser-tab-switcher-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.browser-tab-switcher-row-title {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: inherit;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #f3f4f6;
+}
+
+.browser-tab-switcher-row-time {
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 400;
+  /* Brighter + shadow so it stays readable over light page content through the glass */
+  color: #e5e7eb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browser-tab-switcher-row-item.child .browser-tab-switcher-row-title {
+  font-size: 11px;
+  font-weight: 400;
 }
 
 @media (max-width: 720px) {
@@ -313,8 +406,13 @@
     height: 45vh;
   }
 
-  .browser-tab-switcher-tile {
-    width: 112px;
+  .browser-tab-switcher-panel-inner {
+    max-width: none;
+  }
+
+  .browser-tab-switcher-row-preview {
+    flex-basis: 56px;
+    width: 56px;
   }
 
   .browser-tab-switcher-new-tab span {

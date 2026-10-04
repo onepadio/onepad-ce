@@ -91,6 +91,10 @@
   font-size: 11px;
 }
 
+.vertical-tabbar .vertical-tab-item.browser-group-child .tab-time-meta {
+  font-size: 9px;
+}
+
 .browser-tab-chevron-col {
   max-width: 20px;
   cursor: pointer;
@@ -99,4 +103,23 @@
 
 .browser-tab-chevron-col:hover {
   opacity: 0.8;
+}
+
+.browser-tab-add-item .browser-tab-add-row {
+  cursor: pointer;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  min-height: 32px;
+  opacity: 0.85;
+}
+
+.browser-tab-add-item .browser-tab-add-row:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+  opacity: 1;
+}
+
+.browser-tab-add-item .browser-tab-add-row .tab-title {
+  color: #d1d5db;
+  font-size: 11px;
+  font-weight: 500;
 }
