@@ -8,6 +8,7 @@ import "./AppsOverlayMenu.css";
 import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
 import { sidebarActions } from "../../store/sidebar-slice";
+import { settingsActions } from "../../store/settings-slice";
 import DesktopService from "../../services/desktop";
 import {
   BUILTIN_APPS,
@@ -94,6 +95,18 @@ function AppsOverlayMenu({
   );
   const dockPulseToken = useSelector(
     (state: any) => state.windowService.dockPulseToken
+  );
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+  const desktop3dLayout = useSelector(
+    (state: any) =>
+      state.settings.desktop3dLayout ||
+      state.settings.launchpad3dLayout ||
+      "coverflow"
   );
 
   useEffect(() => {
@@ -221,6 +234,7 @@ function AppsOverlayMenu({
       document.body.removeChild(menu);
     });
 
+    const is3d = desktopVisualMode === "3d";
     const menu = document.createElement("div");
     menu.className = "apps-overlay-context-menu context-menu";
     menu.innerHTML = `
@@ -233,6 +247,23 @@ function AppsOverlayMenu({
         </svg>
         <span>${hideMode === 'auto-hide' ? 'Auto-Hide Off' : 'Auto-Hide On'}</span>
       </div>
+      <div class="context-menu-item toggle-visual-mode">
+        <span>${is3d ? 'Switch to 2D Desktop' : 'Switch to 3D Desktop'}</span>
+      </div>
+      ${is3d ? `
+      <div class="context-menu-item set-layout-coverflow${desktop3dLayout === 'coverflow' ? ' active' : ''}">
+        <span>Cover (wallpaper)</span>
+      </div>
+      <div class="context-menu-item set-layout-mission${desktop3dLayout === 'mission' ? ' active' : ''}">
+        <span>Mission (wallpaper)</span>
+      </div>
+      <div class="context-menu-item set-layout-ring${desktop3dLayout === 'ring' ? ' active' : ''}">
+        <span>Ring (wallpaper)</span>
+      </div>
+      <div class="context-menu-item set-layout-scene${desktop3dLayout === 'scene' ? ' active' : ''}">
+        <span>Scene (control room)</span>
+      </div>
+      ` : ''}
     `;
     
     menu.style.position = "fixed";
@@ -265,22 +296,50 @@ function AppsOverlayMenu({
     
     menu.style.opacity = "1";
 
+    const removeMenu = () => {
+      if (document.body.contains(menu)) {
+        document.body.removeChild(menu);
+      }
+    };
+
     menu.querySelector(".toggle-hide-mode")?.addEventListener("click", () => {
       const newMode = hideMode === 'auto-hide' ? 'always-on-top' : 'auto-hide';
       setHideMode(newMode);
       localStorage.setItem('apps-overlay-hide-mode', newMode);
-      document.body.removeChild(menu);
+      removeMenu();
+    });
+
+    menu.querySelector(".toggle-visual-mode")?.addEventListener("click", () => {
+      dispatch(
+        settingsActions.setDesktopVisualMode(is3d ? "2d" : "3d")
+      );
+      removeMenu();
+    });
+
+    menu.querySelector(".set-layout-coverflow")?.addEventListener("click", () => {
+      dispatch(settingsActions.setDesktop3dLayout("coverflow"));
+      removeMenu();
+    });
+    menu.querySelector(".set-layout-mission")?.addEventListener("click", () => {
+      dispatch(settingsActions.setDesktop3dLayout("mission"));
+      removeMenu();
+    });
+    menu.querySelector(".set-layout-ring")?.addEventListener("click", () => {
+      dispatch(settingsActions.setDesktop3dLayout("ring"));
+      removeMenu();
+    });
+    menu.querySelector(".set-layout-scene")?.addEventListener("click", () => {
+      dispatch(settingsActions.setDesktop3dLayout("scene"));
+      removeMenu();
     });
 
     menu.addEventListener("mouseleave", () => {
-      if (document.body.contains(menu)) {
-        document.body.removeChild(menu);
-      }
+      removeMenu();
     });
 
-    const closeMenu = (e: any) => {
-      if (document.body.contains(menu) && !menu.contains(e.target)) {
-        document.body.removeChild(menu);
+    const closeMenu = (ev: any) => {
+      if (document.body.contains(menu) && !menu.contains(ev.target)) {
+        removeMenu();
         document.removeEventListener("click", closeMenu);
       }
     };

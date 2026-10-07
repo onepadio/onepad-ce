@@ -38,6 +38,14 @@ function DesktopMenu({
 
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen);
 
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+  const is3d = desktopVisualMode === "3d";
+
   const client = createClient('4Qpo6sLZ2hjfUkyERXQrQzKbcbew6EQtIr3cPQLnMp26S9urGttwX8rg');
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -65,11 +73,19 @@ function DesktopMenu({
       const photo = photos.photos[Math.floor(Math.random() * photos.photos.length)];
       const url = photo.src.original;
       setItem(BG_IMAGE_STORE_KEY, url);
-      WorkspaceRepository.updateBackgroundImage(workspace.id, url).then((workspaceId) => {
+      if (is3d) {
+        WorkspaceRepository.updateBackgroundImage3d(workspace.id, url).then(() => {
+          dispatch(appActions.setBgImage3d({ bgImage3d: url }));
+        }).catch(() => {
+          dispatch(appActions.setBgImage3d({ bgImage3d: defaultBG }));
+        });
+        return;
+      }
+      WorkspaceRepository.updateBackgroundImage(workspace.id, url).then(() => {
         dispatch(appActions.setBgImage({
           bgImage: url
         }));
-      }).catch((error) => {
+      }).catch(() => {
         dispatch(appActions.setBgImage({
           bgImage: defaultBG
         }));
@@ -89,7 +105,7 @@ function DesktopMenu({
             Widgets
           </DropdownItem>
           <DropdownItem onClick={randomBackgroundImage}>
-            Random Background
+            {is3d ? "Random 3D Background" : "Random Background"}
           </DropdownItem>
           { isDesktopsEnabled ?  (
             <>
@@ -122,7 +138,7 @@ function DesktopMenu({
         () => {
           // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
           dispatch(modalActions.toggleChangeBackgroundModal());
-        }} data-bs-toggle="tooltip" data-bs-placement="left" title="Set Background" data-bs-custom-className="custom-tooltip">
+        }} data-bs-toggle="tooltip" data-bs-placement="left" title={is3d ? "Set 3D Background" : "Set Background"} data-bs-custom-className="custom-tooltip">
         <Image size={24} color="white" />
       </Button>
     </div>

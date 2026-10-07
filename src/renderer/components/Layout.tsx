@@ -3,13 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { Outlet } from "react-router-dom";
 import log from "loglevel";
 
-import { getItem, setItem } from "../services/persist"
-import { getRandomImage, BG_IMAGE_STORE_KEY } from "../services/unsplash";
 import { appActions } from '../store/app-slice';
 
-import DesktopRepository from '../repository/desktop';
 import WorkspaceRepository from '../repository/workspace';
-
 
 import defaultBG from '../images/default_bg.jpg';
 
@@ -17,17 +13,30 @@ export function Layout() {
   const dispatch = useDispatch();
 
   const bgImage = useSelector((state: any) => state.app.bgImage);
+  const bgImage3d = useSelector((state: any) => state.app.bgImage3d);
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
 
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
 
-  const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
-
   const location = useSelector((state: any) => state.session.location);
+
+  const activeBg =
+    desktopVisualMode === "3d"
+      ? bgImage3d || bgImage || defaultBG
+      : bgImage || defaultBG;
 
   useEffect(() => {
     if(location !== "launchpad"){
       dispatch(appActions.setBgImage({
         bgImage: defaultBG
+      }));
+      dispatch(appActions.setBgImage3d({
+        bgImage3d: defaultBG
       }));
       return;
     }
@@ -39,21 +48,39 @@ export function Layout() {
           bgImage: defaultBG
         }));
       } else {
+        dispatch(appActions.setBgImage({
+          bgImage: workspace.bgImage
+        }));
+      }
 
-        if(workspace.bgImage !== null && workspace.bgImage !== undefined && workspace.bgImage !== ""){
-          dispatch(appActions.setBgImage({
-
-            bgImage: workspace.bgImage
-          }));
-        }
+      if (
+        workspace == null ||
+        workspace.bgImage3d == null ||
+        workspace.bgImage3d === undefined ||
+        workspace.bgImage3d === ""
+      ) {
+        // Fall back to 2D wallpaper until a dedicated 3D image is set
+        dispatch(appActions.setBgImage3d({
+          bgImage3d:
+            workspace?.bgImage && workspace.bgImage !== ""
+              ? workspace.bgImage
+              : defaultBG,
+        }));
+      } else {
+        dispatch(appActions.setBgImage3d({
+          bgImage3d: workspace.bgImage3d
+        }));
       }
     }).catch((error) => {
       dispatch(appActions.setBgImage({
         bgImage: defaultBG
       }));
+      dispatch(appActions.setBgImage3d({
+        bgImage3d: defaultBG
+      }));
     });
 
-  }, [location, workspace]);
+  }, [location, workspace, dispatch]);
 
   function handleKeyDown(e: any){
     if(e.key === "Tab"){
@@ -93,7 +120,7 @@ export function Layout() {
       onContextMenu={(e) => onContextMenu(e)}
       onKeyDown={(e) => handleKeyDown(e)}
     >
-      <div className="bg-image" style={{ backgroundImage: bgImage ? `url(${bgImage})` : 'none' }}  onKeyDown={(e) => handleKeyDown(e)}>
+      <div className="bg-image" style={{ backgroundImage: activeBg ? `url(${activeBg})` : 'none' }}  onKeyDown={(e) => handleKeyDown(e)}>
         {" "}
       </div>
       <div id="wrapper"  onKeyDown={(e) => handleKeyDown(e)}>

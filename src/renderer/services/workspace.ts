@@ -17,6 +17,7 @@ import { SpaceService } from './space';
 import default_bg from "../images/default_bg.jpg";
 import XAppService from './xapp';
 import { focusBuiltinWindow, isBuiltinWindow } from '../builtin';
+import { hydrateDesktop3dZoomsFromWorkspace } from '../util/desktop3dZooms';
 
 export const LOCAL_WORKSPACE_ID = "device";
 export const LOCAL_WORKSPACE_NAME = "Device";
@@ -131,6 +132,7 @@ export class WorkspaceService{
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
         let links = await LinkService.getLinksByWorkspaceIdAndDesktopId(id, desktop.id);
         dispatch(workspaceActions.selectWorkspace({ workspace: workspace }));
+        hydrateDesktop3dZoomsFromWorkspace(dispatch, workspace);
         dispatch(workspaceActions.setDesktops({ desktops: desktops }));
         dispatch(workspaceActions.selectDesktop({desktop: desktop}));
         dispatch(workspaceActions.setApps({ apps: _apps }));
@@ -191,6 +193,7 @@ export class WorkspaceService{
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
         let links = await LinkService.getLinksByWorkspaceIdAndDesktopId(id, desktop.id);
         dispatch(workspaceActions.selectWorkspace({ workspace: workspace }));
+        hydrateDesktop3dZoomsFromWorkspace(dispatch, workspace);
         dispatch(workspaceActions.setDesktops({ desktops: desktops }));
         dispatch(workspaceActions.selectDesktop({desktop: desktop}));
         dispatch(workspaceActions.setApps({ apps: _apps }));

@@ -27,6 +27,22 @@ const settingsSlice = createSlice({
       { value: 60, label: '1 hour' }
     ],
     isKeepActiveWindowTabsAwake: false,
+    /** Desktop presentation: classic 2D home vs 3D Desktop */
+    desktopVisualMode: "2d" as "2d" | "3d",
+    /** 3D mode: Cover/Mission/Ring use wallpaper; Scene uses control-room env */
+    desktop3dLayout: "coverflow" as
+      | "coverflow"
+      | "mission"
+      | "ring"
+      | "scene",
+    /** Persisted overview camera distance for Scene mode (null = default) */
+    desktop3dSceneZoomDistance: null as number | null,
+    /** Persisted Ring camera distance past the front card (null = default) */
+    desktop3dRingZoomDistance: null as number | null,
+    /** Persisted Ring view pitch in radians (null = flat default) */
+    desktop3dRingViewPitch: null as number | null,
+    /** Persisted Mission camera Z distance (null = default) */
+    desktop3dMissionZoomDistance: null as number | null,
   },
   reducers: {
     toggleWorkspaces(state, action) {
@@ -115,6 +131,97 @@ const settingsSlice = createSlice({
     },
     setKeepActiveWindowTabsAwake(state, action) {
       state.isKeepActiveWindowTabsAwake = action.payload;
+    },
+    setDesktopVisualMode(state, action) {
+      state.desktopVisualMode = action.payload === "3d" ? "3d" : "2d";
+    },
+    toggleDesktopVisualMode(state) {
+      state.desktopVisualMode =
+        state.desktopVisualMode === "3d" ? "2d" : "3d";
+    },
+    setDesktop3dLayout(state, action) {
+      const layout = action.payload;
+      if (
+        layout === "coverflow" ||
+        layout === "mission" ||
+        layout === "ring" ||
+        layout === "scene"
+      ) {
+        state.desktop3dLayout = layout;
+      }
+    },
+    setDesktop3dSceneZoomDistance(state, action) {
+      const d = action.payload;
+      if (d == null || d === undefined) {
+        state.desktop3dSceneZoomDistance = null;
+        return;
+      }
+      const n = Number(d);
+      if (!Number.isFinite(n)) return;
+      state.desktop3dSceneZoomDistance = Math.min(40, Math.max(0.2, n));
+    },
+    setDesktop3dRingZoomDistance(state, action) {
+      const d = action.payload;
+      if (d == null || d === undefined) {
+        state.desktop3dRingZoomDistance = null;
+        return;
+      }
+      const n = Number(d);
+      if (!Number.isFinite(n)) return;
+      state.desktop3dRingZoomDistance = Math.min(16, Math.max(2.4, n));
+    },
+    setDesktop3dRingViewPitch(state, action) {
+      const d = action.payload;
+      if (d == null || d === undefined) {
+        state.desktop3dRingViewPitch = null;
+        return;
+      }
+      const n = Number(d);
+      if (!Number.isFinite(n)) return;
+      state.desktop3dRingViewPitch = Math.min(0.95, Math.max(-0.35, n));
+    },
+    setDesktop3dMissionZoomDistance(state, action) {
+      const d = action.payload;
+      if (d == null || d === undefined) {
+        state.desktop3dMissionZoomDistance = null;
+        return;
+      }
+      const n = Number(d);
+      if (!Number.isFinite(n)) return;
+      state.desktop3dMissionZoomDistance = Math.min(30, Math.max(4.5, n));
+    },
+    /** Hydrate all layout zooms when switching space (nulls = use defaults) */
+    setDesktop3dLayoutZooms(state, action) {
+      const z = action.payload || {};
+      const clampOrNull = (v: unknown, min: number, max: number) => {
+        if (v == null || v === undefined) return null;
+        const n = Number(v);
+        if (!Number.isFinite(n)) return null;
+        return Math.min(max, Math.max(min, n));
+      };
+      state.desktop3dSceneZoomDistance = clampOrNull(z.scene, 0.2, 40);
+      state.desktop3dRingZoomDistance = clampOrNull(z.ring, 2.4, 16);
+      state.desktop3dRingViewPitch = clampOrNull(z.ringPitch, -0.35, 0.95);
+      state.desktop3dMissionZoomDistance = clampOrNull(z.mission, 4.5, 30);
+    },
+    // Back-compat aliases (older launchpad* naming)
+    setLaunchpadVisualMode(state, action) {
+      state.desktopVisualMode = action.payload === "3d" ? "3d" : "2d";
+    },
+    toggleLaunchpadVisualMode(state) {
+      state.desktopVisualMode =
+        state.desktopVisualMode === "3d" ? "2d" : "3d";
+    },
+    setLaunchpad3dLayout(state, action) {
+      const layout = action.payload;
+      if (
+        layout === "coverflow" ||
+        layout === "mission" ||
+        layout === "ring" ||
+        layout === "scene"
+      ) {
+        state.desktop3dLayout = layout;
+      }
     },
   },
 });

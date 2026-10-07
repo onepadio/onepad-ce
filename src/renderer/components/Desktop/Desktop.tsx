@@ -18,8 +18,9 @@ import { Robot } from "react-bootstrap-icons";
 
 import Widget from "./Widget";
 import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
+import Desktop3D from "./Desktop3D";
+import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
 import { aiAppsActions } from "renderer/store/ai-slice";
-import SpaceStatsWidget from "../SpaceStatsWidget/SpaceStatsWidget";
 import Pages from "../Pages/Pages";
 import AppsOverlayMenu from "../NavBarApps/AppsOverlayMenu";
 import BrowserTabSwitcher from "../NavBarApps/BrowserTabSwitcher";
@@ -52,6 +53,13 @@ function Desktop(props) {
   const isDesktopsEnabled = useSelector(
     (state: any) => state.settings.isDesktopsEnabled
   );
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+  const is3dDesktop = desktopVisualMode === "3d";
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const items = useSelector((state: any) => state.workspace.items);
   const openWindows = useSelector((state: any) => state.session.openWindows);
@@ -528,14 +536,21 @@ function Desktop(props) {
 
   return (
     <>
-      {activeTabId === "launchpad" && (
+      {activeTabId === "launchpad" &&
+        (is3dDesktop ? (
+          <Desktop3D
+            id={props.id}
+            name={name}
+            isLaunchpadActive={isLaunchpadActive}
+          />
+        ) : (
         <div
           id={props.id}
           className={`w-100 space-container ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}
         >
           <DesktopMenu />
-          <div className={`desktop-top-controls d-flex justify-content-center align-items-center ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
-
+          <div className={`desktop-top-controls d-flex align-items-center ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
+            <Desktop3DChrome showLayoutControls={false} />
             <Button
               color="dark"
               onClick={() => dispatch(aiAppsActions.toggle("ai"))}
@@ -636,9 +651,8 @@ function Desktop(props) {
               </div>
             </div>
           </div>
-          <SpaceStatsWidget />
         </div>
-      )}
+        ))}
       
       <AppsOverlayMenu
         apps={apps}

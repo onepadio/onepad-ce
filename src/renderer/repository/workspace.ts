@@ -102,6 +102,21 @@ export default class WorkspaceRepository {
         });
     }
 
+    static updateBackgroundImage3d(id: any, data: any) {
+        return new Promise((resolve, reject) => {
+            // @ts-expect-error
+            db.workspaces.update(id, {
+                bgImage3d: data,
+                updatedAt: Date.now(),
+                version: uuidv4(),
+            }).then((id: any) => {
+                resolve(id);
+            }).catch((error: any) => {
+                reject(error);
+            });
+        });
+    }
+
     static updateConfig(id: any, config: any) {
         return new Promise((resolve, reject) => {
             // @ts-expect-error

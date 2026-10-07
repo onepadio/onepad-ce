@@ -113,6 +113,20 @@ function SettingsCanvas() {
     (state: any) => state.settings.isKeepActiveWindowTabsAwake
   );
 
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+
+  const desktop3dLayout = useSelector(
+    (state: any) =>
+      state.settings.desktop3dLayout ||
+      state.settings.launchpad3dLayout ||
+      "coverflow"
+  );
+
   
   const productName = useSelector((state: any) => state.user.product);
 
@@ -182,6 +196,17 @@ function SettingsCanvas() {
           if (settings.isKeepActiveWindowTabsAwake !== undefined) {
             dispatch(settingsActions.setKeepActiveWindowTabsAwake(settings.isKeepActiveWindowTabsAwake));
           }
+          if (settings.desktopVisualMode !== undefined) {
+            dispatch(settingsActions.setDesktopVisualMode(settings.desktopVisualMode));
+          } else if (settings.launchpadVisualMode !== undefined) {
+            dispatch(settingsActions.setDesktopVisualMode(settings.launchpadVisualMode));
+          }
+          if (settings.desktop3dLayout !== undefined) {
+            dispatch(settingsActions.setDesktop3dLayout(settings.desktop3dLayout));
+          } else if (settings.launchpad3dLayout !== undefined) {
+            dispatch(settingsActions.setDesktop3dLayout(settings.launchpad3dLayout));
+          }
+          // Layout zooms are stored per space (workspace.config.desktop3dZooms)
         }
       } catch (error) {
         console.error("Failed to load user settings:", error);
@@ -213,6 +238,8 @@ function SettingsCanvas() {
           isSleepingTabsEnabled,
           sleepingTabsTimeout,
           isKeepActiveWindowTabsAwake,
+          desktopVisualMode,
+          desktop3dLayout,
         });
       } catch (error) {
         console.error("Failed to save user settings:", error);
@@ -237,6 +264,8 @@ function SettingsCanvas() {
     isSleepingTabsEnabled,
     sleepingTabsTimeout,
     isKeepActiveWindowTabsAwake,
+    desktopVisualMode,
+    desktop3dLayout,
   ]);
 
   return (
@@ -281,6 +310,69 @@ function SettingsCanvas() {
                 </Col>
               </Row>
             </FormGroup>
+
+            <ListGroup
+              horizontal
+              className="open-windows mt-3 justify-content-start"
+            >
+              <ListGroupItem className="d-flex container">
+                <h6 className="mt-2">Desktop View</h6>
+              </ListGroupItem>
+            </ListGroup>
+            <FormGroup switch>
+              <Row>
+                <Col md={9}>
+                  <Label className="ml-1 mt-2 mb-2" check>
+                    Use 3D Desktop (apps & tab switchers)
+                  </Label>
+                </Col>
+                <Col className="container">
+                  <div className="d-flex justify-content-end">
+                    <Input
+                      type="switch"
+                      className="m-2"
+                      checked={desktopVisualMode === "3d"}
+                      onChange={() => {
+                        dispatch(
+                          settingsActions.setDesktopVisualMode(
+                            desktopVisualMode === "3d" ? "2d" : "3d"
+                          )
+                        );
+                      }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </FormGroup>
+            {desktopVisualMode === "3d" && (
+              <FormGroup>
+                <Row>
+                  <Col md={9}>
+                    <Label className="ml-1 mt-2 mb-2">3D layout / scene</Label>
+                  </Col>
+                  <Col className="container">
+                    <div className="d-flex justify-content-end">
+                      <Input
+                        type="select"
+                        className="m-2"
+                        style={{ maxWidth: 180 }}
+                        value={desktop3dLayout}
+                        onChange={(e) => {
+                          dispatch(
+                            settingsActions.setDesktop3dLayout(e.target.value)
+                          );
+                        }}
+                      >
+                        <option value="coverflow">Cover (wallpaper)</option>
+                        <option value="mission">Mission (wallpaper)</option>
+                        <option value="ring">Ring (wallpaper)</option>
+                        <option value="scene">Scene (control room)</option>
+                      </Input>
+                    </div>
+                  </Col>
+                </Row>
+              </FormGroup>
+            )}
 
             <ListGroup
               horizontal

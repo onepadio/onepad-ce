@@ -10,6 +10,8 @@ const appSlice = createSlice({
     profileId: "",
     selectedProfile: {},
     bgImage: defaultBG,
+    /** Separate wallpaper used when Desktop is in 3D mode (Cover/Mission/Ring) */
+    bgImage3d: defaultBG,
     platform: "",
     version: "",
     hostname: "",
@@ -72,6 +74,9 @@ const appSlice = createSlice({
     },
     setBgImage(state, action) {
       state.bgImage = action.payload.bgImage;
+    },
+    setBgImage3d(state, action) {
+      state.bgImage3d = action.payload.bgImage3d ?? action.payload.bgImage ?? defaultBG;
     },
     setPlatform(state, action) {
       state.platform = action.payload;

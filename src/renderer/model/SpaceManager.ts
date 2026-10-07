@@ -38,7 +38,27 @@ export class SpaceManager{
             // @ts-expect-error TS(2571): Object is of type 'unknown'.
             dispatch(settingsActions.setExternalWindowMode(profile.settings.isExternalWindowMode));
             // @ts-expect-error TS(2571): Object is of type 'unknown'.
-            dispatch(settingsActions.setEfficiencyModeEnabled(profile.settings.isEfficiencyModeEnabled));  
+            dispatch(settingsActions.setEfficiencyModeEnabled(profile.settings.isEfficiencyModeEnabled));
+            // @ts-expect-error TS(2571): Object is of type 'unknown'.
+            if (profile.settings.desktopVisualMode !== undefined) {
+              // @ts-expect-error TS(2571): Object is of type 'unknown'.
+              dispatch(settingsActions.setDesktopVisualMode(profile.settings.desktopVisualMode));
+            // @ts-expect-error TS(2571): Object is of type 'unknown'.
+            } else if (profile.settings.launchpadVisualMode !== undefined) {
+              // @ts-expect-error TS(2571): Object is of type 'unknown'.
+              dispatch(settingsActions.setDesktopVisualMode(profile.settings.launchpadVisualMode));
+            }
+            // @ts-expect-error TS(2571): Object is of type 'unknown'.
+            if (profile.settings.desktop3dLayout !== undefined) {
+              // @ts-expect-error TS(2571): Object is of type 'unknown'.
+              dispatch(settingsActions.setDesktop3dLayout(profile.settings.desktop3dLayout));
+            // @ts-expect-error TS(2571): Object is of type 'unknown'.
+            } else if (profile.settings.launchpad3dLayout !== undefined) {
+              // @ts-expect-error TS(2571): Object is of type 'unknown'.
+              dispatch(settingsActions.setDesktop3dLayout(profile.settings.launchpad3dLayout));
+            }
+            // Layout zooms are hydrated per space from workspace.config.desktop3dZooms
+            // when the workspace is selected (see hydrateDesktop3dZoomsFromWorkspace).
           }
         });
     }

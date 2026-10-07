@@ -1,0 +1,219 @@
+.launchpad-3d-root {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 280px);
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  top: 120px;
+}
+
+.launchpad-3d-root-embed {
+  height: 100%;
+  min-height: 0;
+}
+
+.launchpad-3d-root-fullscreen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.launchpad-3d-stage-fullscreen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+
+.launchpad-3d-header {
+  padding: 0 8px 4px;
+  z-index: 2;
+}
+
+.launchpad-3d-workspace-name {
+  color: rgba(249, 249, 249, 0.85);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.launchpad-3d-divider {
+  height: 1px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.28);
+  margin: 10px 0 4px;
+}
+
+.launchpad-3d-stage {
+  flex: 1;
+  width: 100%;
+  min-height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  touch-action: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(30, 40, 60, 0.35) 0%,
+    rgba(8, 10, 16, 0.15) 70%,
+    transparent 100%
+  );
+}
+
+.launchpad-3d-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  min-height: 200px;
+}
+
+.launchpad-3d-icon-bridge {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: -1px;
+}
+
+.desktop-3d-chrome,
+.launchpad-3d-chrome {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desktop-3d-chrome-group,
+.launchpad-3d-chrome-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(12, 14, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.desktop-3d-chrome-btn,
+.launchpad-3d-chrome-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 560;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.desktop-3d-chrome-btn:hover,
+.launchpad-3d-chrome-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-3d-chrome-btn.active,
+.launchpad-3d-chrome-btn.active {
+  color: #0d1118;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.desktop-3d-chrome-compact .desktop-3d-chrome-btn,
+.launchpad-3d-chrome-compact .launchpad-3d-chrome-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.launchpad-3d-card-label {
+  text-align: center;
+  min-width: 120px;
+  max-width: 220px;
+  pointer-events: none;
+}
+
+.launchpad-3d-card-title {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.launchpad-3d-card-subtitle {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tab switcher 3D overlay */
+.tab-switcher-3d {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  width: min(920px, calc(100vw - 32px));
+  height: min(420px, 52vh);
+  z-index: 1998;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  animation: tabSwitcher3dIn 0.18s ease-out;
+}
+
+@keyframes tabSwitcher3dIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.tab-switcher-3d-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(16, 18, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.tab-switcher-3d-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 10px 0;
+  z-index: 2;
+}
+
+.tab-switcher-3d-stage {
+  flex: 1;
+  width: 100%;
+  min-height: 280px;
+}

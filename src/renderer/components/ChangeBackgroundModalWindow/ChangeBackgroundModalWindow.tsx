@@ -2,24 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import log from "loglevel";
 
-import { getRandomImage, BG_IMAGE_STORE_KEY } from "../../services/unsplash";
+import { BG_IMAGE_STORE_KEY } from "../../services/unsplash";
 import { setItem } from "../../services/persist";
 
 import { modalActions } from "../../store/modal-slice";
-
-import { updateWorkspace } from "../../api/WorkspaceApi";
-import {
-  updateWorkspacesAndGoToSelected,
-  setBackgroundImageForLocalWorkspace,
-} from "../../services/workspace";
-
-import {
-  Button,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-} from "reactstrap";
 
 import default_bg from "../../images/default_bg.jpg";
 import BgSelectorDropDown from "../BgSelectorDropDown/BgSelectorDropDown";
@@ -30,12 +16,14 @@ import { appActions } from "../../store/app-slice";
 function ChangeBackgroundModalWindow(props: any) {
   const dispatch = useDispatch();
 
-  const userId = useSelector((state: any) => state.user.id);
-
-  const isLocal = useSelector((state: any) => state.workspace.isLocal);
-
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
-  const [name, setName] = useState("");
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+  const is3d = desktopVisualMode === "3d";
   const [bgImage, setBgImage] = useState("");
 
   const isChangeBackgroundModalOpen = useSelector(
@@ -48,16 +36,29 @@ function ChangeBackgroundModalWindow(props: any) {
   };
 
   function save(image: any) {
+    if (!workspace?.id) return;
     setItem(BG_IMAGE_STORE_KEY, image);
-    WorkspaceRepository.updateBackgroundImage(workspace.id, image).then((workspaceId) => {
-      dispatch(appActions.setBgImage({
-        bgImage: image
-      }));
-    }).catch((error) => {
-      dispatch(appActions.setBgImage({
-        bgImage: default_bg
-      }));
-    });
+
+    if (is3d) {
+      WorkspaceRepository.updateBackgroundImage3d(workspace.id, image)
+        .then(() => {
+          dispatch(appActions.setBgImage3d({ bgImage3d: image }));
+        })
+        .catch((error) => {
+          log.error(error);
+          dispatch(appActions.setBgImage3d({ bgImage3d: default_bg }));
+        });
+      return;
+    }
+
+    WorkspaceRepository.updateBackgroundImage(workspace.id, image)
+      .then(() => {
+        dispatch(appActions.setBgImage({ bgImage: image }));
+      })
+      .catch((error) => {
+        log.error(error);
+        dispatch(appActions.setBgImage({ bgImage: default_bg }));
+      });
   }
 
   function onBgSelected(value: any) {
@@ -66,7 +67,6 @@ function ChangeBackgroundModalWindow(props: any) {
 
   useEffect(() => {
     if (isChangeBackgroundModalOpen) {
-      setName("");
       setBgImage(default_bg);
     }
   }, [isChangeBackgroundModalOpen]);
@@ -83,7 +83,7 @@ function ChangeBackgroundModalWindow(props: any) {
       />
       <div className="background-sidebar">
         <div className="sidebar-header">
-          <h3>Background Image</h3>
+          <h3>{is3d ? "3D Desktop Background" : "Background Image"}</h3>
           <button 
             className="sidebar-close-btn" 
             onClick={toggleChangeBackgroundModal}
@@ -95,7 +95,7 @@ function ChangeBackgroundModalWindow(props: any) {
         <div className="sidebar-body">
           <BgSelectorDropDown
             bgImage={bgImage}
-            onClick={(value) => onBgSelected(value)}
+            onClick={(value: any) => onBgSelected(value)}
           />
         </div>
       </div>

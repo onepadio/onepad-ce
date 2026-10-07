@@ -16,6 +16,14 @@ export interface UserSettings {
   isSleepingTabsEnabled?: boolean;
   sleepingTabsTimeout?: number;
   isKeepActiveWindowTabsAwake?: boolean;
+  desktopVisualMode?: "2d" | "3d";
+  desktop3dLayout?: "coverflow" | "mission" | "ring" | "scene";
+  /** Scene overview camera distance from look-at */
+  desktop3dSceneZoomDistance?: number | null;
+  /** @deprecated prefer desktopVisualMode */
+  launchpadVisualMode?: "2d" | "3d";
+  /** @deprecated prefer desktop3dLayout */
+  launchpad3dLayout?: "coverflow" | "mission" | "ring" | "scene";
 }
 
 export class UserSettingsService {
