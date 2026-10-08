@@ -146,12 +146,14 @@ function CircularArenaEnvironment({ count }: CircularArenaProps) {
   const n = Math.max(count, 1);
   const radius = getArenaRadius(n);
   const { rows } = getSceneGrid(n);
-  const wallHeight = 3.4 + rows * 1.15;
+  // Tall enough for single-row large screens
+  const wallHeight = Math.max(5.2, 3.6 + rows * 1.15);
   const wallTop = ARENA_FLOOR_Y + wallHeight + 0.15;
   const wallY = ARENA_FLOOR_Y + wallHeight / 2 + 0.15;
   // Hemisphere equator sits on the wall rim; apex opens the space sky above
   const domeY = wallTop;
-  const domeRadius = Math.max(radius + 1.35, wallHeight * 0.95);
+  // Keep dome outside the recessed wall cylinder
+  const domeRadius = Math.max(radius + 4.0, wallHeight * 0.95);
 
   const spaceMap = useTexture(spaceDomeUrl);
   useEffect(() => {
@@ -237,10 +239,14 @@ function CircularArenaEnvironment({ count }: CircularArenaProps) {
         <ringGeometry args={[1.1, 1.45, 48]} />
       </mesh>
 
-      {/* Panelled cylindrical wall */}
+      {/*
+        Wall sits well behind the screen ring so curvature is gentle in FOV.
+        Close walls + cartesian camera lerp made the grid look like it was bending
+        while turning.
+      */}
       <mesh position={[0, wallY, 0]} material={wallMat} receiveShadow>
         <cylinderGeometry
-          args={[radius + 0.35, radius + 0.35, wallHeight, 64, 1, true]}
+          args={[radius + 3.2, radius + 3.2, wallHeight, 96, 1, true]}
         />
       </mesh>
 

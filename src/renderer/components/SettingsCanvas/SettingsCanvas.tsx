@@ -333,46 +333,18 @@ function SettingsCanvas() {
                       className="m-2"
                       checked={desktopVisualMode === "3d"}
                       onChange={() => {
-                        dispatch(
-                          settingsActions.setDesktopVisualMode(
-                            desktopVisualMode === "3d" ? "2d" : "3d"
-                          )
-                        );
+                        const next =
+                          desktopVisualMode === "3d" ? "2d" : "3d";
+                        dispatch(settingsActions.setDesktopVisualMode(next));
+                        if (next === "3d") {
+                          dispatch(settingsActions.setDesktop3dLayout("scene"));
+                        }
                       }}
                     />
                   </div>
                 </Col>
               </Row>
             </FormGroup>
-            {desktopVisualMode === "3d" && (
-              <FormGroup>
-                <Row>
-                  <Col md={9}>
-                    <Label className="ml-1 mt-2 mb-2">3D layout / scene</Label>
-                  </Col>
-                  <Col className="container">
-                    <div className="d-flex justify-content-end">
-                      <Input
-                        type="select"
-                        className="m-2"
-                        style={{ maxWidth: 180 }}
-                        value={desktop3dLayout}
-                        onChange={(e) => {
-                          dispatch(
-                            settingsActions.setDesktop3dLayout(e.target.value)
-                          );
-                        }}
-                      >
-                        <option value="coverflow">Cover (wallpaper)</option>
-                        <option value="mission">Mission (wallpaper)</option>
-                        <option value="ring">Ring (wallpaper)</option>
-                        <option value="scene">Scene (control room)</option>
-                      </Input>
-                    </div>
-                  </Col>
-                </Row>
-              </FormGroup>
-            )}
 
             <ListGroup
               horizontal

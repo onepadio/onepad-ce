@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Image } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
 
 import type { CardPose, LaunchPadCard } from "./types";
 import { useCardTexture } from "./useCardTextures";
+import { registerPlane, unregisterPlane } from "./planeRegistry";
 
 const CARD_WIDTH = 2.4;
 const CARD_HEIGHT = 1.5;
+/** Centered favicon/app icon size when there is no screenshot/webview */
+const ICON_SIZE = 0.55;
+/** Corner radius for the centered icon (world units) */
+const ICON_RADIUS = 0.12;
 
 interface CardMeshProps {
   card: LaunchPadCard;
@@ -22,6 +28,10 @@ interface CardMeshProps {
   moveDuration?: number;
   /** When true, pointer-down won't start stage drag/pan (Mission) */
   blockStageDrag?: boolean;
+  /** Register this plane for live DOM webview projection */
+  projectWebView?: boolean;
+  /** Hide texture (live webview drawn on top) */
+  contentTransparent?: boolean;
 }
 
 function CardMesh({
@@ -34,12 +44,24 @@ function CardMesh({
   variant = "card",
   moveDuration,
   blockStageDrag = false,
+  projectWebView = false,
+  contentTransparent = false,
 }: CardMeshProps) {
   const groupRef = useRef<THREE.Group>(null);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
-  const { texture, failed } = useCardTexture(card.imageUrl);
+  const isIconPreview = card.previewMode === "icon";
+  const { texture, failed } = useCardTexture(
+    contentTransparent ? null : card.imageUrl
+  );
   const isScreen = variant === "screen";
   const duration = moveDuration ?? (isScreen ? 0.35 : 0.45);
+
+  useEffect(() => {
+    if (!projectWebView) return;
+    const g = groupRef.current;
+    if (g) registerPlane(card.id, g);
+    return () => unregisterPlane(card.id);
+  }, [card.id, projectWebView]);
   const target = useRef({
     x: pose.position[0],
     y: pose.position[1],
@@ -81,13 +103,22 @@ function CardMesh({
     }
   });
 
+  // Screen/monitor bezel stays dark — light gray (#cfd6e0) was showing through
+  // behind projected webviews. Launchpad cards keep the brighter plate.
   const color = useMemo(() => {
+    if (isScreen) {
+      if (card.isActive || focused) return "#1a2333";
+      return "#121820";
+    }
     if (card.isActive) return "#4ea1ff";
     if (focused) return "#ffffff";
     return "#cfd6e0";
-  }, [card.isActive, focused]);
+  }, [card.isActive, focused, isScreen]);
 
-  const showPlaceholder = !texture || failed;
+  // Icon-only cards: dark panel + small centered icon (never stretch favicon full-bleed)
+  const useIconLayout = !contentTransparent && isIconPreview;
+  const showPlaceholder =
+    !contentTransparent && useIconLayout && (!texture || failed);
 
   return (
     <group
@@ -117,37 +148,69 @@ function CardMesh({
         <planeGeometry args={[CARD_WIDTH, CARD_HEIGHT]} />
         <meshStandardMaterial
           ref={matRef}
-          map={texture || undefined}
-          color={showPlaceholder ? "#1a2433" : "#ffffff"}
+          map={
+            contentTransparent || useIconLayout
+              ? undefined
+              : texture || undefined
+          }
+          color={
+            contentTransparent || useIconLayout
+              ? "#0a1018"
+              : showPlaceholder
+                ? "#1a2433"
+                : "#ffffff"
+          }
           transparent
-          opacity={pose.opacity}
+          opacity={contentTransparent ? 0.06 : pose.opacity}
           roughness={isScreen ? 0.35 : 0.55}
           metalness={isScreen ? 0.15 : 0.05}
           emissive={isScreen ? "#1a6cff" : "#000000"}
           emissiveIntensity={0}
           side={THREE.DoubleSide}
           toneMapped={!isScreen}
+          depthWrite={!contentTransparent}
         />
       </mesh>
 
       <mesh position={[0, 0, -0.012]}>
         <planeGeometry
           args={[
-            CARD_WIDTH + (isScreen ? 0.08 : 0.06),
-            CARD_HEIGHT + (isScreen ? 0.08 : 0.06),
+            CARD_WIDTH + (isScreen ? 0.06 : 0.06),
+            CARD_HEIGHT + (isScreen ? 0.06 : 0.06),
           ]}
         />
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={focused ? (isScreen ? 0.75 : 0.55) : isScreen ? 0.12 : 0.2}
+          opacity={
+            isScreen
+              ? focused
+                ? 0.55
+                : 0.35
+              : focused
+                ? 0.55
+                : 0.2
+          }
         />
       </mesh>
 
+      {/* Small centered favicon / app icon when no screenshot or live webview */}
+      {useIconLayout && texture && !failed && (
+        <Image
+          texture={texture}
+          scale={[ICON_SIZE, ICON_SIZE]}
+          position={[0, 0, 0.02]}
+          radius={ICON_RADIUS}
+          transparent
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
+      )}
+
       {showPlaceholder && (
-        <mesh position={[0, 0.05, 0.02]}>
-          <planeGeometry args={[0.55, 0.55]} />
-          <meshBasicMaterial color="#6b778c" />
+        <mesh position={[0, 0, 0.02]}>
+          <planeGeometry args={[ICON_SIZE, ICON_SIZE]} />
+          <meshBasicMaterial color="#6b778c" transparent opacity={0.85} />
         </mesh>
       )}
 

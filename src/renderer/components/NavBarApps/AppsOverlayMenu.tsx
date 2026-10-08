@@ -102,13 +102,6 @@ function AppsOverlayMenu({
       state.settings.launchpadVisualMode ||
       "2d"
   );
-  const desktop3dLayout = useSelector(
-    (state: any) =>
-      state.settings.desktop3dLayout ||
-      state.settings.launchpad3dLayout ||
-      "coverflow"
-  );
-
   useEffect(() => {
     suppressAutoHideRef.current = suppressAutoHide;
   }, [suppressAutoHide]);
@@ -250,20 +243,6 @@ function AppsOverlayMenu({
       <div class="context-menu-item toggle-visual-mode">
         <span>${is3d ? 'Switch to 2D Desktop' : 'Switch to 3D Desktop'}</span>
       </div>
-      ${is3d ? `
-      <div class="context-menu-item set-layout-coverflow${desktop3dLayout === 'coverflow' ? ' active' : ''}">
-        <span>Cover (wallpaper)</span>
-      </div>
-      <div class="context-menu-item set-layout-mission${desktop3dLayout === 'mission' ? ' active' : ''}">
-        <span>Mission (wallpaper)</span>
-      </div>
-      <div class="context-menu-item set-layout-ring${desktop3dLayout === 'ring' ? ' active' : ''}">
-        <span>Ring (wallpaper)</span>
-      </div>
-      <div class="context-menu-item set-layout-scene${desktop3dLayout === 'scene' ? ' active' : ''}">
-        <span>Scene (control room)</span>
-      </div>
-      ` : ''}
     `;
     
     menu.style.position = "fixed";
@@ -310,26 +289,12 @@ function AppsOverlayMenu({
     });
 
     menu.querySelector(".toggle-visual-mode")?.addEventListener("click", () => {
-      dispatch(
-        settingsActions.setDesktopVisualMode(is3d ? "2d" : "3d")
-      );
-      removeMenu();
-    });
-
-    menu.querySelector(".set-layout-coverflow")?.addEventListener("click", () => {
-      dispatch(settingsActions.setDesktop3dLayout("coverflow"));
-      removeMenu();
-    });
-    menu.querySelector(".set-layout-mission")?.addEventListener("click", () => {
-      dispatch(settingsActions.setDesktop3dLayout("mission"));
-      removeMenu();
-    });
-    menu.querySelector(".set-layout-ring")?.addEventListener("click", () => {
-      dispatch(settingsActions.setDesktop3dLayout("ring"));
-      removeMenu();
-    });
-    menu.querySelector(".set-layout-scene")?.addEventListener("click", () => {
-      dispatch(settingsActions.setDesktop3dLayout("scene"));
+      if (is3d) {
+        dispatch(settingsActions.setDesktopVisualMode("2d"));
+      } else {
+        dispatch(settingsActions.setDesktopVisualMode("3d"));
+        dispatch(settingsActions.setDesktop3dLayout("scene"));
+      }
       removeMenu();
     });
 

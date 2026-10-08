@@ -9,7 +9,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, ContactShadows, OrbitControls } from "@react-three/drei";
 import gsap from "gsap";
 import * as THREE from "three";
@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import CardMesh from "./CardMesh";
 import ControlRoomEnvironment from "./ControlRoomEnvironment";
 import MonitorBank from "./MonitorBank";
+import WebViewProjector from "./WebViewProjector";
 import {
   computeCardPose,
   getCameraTargetForLayout,
@@ -32,12 +33,90 @@ import {
   getMissionDefaultZoom,
   clampMissionZoom,
 } from "./layouts/layoutMath";
-import { ARENA_FLOOR_Y, getArenaRadius } from "./layouts/roomScreens";
+import {
+  ARENA_FLOOR_Y,
+  getArenaRadius,
+  getSceneFrontIndex,
+  dragDeltaToSceneAngle,
+  snapSceneAngle,
+} from "./layouts/roomScreens";
+import { setVisibleSceneWindowIds } from "./sceneVisibility";
 import type { LaunchPadCard, Launchpad3dLayoutId } from "./types";
 import { persistDesktop3dZoomForWorkspace } from "../../util/desktop3dZooms";
+import {
+  getSortedTabIdsForWindow,
+  switchAppTab,
+  switchBrowserTab,
+} from "../../util/browserTabGroups";
+import { OTHERS_BROWSER_CARD_ID } from "./othersBrowser";
 
 /** Soft cap for wallpaper layouts (ring / mission / cover) */
 const WALLPAPER_CARD_MAX = 48;
+
+/** True when the pointer is over the focused HUD webview (guest should own scroll). */
+function isPointerOverFocusedWebView(
+  clientX: number,
+  clientY: number,
+  frontCardId: string | null
+): boolean {
+  const hit = document.elementFromPoint(clientX, clientY) as Element | null;
+  if (hit) {
+    const tag = hit.tagName?.toLowerCase?.() || "";
+    if (tag === "webview" || hit.closest?.("webview")) return true;
+    if (hit.closest?.("[data-desktop3d-webview]")) return true;
+  }
+  if (!frontCardId) return false;
+  const host = document.querySelector(
+    `[data-desktop3d-webview="${frontCardId}"]`
+  ) as HTMLElement | null;
+  if (!host) return false;
+  const r = host.getBoundingClientRect();
+  return (
+    clientX >= r.left &&
+    clientX <= r.right &&
+    clientY >= r.top &&
+    clientY <= r.bottom
+  );
+}
+
+function resolveCardWindowId(
+  cardId: string | null | undefined,
+  openWindows: Record<string, any>,
+  activeWindowId: string | null | undefined
+): string | null {
+  if (!cardId || cardId === "launchpad") return null;
+  if (cardId === OTHERS_BROWSER_CARD_ID) {
+    if (activeWindowId && openWindows[activeWindowId]?.type === "browser") {
+      return activeWindowId;
+    }
+    return (
+      Object.keys(openWindows).find(
+        (id) => openWindows[id]?.type === "browser"
+      ) || null
+    );
+  }
+  return openWindows[cardId] ? cardId : null;
+}
+
+/** Truncate long label text (page title or URL); full value stays in tooltip. */
+function formatCardSubtitle(raw: string, maxLen = 48): string {
+  const s = (raw || "").trim();
+  if (!s) return "";
+  // Prefer compact host/path when the subtitle is a bare URL
+  if (/^https?:\/\//i.test(s) || /^www\./i.test(s)) {
+    try {
+      const u = new URL(s.includes("://") ? s : `https://${s}`);
+      const host = u.host.replace(/^www\./, "");
+      const path = `${u.pathname}${u.search}`.replace(/\/$/, "") || "";
+      const full = path && path !== "/" ? `${host}${path}` : host;
+      if (full.length <= maxLen) return full;
+      return `${full.slice(0, maxLen - 1)}…`;
+    } catch {
+      /* fall through */
+    }
+  }
+  return s.length <= maxLen ? s : `${s.slice(0, maxLen - 1)}…`;
+}
 
 export interface Desktop3DHudSlots {
   top?: ReactNode;
@@ -61,6 +140,20 @@ interface SceneProps {
   missionZoomDistance: number;
   ringViewPitch: number;
   workspace: any;
+  /** Project live DOM webviews onto screen planes */
+  projectWebViews?: boolean;
+  /** Notify parent when camera zooms to a card (window desktop HUD) */
+  onZoomedChange?: (zoomed: boolean, cardId: string | null) => void;
+  /** External request to zoom to this card id (dock / session focus) */
+  externalZoomCardId?: string | null;
+  /** When true, leave focus (overview) */
+  externalClearZoom?: boolean;
+  /** Esc / click-outside: deactivate the active window (back to launchpad session) */
+  onDeactivateFront?: () => void;
+  /** Continuous scene ring rotation angle offset from drag (radians) */
+  sceneAngleOffset?: number;
+  /** Reset scene rotation offset to 0 (called on card select) */
+  onResetSceneAngle?: () => void;
 }
 
 function CameraRig({
@@ -78,6 +171,7 @@ function CameraRig({
   browseOffset = 0,
   ringZoomCardIndex = -1,
   ringZoomPhase = null,
+  sceneAngleOffset = 0,
 }: {
   layout: Launchpad3dLayoutId;
   active: boolean;
@@ -93,30 +187,51 @@ function CameraRig({
   browseOffset?: number;
   ringZoomCardIndex?: number;
   ringZoomPhase?: "approach" | "front" | null;
+  sceneAngleOffset?: number;
 }) {
   const { camera, gl, controls } = useThree();
   const roomScene = usesRoomScene(layout) || !!fullscreen;
   const zoomDistRef = useRef(overviewZoomDistance);
   zoomDistRef.current = overviewZoomDistance;
+  // Room scene: drive camera by angle on the ring (never cartesian lerp — that bends walls)
+  const roomAngleRef = useRef<number | null>(null);
 
   useEffect(() => {
     gl.setClearColor(roomScene ? 0x2a3a52 : 0x000000, roomScene ? 1 : 0);
   }, [gl, roomScene]);
 
   useEffect(() => {
-    if (!active) return;
+    // Recenter angle tracking when ring size / mode changes
+    roomAngleRef.current = null;
+  }, [cardCount, roomScene]);
+
+  useFrame(() => {
+    if (!active || !roomScene) return;
     const cam = camera as THREE.PerspectiveCamera;
     const orbit = controls as OrbitControlsImpl | null;
-    const duration =
-      roomScene
-        ? 0.7
-        : (layout === "mission" || layout === "ring") && zoomToScreen
-          ? ringZoomPhase === "front"
-            ? 0.75
-            : 0.55
-          : layout === "ring"
-            ? 0.18
-            : 0.4;
+    const n = Math.max(cardCount, 1);
+    const angleStep = (Math.PI * 2) / n;
+    const targetAngle = focusedIndex * angleStep + sceneAngleOffset;
+
+    if (roomAngleRef.current == null) {
+      roomAngleRef.current = targetAngle;
+    } else if (sceneAngleOffset !== 0) {
+      // Drag / key orbit: follow the animated angle exactly (arc motion)
+      roomAngleRef.current = targetAngle;
+    } else {
+      // Settle after snap: shortest arc only (2π → 0 must not rewind through all screens)
+      let a = roomAngleRef.current;
+      const TWO_PI = Math.PI * 2;
+      let delta = targetAngle - a;
+      delta = ((delta % TWO_PI) + TWO_PI) % TWO_PI;
+      if (delta > Math.PI) delta -= TWO_PI;
+      if (Math.abs(delta) < 0.0005) {
+        roomAngleRef.current = targetAngle;
+      } else {
+        roomAngleRef.current = a + delta * 0.22;
+      }
+    }
+
     const target = getCameraTargetForLayout(
       layout,
       roomScene,
@@ -130,10 +245,54 @@ function CameraRig({
       ringViewPitch,
       ringZoomCardIndex,
       browseOffset,
-      ringZoomPhase
+      ringZoomPhase,
+      // Pass the smoothed angle as offset relative to focusedIndex
+      roomAngleRef.current - focusedIndex * angleStep
+    );
+    cam.position.set(...target.position);
+    const look = new THREE.Vector3(...target.lookAt);
+    cam.lookAt(look);
+    const fov = target.fov ?? 56;
+    if (Math.abs(cam.fov - fov) > 0.01) {
+      cam.fov = fov;
+      cam.updateProjectionMatrix();
+    }
+    if (orbit) {
+      orbit.target.copy(look);
+      orbit.update();
+    }
+  });
+
+  useEffect(() => {
+    if (!active || roomScene) return;
+    const cam = camera as THREE.PerspectiveCamera;
+    const orbit = controls as OrbitControlsImpl | null;
+    const duration =
+      (layout === "mission" || layout === "ring") && zoomToScreen
+        ? ringZoomPhase === "front"
+          ? 0.75
+          : 0.55
+        : layout === "ring"
+          ? 0.18
+          : 0.4;
+    const target = getCameraTargetForLayout(
+      layout,
+      roomScene,
+      focusedIndex,
+      zoomToScreen,
+      cardCount,
+      zoomToScreen ? null : zoomDistRef.current,
+      ringZoomDistance,
+      missionScrollY,
+      missionZoomDistance,
+      ringViewPitch,
+      ringZoomCardIndex,
+      browseOffset,
+      ringZoomPhase,
+      sceneAngleOffset
     );
     const look = new THREE.Vector3(...target.lookAt);
-    const fov = target.fov ?? (roomScene ? 48 : 45);
+    const fov = target.fov ?? 45;
 
     const syncOrbit = () => {
       cam.lookAt(look);
@@ -174,32 +333,83 @@ function CameraRig({
     browseOffset,
     ringZoomCardIndex,
     ringZoomPhase,
+    sceneAngleOffset,
   ]);
 
   return null;
 }
 
-/** Look around from the arena center (drag) + wheel zoom toward the wall */
+/** Keep live webviews mounted for windows near the camera front (+ focused). */
+function SceneVisibilityTracker({
+  cards,
+  focusedIndex,
+  cameraZoomed,
+}: {
+  cards: LaunchPadCard[];
+  focusedIndex: number;
+  cameraZoomed: boolean;
+}) {
+  const { camera } = useThree();
+  const lastKey = useRef("");
+
+  useFrame(() => {
+    const n = cards.length;
+    if (n === 0) {
+      if (lastKey.current !== "") {
+        lastKey.current = "";
+        setVisibleSceneWindowIds([]);
+      }
+      return;
+    }
+    const front = cameraZoomed
+      ? focusedIndex
+      : getSceneFrontIndex(n, camera.position.x, camera.position.z);
+    // Mount webviews only near the front; projector hides off-front ones
+    const radius = cameraZoomed ? 1 : 2;
+    const ids: string[] = [];
+    for (let d = -radius; d <= radius; d++) {
+      const i = ((front + d) % n + n) % n;
+      if (cards[i]) ids.push(cards[i].id);
+    }
+    // Always mount the focused card's webview
+    if (cards[focusedIndex] && !ids.includes(cards[focusedIndex].id)) {
+      ids.push(cards[focusedIndex].id);
+    }
+    const key = ids.join("|");
+    if (key === lastKey.current) return;
+    lastKey.current = key;
+    setVisibleSceneWindowIds(ids);
+  });
+
+  return null;
+}
+
+/**
+ * OrbitControls for launchpad scene (non-window) only.
+ * Window desktop scene: drag rotation is handled by sceneAngleOffset — no zoom/pan.
+ */
 function SceneOrbitControls({
   zoomToScreen,
   lookAt,
   cardCount,
   workspace,
+  locked = false,
 }: {
   zoomToScreen: boolean;
   lookAt: [number, number, number];
   cardCount: number;
   workspace: any;
+  /** When true (window desktop): no rotate/zoom — CameraRig owns the view */
+  locked?: boolean;
 }) {
   const dispatch = useDispatch();
   const { camera } = useThree();
   const radius = getArenaRadius(Math.max(cardCount, 1));
-  // Allow dollying almost up to the wall so screens can fill the view
   const maxDist = Math.max(4, radius - 0.85);
-  const minDist = zoomToScreen ? 0.9 : 0.2;
+  const minDist = zoomToScreen ? 1.6 : 0.2;
 
   const persistOverviewZoom = useCallback(() => {
-    if (zoomToScreen) return;
+    if (locked || zoomToScreen) return;
     const target = new THREE.Vector3(...lookAt);
     const distance = camera.position.distanceTo(target);
     if (!Number.isFinite(distance)) return;
@@ -209,29 +419,28 @@ function SceneOrbitControls({
       "scene",
       distance
     );
-  }, [camera, lookAt, zoomToScreen, dispatch, workspace]);
+  }, [camera, lookAt, zoomToScreen, locked, dispatch, workspace]);
 
   return (
     <OrbitControls
       makeDefault
       enablePan={false}
-      enableRotate
-      enableZoom
-      enableDamping
+      enableRotate={!locked}
+      enableZoom={false}
+      enableDamping={!locked}
       dampingFactor={0.08}
-      zoomSpeed={1.35}
       rotateSpeed={0.6}
       minDistance={minDist}
-      maxDistance={zoomToScreen ? maxDist : maxDist}
+      maxDistance={maxDist}
       minPolarAngle={Math.PI * 0.28}
       maxPolarAngle={Math.PI * 0.72}
       target={lookAt}
-      // Drag to turn; wheel to zoom; left-click without drag still hits screens
-      mouseButtons={{
-        LEFT: THREE.MOUSE.ROTATE,
-        MIDDLE: THREE.MOUSE.DOLLY,
-        RIGHT: THREE.MOUSE.DOLLY,
-      }}
+      // No dolly/pan; rotate only when unlocked (launchpad). Window desktop uses sceneAngleOffset.
+      mouseButtons={
+        locked
+          ? { LEFT: -1 as THREE.MOUSE, MIDDLE: -1 as THREE.MOUSE, RIGHT: -1 as THREE.MOUSE }
+          : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: -1 as THREE.MOUSE, RIGHT: -1 as THREE.MOUSE }
+      }
       onEnd={persistOverviewZoom}
     />
   );
@@ -310,6 +519,13 @@ function SceneContent({
   missionZoomDistance,
   ringViewPitch,
   workspace,
+  projectWebViews = false,
+  onZoomedChange,
+  externalZoomCardId = null,
+  externalClearZoom = false,
+  onDeactivateFront,
+  sceneAngleOffset = 0,
+  onResetSceneAngle,
 }: SceneProps) {
   const roomScene = usesRoomScene(layout) || !!fullscreen;
   const limited = cards.slice(
@@ -321,6 +537,8 @@ function SceneContent({
       (state.settings.desktop3dSceneZoomDistance as number | null) ?? null
   );
   const [cameraZoomed, setCameraZoomed] = useState(false);
+  /** Window desktop: bring webview to HUD frame without moving the camera */
+  const [frontWebViewId, setFrontWebViewId] = useState<string | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
   const [ringZoomCardIndex, setRingZoomCardIndex] = useState(-1);
   const [ringZoomPhase, setRingZoomPhase] = useState<
@@ -328,6 +546,15 @@ function SceneContent({
   >(null);
   const activateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ringPhaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** User dismissed this window's front webview — don't auto-reopen from session */
+  const dismissedFrontIdRef = useRef<string | null>(null);
+  const appliedExternalZoomRef = useRef<string | null>(null);
+  /** Ignore card picks right after an outside-click dismiss */
+  const suppressSelectUntilRef = useRef(0);
+  /** Timestamp when frontWebViewId was last set — ignore outside-click within 600ms */
+  const frontWebViewOpenedAtRef = useRef(0);
+  const frontWebViewIdRef = useRef<string | null>(null);
+  frontWebViewIdRef.current = frontWebViewId;
 
   const clearActivateTimer = useCallback(() => {
     if (activateTimerRef.current) {
@@ -340,40 +567,218 @@ function SceneContent({
     }
   }, []);
 
-  // Reset zoom / hover when layout mode changes
-  useEffect(() => {
+  const leaveZoom = useCallback(() => {
     clearActivateTimer();
+    if (projectWebViews && frontWebViewIdRef.current) {
+      dismissedFrontIdRef.current = frontWebViewIdRef.current;
+    }
     setCameraZoomed(false);
+    setFrontWebViewId(null);
     setRingZoomCardIndex(-1);
     setRingZoomPhase(null);
+  }, [clearActivateTimer, projectWebViews]);
+
+  /** User dismiss: clear front frame + deactivate the app in session */
+  const dismissFrontAndDeactivate = useCallback(() => {
+    leaveZoom();
+    if (projectWebViews) {
+      onDeactivateFront?.();
+    }
+  }, [leaveZoom, projectWebViews, onDeactivateFront]);
+
+  // Reset zoom / hover when layout mode changes
+  useEffect(() => {
+    dismissedFrontIdRef.current = null;
+    appliedExternalZoomRef.current = null;
+    leaveZoom();
     setHoveredIndex(-1);
-  }, [roomScene, layout, clearActivateTimer]);
+  }, [roomScene, layout, leaveZoom]);
 
   useEffect(() => {
     return () => clearActivateTimer();
   }, [clearActivateTimer]);
 
+  const zoomedCardId = projectWebViews
+    ? frontWebViewId
+    : cameraZoomed && limited[focusedIndex]
+      ? limited[focusedIndex].id
+      : cameraZoomed && ringZoomCardIndex >= 0
+        ? limited[ringZoomCardIndex]?.id ?? null
+        : null;
+
+  // In scene overview (no card expanded): show focused card's webview on the wall.
+  // When a card is expanded (frontWebViewId set), hide the wall webview — HUD overlay takes over.
+  const sceneFocusedCardId =
+    roomScene && projectWebViews && !frontWebViewId && limited[focusedIndex]?.hasLiveTab
+      ? limited[focusedIndex].id
+      : null;
+
+  // HUD-focused only when a window is expanded to the front overlay (not wall overview)
+  const windowFrontActive = projectWebViews && !!frontWebViewId;
+
+  useEffect(() => {
+    onZoomedChange?.(
+      projectWebViews ? windowFrontActive : cameraZoomed,
+      zoomedCardId
+    );
+  }, [
+    cameraZoomed,
+    windowFrontActive,
+    zoomedCardId,
+    onZoomedChange,
+    projectWebViews,
+  ]);
+
+  // Dock / session: orbit camera to face active window + dolly in so webview is large
+  useEffect(() => {
+    if (!projectWebViews) return;
+    if (!externalZoomCardId) {
+      appliedExternalZoomRef.current = null;
+      return;
+    }
+    if (appliedExternalZoomRef.current === externalZoomCardId) return;
+
+    const i = cards.findIndex((c) => c.id === externalZoomCardId);
+    if (i < 0) return;
+
+    appliedExternalZoomRef.current = externalZoomCardId;
+    dismissedFrontIdRef.current = null;
+    clearActivateTimer();
+    onFocusIndex(i);
+    setHoveredIndex(i);
+    // Expand webview to HUD overlay (same as clicking the card)
+    if (roomScene && projectWebViews) {
+      frontWebViewOpenedAtRef.current = performance.now();
+      setFrontWebViewId(externalZoomCardId);
+    }
+    // No dolly in scene mode — camera stays at fixed OVERVIEW_DIST from wall
+  }, [
+    externalZoomCardId,
+    projectWebViews,
+    roomScene,
+    cards,
+    onFocusIndex,
+    clearActivateTimer,
+  ]);
+
+  useEffect(() => {
+    if (!externalClearZoom) return;
+    leaveZoom();
+  }, [externalClearZoom, leaveZoom]);
+
+  // Keyboard / drag browse moved focus off the expanded window → return to overview
+  useEffect(() => {
+    if (!projectWebViews || !frontWebViewId) return;
+    const focused = limited[focusedIndex];
+    if (focused && focused.id !== frontWebViewId) {
+      leaveZoom();
+    }
+  }, [
+    focusedIndex,
+    frontWebViewId,
+    limited,
+    projectWebViews,
+    leaveZoom,
+  ]);
+
+  // Click outside the front webview → dismiss (dock / HUD stay interactive)
+  useEffect(() => {
+    if (!projectWebViews || !frontWebViewId) return;
+    const onPointerDown = (e: PointerEvent) => {
+      // Ignore the same click that opened the HUD frame
+      if (performance.now() - frontWebViewOpenedAtRef.current < 600) return;
+      const target = e.target as Element | null;
+      if (!target) return;
+      const host = document.querySelector(
+        `[data-desktop3d-webview="${frontWebViewId}"]`
+      );
+      if (host?.contains(target)) return;
+      // Keep chrome interactive: dock, HUD, vertical tab bar, browser switcher, etc.
+      if (
+        target.closest?.(
+          [
+            ".apps-overlay-menu",
+            ".apps-overlay-trigger-indicator",
+            ".desktop-3d-overlay-top",
+            ".desktop-top-controls",
+            ".desktop-3d-chrome",
+            ".desktop-3d-launchpad-overlay",
+            ".desktop-3d-tab-dots",
+            "#vertical-tab-bar",
+            "#vertical-tab-bar-overlay",
+            "#vertical-tab-bar-trigger",
+            ".vertical-tab-bar-trigger-zone",
+            ".browser-tab-switcher-panel",
+            ".browser-tab-switcher-backdrop",
+            ".app-tab-switcher-panel",
+            ".builtin-apps-switcher-panel",
+            ".shared-apps-switcher-panel",
+          ].join(", ")
+        )
+      ) {
+        return;
+      }
+      // Prevent the same click from re-selecting the card under the cursor
+      suppressSelectUntilRef.current = performance.now() + 450;
+      dismissFrontAndDeactivate();
+      e.stopPropagation();
+    };
+    window.addEventListener("pointerdown", onPointerDown, true);
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, [projectWebViews, frontWebViewId, dismissFrontAndDeactivate]);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      if (projectWebViews) {
+        e.preventDefault();
+        if (roomScene) {
+          // Scene: just pull camera back to overview, don't deactivate app
+          leaveZoom();
+        } else {
+          dismissFrontAndDeactivate();
+        }
+        return;
+      }
       if (!cameraZoomed) return;
       if (!roomScene && layout !== "mission" && layout !== "ring") return;
       e.preventDefault();
-      clearActivateTimer();
-      setCameraZoomed(false);
-      setRingZoomCardIndex(-1);
-      setRingZoomPhase(null);
+      leaveZoom();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [roomScene, layout, cameraZoomed, clearActivateTimer]);
+  }, [
+    roomScene,
+    layout,
+    cameraZoomed,
+    leaveZoom,
+    projectWebViews,
+    dismissFrontAndDeactivate,
+  ]);
 
   const handleCardSelect = useCallback(
     (id: string) => {
+      if (performance.now() < suppressSelectUntilRef.current) return;
+
       const i = limited.findIndex((c) => c.id === id);
       if (i < 0) return;
 
-      // Scene: zoom to icon, then activate
+      // Window Scene: orbit to face selected card, then expand webview to full HUD
+      if (roomScene && projectWebViews) {
+        dismissedFrontIdRef.current = null;
+        appliedExternalZoomRef.current = id;
+        clearActivateTimer();
+        onFocusIndex(i);
+        setHoveredIndex(i);
+        onResetSceneAngle?.();
+        // Expand the clicked card's webview to full-screen HUD overlay
+        frontWebViewOpenedAtRef.current = performance.now();
+        setFrontWebViewId(id);
+        onSelect(id);
+        return;
+      }
+
+      // Scene (launchpad): zoom to icon, then activate
       if (roomScene) {
         if (cameraZoomed && i === focusedIndex) {
           clearActivateTimer();
@@ -437,24 +842,37 @@ function SceneContent({
       onSelect,
       onFocusIndex,
       clearActivateTimer,
+      projectWebViews,
+      frontWebViewId,
     ]
   );
 
-  const highlightIndex =
-    roomScene && cameraZoomed
-      ? focusedIndex
-      : (layout === "mission" || layout === "ring") &&
-          cameraZoomed &&
-          ringZoomCardIndex >= 0
-        ? ringZoomCardIndex
-        : hoveredIndex >= 0
-          ? hoveredIndex
-          : focusedIndex;
+  const frontWebViewIndex = frontWebViewId
+    ? limited.findIndex((c) => c.id === frontWebViewId)
+    : -1;
 
+  const highlightIndex =
+    projectWebViews && frontWebViewIndex >= 0
+      ? frontWebViewIndex
+      : roomScene && cameraZoomed
+        ? focusedIndex
+        : (layout === "mission" || layout === "ring") &&
+            cameraZoomed &&
+            ringZoomCardIndex >= 0
+          ? ringZoomCardIndex
+          : hoveredIndex >= 0
+            ? hoveredIndex
+            : focusedIndex;
+
+  // When a card is clicked in any layout, expand it to HUD overlay
+  const interactiveWebViewId = projectWebViews ? frontWebViewId : null;
+
+  // Scene+projectWebViews: camera stays at OVERVIEW_DIST — no dolly ever
+  // Other layouts: dolly when cameraZoomed
   const zoomToIcon =
-    ((roomScene || layout === "mission" || layout === "ring") &&
-      cameraZoomed) ||
-    false;
+    !projectWebViews &&
+    (roomScene || layout === "mission" || layout === "ring") &&
+    cameraZoomed;
 
   const cameraLookAt = useMemo((): [number, number, number] => {
     const t = getCameraTargetForLayout(
@@ -470,7 +888,8 @@ function SceneContent({
       ringViewPitch,
       ringZoomCardIndex,
       browseOffset,
-      ringZoomPhase
+      ringZoomPhase,
+      sceneAngleOffset
     );
     return t.lookAt;
   }, [
@@ -478,6 +897,7 @@ function SceneContent({
     roomScene,
     focusedIndex,
     zoomToIcon,
+    sceneAngleOffset,
     limited.length,
     overviewZoomDistance,
     ringZoomDistance,
@@ -506,7 +926,7 @@ function SceneContent({
         focusedIndex={focusedIndex}
         zoomToScreen={zoomToIcon}
         cardCount={limited.length}
-        overviewZoomDistance={overviewZoomDistance}
+        overviewZoomDistance={projectWebViews ? null : overviewZoomDistance}
         ringZoomDistance={ringZoomDistance}
         missionScrollY={missionScrollY}
         missionZoomDistance={missionZoomDistance}
@@ -514,13 +934,15 @@ function SceneContent({
         browseOffset={browseOffset}
         ringZoomCardIndex={ringZoomCardIndex}
         ringZoomPhase={ringZoomPhase}
+        sceneAngleOffset={sceneAngleOffset}
       />
       {roomScene && (
         <SceneOrbitControls
-          zoomToScreen={cameraZoomed}
+          zoomToScreen={!projectWebViews && cameraZoomed}
           lookAt={cameraLookAt}
           cardCount={limited.length}
           workspace={workspace}
+          locked={!!projectWebViews}
         />
       )}
 
@@ -545,7 +967,13 @@ function SceneContent({
           <ControlRoomEnvironment count={limited.length} />
           <MonitorBank
             count={limited.length}
-            focusedIndex={cameraZoomed ? focusedIndex : -1}
+            focusedIndex={
+              projectWebViews
+                ? frontWebViewIndex
+                : cameraZoomed
+                  ? focusedIndex
+                  : -1
+            }
             hoveredIndex={hoveredIndex}
           />
           <ContactShadows
@@ -561,8 +989,7 @@ function SceneContent({
             position={[0, ARENA_FLOOR_Y + 0.03, 0]}
             onClick={(e) => {
               e.stopPropagation();
-              clearActivateTimer();
-              setCameraZoomed(false);
+              leaveZoom();
               setHoveredIndex(-1);
             }}
           >
@@ -572,6 +999,21 @@ function SceneContent({
         </>
       ) : null}
       {roomScene && <SceneHud hud={hud} />}
+      {projectWebViews && (
+        <>
+          <SceneVisibilityTracker
+            cards={limited}
+            focusedIndex={
+              frontWebViewIndex >= 0 ? frontWebViewIndex : focusedIndex
+            }
+            cameraZoomed={windowFrontActive}
+          />
+          <WebViewProjector
+            interactiveId={interactiveWebViewId}
+            sceneFocusedId={sceneFocusedCardId}
+          />
+        </>
+      )}
 
       <group>
         {limited.map((card, index) => {
@@ -591,6 +1033,15 @@ function SceneContent({
                 variant={roomScene ? "screen" : "card"}
                 moveDuration={layout === "ring" ? 0.85 : undefined}
                 blockStageDrag={layout === "mission"}
+                projectWebView={
+                  projectWebViews && !!card.hasLiveTab
+                }
+                // Hide mesh texture when live webview is painted on this card
+                contentTransparent={
+                  projectWebViews &&
+                  (card.id === interactiveWebViewId ||
+                    card.id === sceneFocusedCardId)
+                }
                 onSelect={handleCardSelect}
                 onFocus={(id) => {
                   const i = limited.findIndex((c) => c.id === id);
@@ -615,36 +1066,50 @@ function SceneContent({
                 }}
                 onBlur={() => setHoveredIndex(-1)}
               />
-              {index === highlightIndex && (
-                <Html
-                  position={[
-                    pose.position[0],
-                    pose.position[1] -
-                      (roomScene ? 0.85 : cameraZoomed ? 0.95 : 1.15),
-                    pose.position[2] + (roomScene ? 0.08 : 0.15),
-                  ]}
-                  center
-                  distanceFactor={
-                    roomScene
-                      ? cameraZoomed
-                        ? 6
-                        : 10
-                      : cameraZoomed
-                        ? 5.5
-                        : 8
-                  }
-                  style={{ pointerEvents: "none", userSelect: "none" }}
-                >
-                  <div className="launchpad-3d-card-label">
-                    <div className="launchpad-3d-card-title">{card.title}</div>
-                    {card.subtitle ? (
-                      <div className="launchpad-3d-card-subtitle">
-                        {card.subtitle}
+              {index === highlightIndex && (() => {
+                // Same label placement for icon and webview — under the card plane
+                const contentHalf = 1.5 / 2;
+                const gap = 0.18;
+                const yOff = contentHalf * pose.scale + gap * pose.scale;
+                return (
+                  <Html
+                    position={[
+                      pose.position[0],
+                      pose.position[1] - yOff,
+                      pose.position[2] + (roomScene ? 0.08 : 0.15),
+                    ]}
+                    // Horizontal center only — top of label starts below icon/card
+                    distanceFactor={
+                      roomScene
+                        ? cameraZoomed
+                          ? 6
+                          : 8
+                        : cameraZoomed
+                          ? 5.5
+                          : 8
+                    }
+                    style={{
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      transform: "translateX(-50%)",
+                    }}
+                  >
+                    <div className="launchpad-3d-card-label">
+                      <div className="launchpad-3d-card-title" title={card.title}>
+                        {card.title}
                       </div>
-                    ) : null}
-                  </div>
-                </Html>
-              )}
+                      {card.subtitle ? (
+                        <div
+                          className="launchpad-3d-card-subtitle"
+                          title={card.subtitle}
+                        >
+                          {formatCardSubtitle(card.subtitle)}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Html>
+                );
+              })()}
             </group>
           );
         })}
@@ -667,6 +1132,11 @@ export interface LaunchPad3DStageProps {
   hud?: Desktop3DHudSlots;
   className?: string;
   style?: CSSProperties;
+  projectWebViews?: boolean;
+  onZoomedChange?: (zoomed: boolean, cardId: string | null) => void;
+  externalZoomCardId?: string | null;
+  externalClearZoom?: boolean;
+  onDeactivateFront?: () => void;
 }
 
 function LaunchPad3DStage({
@@ -683,12 +1153,25 @@ function LaunchPad3DStage({
   hud,
   className,
   style,
+  projectWebViews = false,
+  onZoomedChange,
+  externalZoomCardId = null,
+  externalClearZoom = false,
+  onDeactivateFront,
 }: LaunchPad3DStageProps) {
   const dispatch = useDispatch();
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
   const workspaceId = workspace?.id;
+  const openWindows = useSelector((state: any) => state.session.openWindows);
+  const openTabs = useSelector((state: any) => state.session.openTabs);
+  const windowTabs = useSelector((state: any) => state.session.windowTabs);
+  const activeTabs = useSelector((state: any) => state.session.activeTabs);
+  const activeWindowId = useSelector(
+    (state: any) => state.session.activeWindowId
+  );
+  const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const storedRingZoom = useSelector(
     (state: any) =>
       (state.settings.desktop3dRingZoomDistance as number | null) ?? null
@@ -717,6 +1200,73 @@ function LaunchPad3DStage({
   const ringBrowseLockUntil = useRef(0);
   const coverWheelAccum = useRef(0);
   const coverBrowseLockUntil = useRef(0);
+  const sceneWheelSnapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** HUD-focused window (webview expanded) — wheel switches tabs instead of orbiting */
+  const windowFrontActiveRef = useRef(false);
+  const frontCardIdRef = useRef<string | null>(null);
+  const tabWheelAccum = useRef(0);
+  const tabWheelLockUntil = useRef(0);
+  /** Continuous scene ring rotation offset in radians (drag → smooth, release → snap) */
+  const [sceneAngleOffset, setSceneAngleOffset] = useState(0);
+  const sceneAngleOffsetRef = useRef(0);
+  sceneAngleOffsetRef.current = sceneAngleOffset;
+  const focusedIndexRef = useRef(focusedIndex);
+  focusedIndexRef.current = focusedIndex;
+  const sceneKeyOrbitTweenRef = useRef<gsap.core.Tween | null>(null);
+
+  const notifyZoomedChange = useCallback(
+    (zoomed: boolean, cardId: string | null) => {
+      windowFrontActiveRef.current = zoomed;
+      frontCardIdRef.current = zoomed ? cardId : null;
+      if (!zoomed) {
+        tabWheelAccum.current = 0;
+        tabWheelLockUntil.current = 0;
+      }
+      onZoomedChange?.(zoomed, cardId);
+    },
+    [onZoomedChange]
+  );
+
+  const cycleFocusedWindowTab = useCallback(
+    (dir: 1 | -1) => {
+      const cardId =
+        frontCardIdRef.current || cards[focusedIndexRef.current]?.id || null;
+      const windowId = resolveCardWindowId(
+        cardId,
+        openWindows,
+        activeWindowId
+      );
+      if (!windowId || !openWindows[windowId]) return false;
+      const tabIds = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
+      if (tabIds.length <= 1) return false;
+      const currentId =
+        activeTabId && tabIds.includes(activeTabId)
+          ? activeTabId
+          : activeTabs?.[windowId] || tabIds[0];
+      let idx = tabIds.indexOf(currentId);
+      if (idx < 0) idx = 0;
+      const nextId = tabIds[(idx + dir + tabIds.length) % tabIds.length];
+      const tab = openTabs[nextId];
+      if (!tab) return false;
+      const win = openWindows[windowId];
+      if (win?.type === "browser") {
+        switchBrowserTab(tab, dispatch, openWindows, activeTabs, activeWindowId);
+      } else {
+        switchAppTab(tab, dispatch, openWindows, activeTabs, activeWindowId);
+      }
+      return true;
+    },
+    [
+      cards,
+      openWindows,
+      activeWindowId,
+      windowTabs,
+      openTabs,
+      activeTabId,
+      activeTabs,
+      dispatch,
+    ]
+  );
   const zoomPersistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wallpaperCount = Math.min(cards.length, WALLPAPER_CARD_MAX);
   const [ringZoomDistance, setRingZoomDistance] = useState(() =>
@@ -820,8 +1370,28 @@ function LaunchPad3DStage({
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      // Scene overview: mouse is for picking screens — don't scroll-browse
-      if (layout === "scene") return;
+      // Scene: trackpad/wheel smoothly rotates camera; stops → snap to nearest card
+      if (layout === "scene") {
+        // HUD-focused: tab switching is handled by the window wheel listener
+        if (windowFrontActiveRef.current) return;
+        const n = cards.length;
+        if (n <= 1) return;
+        const rawDelta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+        if (Math.abs(rawDelta) < 4) return;
+        const angle = dragDeltaToSceneAngle(rawDelta, n, window.innerWidth);
+        setSceneAngleOffset((prev) => prev + angle);
+        // Restart snap timer on each wheel tick
+        if (sceneWheelSnapTimer.current) clearTimeout(sceneWheelSnapTimer.current);
+        sceneWheelSnapTimer.current = setTimeout(() => {
+          sceneWheelSnapTimer.current = null;
+          setSceneAngleOffset((cur) => {
+            const { index } = snapSceneAngle(focusedIndex, cur, n);
+            onFocusIndex(index);
+            return 0;
+          });
+        }, 200);
+        return;
+      }
       e.preventDefault();
 
       // Ring: wheel zooms the camera in/out (drag / arrows still browse)
@@ -873,7 +1443,7 @@ function LaunchPad3DStage({
       coverBrowseLockUntil.current = now + 240;
       onBrowseDelta(dir);
     },
-    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom]
+    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom, cards, focusedIndex, onFocusIndex]
   );
 
   const handlePointerDown = useCallback((e: PointerEvent) => {
@@ -891,11 +1461,25 @@ function LaunchPad3DStage({
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
-      // Scene: mouse chooses monitors by click — no drag browsing
-      if (layout === "scene") return;
       if (!dragRef.current.active) return;
       const dx = e.clientX - dragRef.current.x;
       const dy = e.clientY - dragRef.current.y;
+
+      // Scene: horizontal drag smoothly rotates the camera around the ring
+      if (layout === "scene") {
+        if (!dragRef.current.panning) {
+          if (Math.abs(dx) < 8) return;
+          dragRef.current.panning = true;
+          dragRef.current.x = e.clientX;
+          return;
+        }
+        // Accumulate continuous angle offset — camera follows finger without jumping
+        const angle = dragDeltaToSceneAngle(dx, cards.length, window.innerWidth);
+        setSceneAngleOffset((prev) => prev + angle);
+        dragRef.current.x = e.clientX;
+        dragRef.current.y = e.clientY;
+        return;
+      }
 
       if (layout === "mission") {
         const limit = getMissionScrollLimits(wallpaperCount);
@@ -961,14 +1545,137 @@ function LaunchPad3DStage({
         dragRef.current.y = e.clientY;
       }
     },
-    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom]
+    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom, cards, focusedIndex, onFocusIndex]
   );
 
   const handlePointerUp = useCallback(() => {
     dragRef.current.active = false;
     dragRef.current.panning = false;
     dragRef.current.mode = null;
-  }, []);
+    // Scene: snap accumulated angle offset to nearest card, then reset offset to 0
+    if (layout === "scene" && sceneAngleOffset !== 0) {
+      const { index } = snapSceneAngle(focusedIndex, sceneAngleOffset, cards.length);
+      onFocusIndex(index);
+      setSceneAngleOffset(0);
+    }
+  }, [layout, sceneAngleOffset, focusedIndex, cards.length, onFocusIndex]);
+
+  // ←/→ orbit screens; ↑/↓ cycle tabs in the active window
+  useEffect(() => {
+    if (layout !== "scene" && !fullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isOrbit = e.key === "ArrowLeft" || e.key === "ArrowRight";
+      const isTab = e.key === "ArrowUp" || e.key === "ArrowDown";
+      if (!isOrbit && !isTab) return;
+
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.(
+          "input, textarea, select, [contenteditable='true'], webview, .desktop-3d-address-bar"
+        )
+      ) {
+        return;
+      }
+
+      if (isTab) {
+        const dir = e.key === "ArrowDown" ? 1 : -1;
+        if (cycleFocusedWindowTab(dir)) e.preventDefault();
+        return;
+      }
+
+      if (e.repeat) return;
+      const n = cards.length;
+      if (n <= 1) return;
+      e.preventDefault();
+
+      // ArrowRight → next screen; ArrowLeft → previous
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+      const angleStep = (Math.PI * 2) / n;
+      sceneKeyOrbitTweenRef.current?.kill();
+
+      const start = sceneAngleOffsetRef.current;
+      const end = start + dir * angleStep;
+      const proxy = { a: start };
+      sceneKeyOrbitTweenRef.current = gsap.to(proxy, {
+        a: end,
+        duration: 0.48,
+        ease: "power2.inOut",
+        onUpdate: () => setSceneAngleOffset(proxy.a),
+        onComplete: () => {
+          sceneKeyOrbitTweenRef.current = null;
+          const { index } = snapSceneAngle(
+            focusedIndexRef.current,
+            proxy.a,
+            n
+          );
+          onFocusIndex(index);
+          setSceneAngleOffset(0);
+        },
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      sceneKeyOrbitTweenRef.current?.kill();
+      sceneKeyOrbitTweenRef.current = null;
+    };
+  }, [layout, fullscreen, cards, onFocusIndex, cycleFocusedWindowTab]);
+
+  // Focused window: wheel outside webview jumps tabs (webview keeps its own scroll)
+  useEffect(() => {
+    if (!projectWebViews) return;
+    if (layout !== "scene" && !fullscreen) return;
+
+    const onWheel = (e: globalThis.WheelEvent) => {
+      if (!windowFrontActiveRef.current) return;
+
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.(
+          "input, textarea, select, [contenteditable='true'], .desktop-3d-address-bar"
+        )
+      ) {
+        return;
+      }
+
+      if (
+        isPointerOverFocusedWebView(
+          e.clientX,
+          e.clientY,
+          frontCardIdRef.current
+        )
+      ) {
+        return;
+      }
+
+      // Prefer vertical scroll; ignore tiny trackpad noise
+      const delta =
+        Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      if (Math.abs(delta) < 2) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const now = performance.now();
+      if (now < tabWheelLockUntil.current) {
+        tabWheelAccum.current = 0;
+        return;
+      }
+
+      tabWheelAccum.current += delta;
+      const threshold = 48;
+      if (Math.abs(tabWheelAccum.current) < threshold) return;
+
+      const dir = tabWheelAccum.current > 0 ? 1 : -1;
+      tabWheelAccum.current = 0;
+      if (cycleFocusedWindowTab(dir)) {
+        tabWheelLockUntil.current = now + 260;
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    return () => window.removeEventListener("wheel", onWheel, true);
+  }, [projectWebViews, layout, fullscreen, cycleFocusedWindowTab]);
 
   const overviewZoomDistance = useSelector(
     (state: any) =>
@@ -989,7 +1696,11 @@ function LaunchPad3DStage({
     ringZoomDistance,
     missionScrollY,
     missionZoomDistance,
-    ringViewPitch
+    ringViewPitch,
+    null,
+    0,
+    null,
+    sceneAngleOffset
   );
 
   if (!active) return null;
@@ -1037,6 +1748,13 @@ function LaunchPad3DStage({
           missionZoomDistance={missionZoomDistance}
           ringViewPitch={ringViewPitch}
           workspace={workspace}
+          projectWebViews={projectWebViews}
+          onZoomedChange={notifyZoomedChange}
+          externalZoomCardId={externalZoomCardId}
+          externalClearZoom={externalClearZoom}
+          onDeactivateFront={onDeactivateFront}
+          sceneAngleOffset={sceneAngleOffset}
+          onResetSceneAngle={() => setSceneAngleOffset(0)}
         />
       </Canvas>
     </div>

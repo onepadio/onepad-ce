@@ -136,6 +136,13 @@ function Home() {
   const openWindows = useSelector((state) => state.session.openWindows);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const openTabs = useSelector((state) => state.session.openTabs);
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
+  const is3dDesktop = desktopVisualMode === "3d";
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const activeWindow = useSelector((state) => state.session.activeWindow);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -627,13 +634,13 @@ function Home() {
         false && (<TabsPreviewBar />)
       }
       <>
-        {
-          isExternalWindowMode ? (
-            <> </>
-          ) : Object.values(openTabs).map(tab =>{
-            return _tab(tab);
-          })
-        }
+        {is3dDesktop ? (
+          <></>
+        ) : isExternalWindowMode ? (
+          <></>
+        ) : (
+          Object.values(openTabs).map((tab) => _tab(tab))
+        )}
       </>
       <BuiltinAppsHost />
       <SplashScreen />

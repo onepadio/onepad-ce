@@ -75,7 +75,10 @@ function Desktop3DChrome({
             "desktop-3d-chrome-btn",
             visualMode === "3d" && "active"
           )}
-          onClick={() => dispatch(settingsActions.setDesktopVisualMode("3d"))}
+          onClick={() => {
+            dispatch(settingsActions.setDesktopVisualMode("3d"));
+            dispatch(settingsActions.setDesktop3dLayout("scene"));
+          }}
           title="3D Desktop"
         >
           3D

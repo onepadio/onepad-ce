@@ -1,0 +1,46 @@
+.desktop-3d-webview-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Above WebGL canvas, below HUD / dock chrome */
+  z-index: 50;
+  overflow: visible;
+}
+
+.desktop-3d-webview-host {
+  visibility: hidden;
+  pointer-events: none;
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  background: #0d1118;
+  /* Sized/placed by WebViewProjector (axis-aligned only — no CSS rotate) */
+}
+
+.desktop-3d-webview-inner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.desktop-3d-webview-inner .webview,
+.desktop-3d-webview-inner webview {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  /* Promote a layer without rotating the guest */
+  transform: translateZ(0);
+}

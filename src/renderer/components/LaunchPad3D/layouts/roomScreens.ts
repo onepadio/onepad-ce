@@ -1,18 +1,33 @@
 import type { CardPose } from "../types";
 
-/** Soft cap for large spaces */
-export const SCENE_SCREEN_MAX = 36;
+/** Soft cap — single-row ring stays readable while orbiting */
+export const SCENE_SCREEN_MAX = 128;
 
-/** Base screen content size */
-export const SCENE_SCREEN_W = 1.85;
-export const SCENE_SCREEN_H = 1.05;
+/**
+ * Physical screen size on the wall.
+ * Large enough so that at OVERVIEW_DIST the webview fills ~70 % of screen width.
+ */
+export const SCENE_SCREEN_W = 6.4;
+export const SCENE_SCREEN_H = 3.8;
+export const SCENE_SCREEN_GAP = 4.0;
+export const SCENE_SCREEN_Y = 0.5;
 
 const CARD_W = 2.4;
 const CARD_H = 1.5;
 
 /** Circle center / floor height for the arena */
 export const ARENA_CENTER: [number, number, number] = [0, 0, 0];
-export const ARENA_FLOOR_Y = -2.2;
+export const ARENA_FLOOR_Y = -2.8;
+
+/**
+ * Camera sits this many units from the WALL SURFACE of the focused screen.
+ * Keep fixed — do NOT pull back when window count grows (that packed neighbors
+ * into view and made Electron paint multiple webviews).
+ */
+const OVERVIEW_DIST = 8.2;
+const DOLLY_DIST = 1.8;
+/** Fixed FOV so the front screen stays dominant regardless of ring size */
+const OVERVIEW_FOV = 56;
 
 export interface ScreenSlot {
   position: [number, number, number];
@@ -26,88 +41,53 @@ export interface ScreenSlot {
   theta: number;
 }
 
-/** Rows grow with icon count so 20+ still readable on a cylinder */
+/** Always a single row — orbit to browse the endless ring */
 export function getSceneGrid(count: number): { cols: number; rows: number } {
   const n = Math.max(0, Math.min(count, SCENE_SCREEN_MAX));
-  if (n <= 0) return { cols: 0, rows: 0 };
-  if (n <= 7) return { cols: n, rows: 1 };
-  if (n <= 14) return { cols: Math.ceil(n / 2), rows: 2 };
-  if (n <= 24) return { cols: Math.ceil(n / 3), rows: 3 };
-  return { cols: Math.ceil(n / 4), rows: 4 };
+  return { cols: n, rows: n > 0 ? 1 : 0 };
 }
 
 export function getSceneColumns(count: number): number {
   return getSceneGrid(count).cols;
 }
 
+/**
+ * Radius grows with count so screens don't overlap.
+ * Minimum is large enough to give good side-card visibility from OVERVIEW_DIST.
+ */
 export function getArenaRadius(count: number): number {
   const n = Math.max(1, Math.min(count, SCENE_SCREEN_MAX));
-  const { cols } = getSceneGrid(n);
-  const density = cols;
-  const sizeScale =
-    density <= 6 ? 1 : density <= 10 ? 0.9 : density <= 14 ? 0.8 : 0.7;
-  const w = SCENE_SCREEN_W * sizeScale;
-  const gap = 0.28 * sizeScale;
-  const chord = w + gap;
-  // Full ring once we have enough columns; otherwise a front-facing arc
-  const fullCircle = cols >= 6;
-  const angleStep = fullCircle
-    ? (Math.PI * 2) / cols
-    : Math.max(0.22, Math.min(0.55, chord / 8));
-  const radius = fullCircle
-    ? chord / (2 * Math.sin(Math.max(angleStep / 2, 0.05)))
-    : Math.max(7, (cols * chord) / (Math.PI * 0.95));
-  return Math.min(22, Math.max(6.5, radius));
+  const chord = SCENE_SCREEN_W + SCENE_SCREEN_GAP;
+  const radius = (n * chord) / (2 * Math.PI);
+  return Math.max(7.0, radius);
 }
 
 /**
- * One slot per icon on a cylindrical wall, facing the arena center.
- * Bottom row left→right, then upper rows.
+ * One large screen per window on a single-row cylindrical wall.
+ * Index 0 faces the default front (-Z).
  */
 export function getSceneScreenSlots(count: number): ScreenSlot[] {
   const n = Math.max(0, Math.min(count, SCENE_SCREEN_MAX));
-  const { cols, rows } = getSceneGrid(n);
-  if (n === 0 || cols === 0) return [];
+  if (n === 0) return [];
 
-  const density = cols;
-  const sizeScale =
-    density <= 6 ? 1 : density <= 10 ? 0.9 : density <= 14 ? 0.8 : 0.7;
-  const w = SCENE_SCREEN_W * sizeScale;
-  const h = SCENE_SCREEN_H * sizeScale;
-  const gapY = 0.26 * sizeScale;
-  const pitchY = h + gapY;
   const radius = getArenaRadius(n);
-  const fullCircle = cols >= 6;
-  const angleStep = fullCircle
-    ? (Math.PI * 2) / cols
-    : Math.min(0.55, (w + 0.28 * sizeScale) / radius);
-  const span = fullCircle ? Math.PI * 2 : angleStep * Math.max(cols - 1, 0);
-
-  const midRowY = 0.55 + ((rows - 1) / 2) * pitchY * 0.15;
+  const angleStep = (Math.PI * 2) / n;
+  const w = SCENE_SCREEN_W;
+  const h = SCENE_SCREEN_H;
   const slots: ScreenSlot[] = [];
 
   for (let i = 0; i < n; i++) {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const rowCount = Math.min(cols, n - row * cols);
-    // Center short last rows on the arc
-    const colOffset = (cols - rowCount) / 2;
-    const colIndex = col + colOffset;
-    const theta = fullCircle
-      ? -Math.PI + colIndex * angleStep + angleStep / 2
-      : -span / 2 + colIndex * angleStep;
+    const theta = i * angleStep;
     const x = radius * Math.sin(theta);
     const z = -radius * Math.cos(theta);
-    const y = midRowY + ((rows - 1) / 2 - row) * pitchY;
     slots.push({
-      col,
-      row,
+      col: i,
+      row: 0,
       width: w,
       height: h,
       radius,
       theta,
-      position: [x, y, z],
-      // Face inward toward arena center
+      position: [x, SCENE_SCREEN_Y, z],
       rotation: [0, -theta, 0],
     });
   }
@@ -126,7 +106,7 @@ export function getScreenSlot(
 export function getSceneScreenCardScale(slot?: ScreenSlot | null): number {
   const w = slot?.width ?? SCENE_SCREEN_W;
   const h = slot?.height ?? SCENE_SCREEN_H;
-  return Math.min(w / CARD_W, h / CARD_H) * 0.96;
+  return Math.min(w / CARD_W, h / CARD_H) * 0.98;
 }
 
 export function computeSceneScreenPose(
@@ -138,7 +118,7 @@ export function computeSceneScreenPose(
   const scale = getSceneScreenCardScale(slot);
   if (!slot) {
     return {
-      position: [0, 0.8, -6],
+      position: [0, SCENE_SCREEN_Y, -8],
       rotation: [0, 0, 0],
       scale,
       opacity: 0,
@@ -146,41 +126,100 @@ export function computeSceneScreenPose(
   }
   const focused = index === focusedIndex;
   const [x, y, z] = slot.position;
-  // Nudge slightly inward so the card sits in front of the bezel
   const inward = 0.08;
   const nx = -Math.sin(slot.theta) * inward;
   const nz = Math.cos(slot.theta) * inward;
+
+  const distFromFront = Math.min(
+    ((index - focusedIndex + count) % count),
+    ((focusedIndex - index + count) % count)
+  );
+  const scaleMult = focused ? 1.04 : 1.0;
+  const opacity = focused ? 1 : distFromFront <= 1 ? 0.8 : 0.55;
+
   return {
     position: [x + nx, y, z + nz],
     rotation: slot.rotation,
-    scale: focused ? scale * 1.02 : scale,
-    opacity: focused ? 1 : 0.9,
+    scale: scale * scaleMult,
+    opacity,
   };
 }
 
-/** Stand in the arena center and look toward the front of the wall */
-export function getSceneOverviewCamera(count = 1): {
+/**
+ * Camera stands OVERVIEW_DIST in front of the focused wall screen.
+ * `angleOffset` is a continuous radian offset added on top of focusedIndex's angle,
+ * allowing smooth rotation while dragging (before snapping to next card).
+ */
+export function getSceneOverviewCamera(
+  count = 1,
+  focusedIndex = 0,
+  angleOffset = 0
+): {
   position: [number, number, number];
   lookAt: [number, number, number];
   fov: number;
 } {
   const n = Math.max(count, 1);
-  const { rows, cols } = getSceneGrid(n);
-  const slots = getSceneScreenSlots(n);
-  const eyeY =
-    slots.length > 0
-      ? slots.reduce((s, sl) => s + sl.position[1], 0) / slots.length
-      : 0.9 + rows * 0.05;
-  // Orbit target = center; camera sits a tiny step off-center so controls work
-  const standOff = 0.55;
+  const radius = getArenaRadius(n);
+  const angleStep = (Math.PI * 2) / n;
+  const eyeY = SCENE_SCREEN_Y;
+
+  // Continuous camera angle: card angle + drag offset
+  const baseTheta = focusedIndex * angleStep;
+  const theta = baseTheta + angleOffset;
+
+  // Wall screen position at this angle
+  const sx = radius * Math.sin(theta);
+  const sz = -radius * Math.cos(theta);
+  // Inward unit vector (toward ring center)
+  const ix = -Math.sin(theta);
+  const iz = Math.cos(theta);
+
   return {
-    position: [0, eyeY, standOff],
-    lookAt: [0, eyeY, 0],
-    fov: cols >= 12 ? 68 : cols >= 8 ? 64 : 60,
+    position: [sx + ix * OVERVIEW_DIST, eyeY, sz + iz * OVERVIEW_DIST],
+    lookAt: [sx, eyeY, sz],
+    // Never widen FOV with count — that "zoomed out" and showed multiple screens
+    fov: OVERVIEW_FOV,
   };
 }
 
-/** Dolly in along the screen's inward normal */
+/**
+ * Convert a horizontal drag delta (pixels) to a scene rotation angle (radians).
+ * dragSensitivity: how many pixels = one full revolution.
+ */
+export function dragDeltaToSceneAngle(
+  dx: number,
+  count: number,
+  viewportW = window.innerWidth
+): number {
+  // One full card step = one angleStep in radians
+  const n = Math.max(count, 1);
+  const angleStep = (Math.PI * 2) / n;
+  // ~viewportW * 0.6 pixels per full revolution feels natural
+  const pixelsPerRev = viewportW * 0.65;
+  return (-dx / pixelsPerRev) * Math.PI * 2;
+}
+
+/**
+ * Snap a continuous angle offset to the nearest card index.
+ * Returns the new focusedIndex and the remaining sub-card offset.
+ */
+export function snapSceneAngle(
+  focusedIndex: number,
+  angleOffset: number,
+  count: number
+): { index: number; remainder: number } {
+  const n = Math.max(count, 1);
+  const angleStep = (Math.PI * 2) / n;
+  const steps = Math.round(angleOffset / angleStep);
+  const newIndex = ((focusedIndex + steps) % n + n) % n;
+  const remainder = angleOffset - steps * angleStep;
+  return { index: newIndex, remainder };
+}
+
+/**
+ * Dolly very close to the focused screen — webview fills most of viewport.
+ */
 export function getSceneScreenCamera(
   index: number,
   count: number
@@ -190,15 +229,16 @@ export function getSceneScreenCamera(
   fov: number;
 } {
   const slot = getScreenSlot(index, count);
-  if (!slot) return getSceneOverviewCamera(count);
+  if (!slot) return getSceneOverviewCamera(count, index);
+
   const [x, y, z] = slot.position;
-  const distance = 1.35 + slot.width * 0.25;
   const ix = -Math.sin(slot.theta);
   const iz = Math.cos(slot.theta);
+
   return {
-    position: [x + ix * distance, y + 0.05, z + iz * distance],
+    position: [x + ix * DOLLY_DIST, y, z + iz * DOLLY_DIST],
     lookAt: [x, y, z],
-    fov: 40,
+    fov: 56,
   };
 }
 
@@ -229,4 +269,24 @@ export function applySceneZoomDistance(
     ...cam,
     position: [lx + dx * scale, ly + dy * scale, lz + dz * scale],
   };
+}
+
+/** Index whose screen faces closest to the camera (front of view). */
+export function getSceneFrontIndex(
+  count: number,
+  cameraX: number,
+  cameraZ: number
+): number {
+  const n = Math.max(0, Math.min(count, SCENE_SCREEN_MAX));
+  if (n <= 0) return 0;
+  // Camera is now near the wall, not at center — find closest slot
+  let best = 0;
+  let bestDist = Infinity;
+  const slots = getSceneScreenSlots(n);
+  for (let i = 0; i < n; i++) {
+    const [sx, , sz] = slots[i].position;
+    const d = (cameraX - sx) ** 2 + (cameraZ - sz) ** 2;
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return best;
 }

@@ -47,6 +47,12 @@ import SpaceSwitcher from "../SpaceSwitcher/SpaceSwitcher";
 function WindowsTopBar() {
   const dispatch = useDispatch();
   const route = useSelector((state: any) => state.session.route);
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
 
   const version = useSelector((state: any) => state.app.version);
 
@@ -385,7 +391,8 @@ function WindowsTopBar() {
       onMouseEnter={() => onMouseEnter()}
       onMouseLeave={() => onMouseLeave()}
     >
-      {!shouldHideAddressBar(activeWindow) && <AddressBar />}
+      {desktopVisualMode !== "3d" &&
+        !shouldHideAddressBar(activeWindow) && <AddressBar />}
       {}
       <div className="row top-menus w-100 h-100">
         {}

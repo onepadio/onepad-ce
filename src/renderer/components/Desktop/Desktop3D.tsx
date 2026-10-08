@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Robot, Plus } from "react-bootstrap-icons";
@@ -5,10 +6,11 @@ import { Robot, Plus } from "react-bootstrap-icons";
 import DateTime from "../DateTime/DateTime";
 import SearchBar from "../SearchBar/SearchBar";
 import DesktopMenu from "../DesktopMenu/DesktopMenu";
-import LaunchPad3D from "../LaunchPad3D/LaunchPad3D";
+import DesktopWindows3D from "../LaunchPad3D/DesktopWindows3D";
 import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
-import { usesRoomScene } from "../LaunchPad3D/layouts/layoutMath";
-import type { Launchpad3dLayoutId } from "../LaunchPad3D/types";
+import Desktop3DWebViewHost from "../LaunchPad3D/Desktop3DWebViewHost";
+import Desktop3DAddressBar from "../LaunchPad3D/Desktop3DAddressBar";
+import Desktop3DTabDots from "../LaunchPad3D/Desktop3DTabDots";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { modalActions } from "../../store/modal-slice";
 import { storeActions } from "../../store/store-slice";
@@ -19,15 +21,14 @@ import "../LaunchPad3D/LaunchPad3D.css";
 interface Desktop3DProps {
   id: string;
   name: string;
-  isLaunchpadActive?: boolean;
+  /** When true, force scene overview (launchpad overlay open) */
+  clearZoomToken?: number;
 }
 
 /**
- * Full-viewport 3D Desktop.
- * Cover / Mission / Ring float over the wallpaper;
- * Scene uses the control-room environment + console layout.
+ * Full-viewport 3D Desktop — Scene of open windows with live projected webviews.
  */
-function Desktop3D({ id, name, isLaunchpadActive = true }: Desktop3DProps) {
+function Desktop3D({ id, name, clearZoomToken = 0 }: Desktop3DProps) {
   const dispatch = useDispatch();
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen || false);
   const isDesktopsEnabled = useSelector(
@@ -36,13 +37,23 @@ function Desktop3D({ id, name, isLaunchpadActive = true }: Desktop3DProps) {
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
-  const desktop3dLayout = useSelector(
-    (state: any) =>
-      (state.settings.desktop3dLayout ||
-        state.settings.launchpad3dLayout ||
-        "coverflow") as Launchpad3dLayoutId
-  );
-  const roomScene = usesRoomScene(desktop3dLayout);
+  const [windowFocused, setWindowFocused] = useState(false);
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
+  const [localClearZoomToken, setLocalClearZoomToken] = useState(0);
+
+  useEffect(() => {
+    if (!clearZoomToken) return;
+    setLocalClearZoomToken(clearZoomToken);
+  }, [clearZoomToken]);
+
+  const onZoomedChange = useCallback((zoomed: boolean, cardId?: string | null) => {
+    setWindowFocused(zoomed);
+    setFocusedCardId(zoomed ? cardId ?? null : null);
+  }, []);
+
+  const leaveFocusedWindow = useCallback(() => {
+    setLocalClearZoomToken((t) => t + 1);
+  }, []);
 
   function toggleAppStore() {
     dispatch(storeActions.setSelectedStore("web"));
@@ -58,11 +69,9 @@ function Desktop3D({ id, name, isLaunchpadActive = true }: Desktop3DProps) {
   return (
     <div
       id={id}
-      className={`desktop-3d-fullscreen ${
-        roomScene ? "desktop-3d-room-scene" : "desktop-3d-wallpaper-scene"
-      } ${isAIAssistantOpen ? "chat-assistant-open" : ""} ${
-        !isLaunchpadActive ? "d-none" : ""
-      }`}
+      className={`desktop-3d-fullscreen desktop-3d-room-scene ${
+        isAIAssistantOpen ? "chat-assistant-open" : ""
+      } ${windowFocused ? "desktop-3d-window-focused" : ""}`}
     >
       <DesktopMenu />
 
@@ -71,16 +80,16 @@ function Desktop3D({ id, name, isLaunchpadActive = true }: Desktop3DProps) {
           isAIAssistantOpen ? "chat-assistant-open" : ""
         }`}
       >
-        <Desktop3DChrome />
         <Button
           id="space-apps-add-button-3d-desktop"
           color="light"
-          className="btn-sm"
+          className="btn-sm mr-2"
           onClick={toggleAppStore}
           title="Add app"
         >
           <Plus />
         </Button>
+        <Desktop3DChrome showLayoutControls={false} />
         <Button
           color="dark"
           onClick={() => dispatch(aiAppsActions.toggle("ai"))}
@@ -92,28 +101,44 @@ function Desktop3D({ id, name, isLaunchpadActive = true }: Desktop3DProps) {
       </div>
 
       <div className="desktop-3d-overlay-top">
-        <div className="desktop-3d-overlay-title">
-          {isDesktopsEnabled ? (
-            <button
-              type="button"
-              className="desktop-3d-hud-title-btn"
-              onClick={() => toggleRenameDesktopModalWindow()}
-            >
-              {name}
-            </button>
-          ) : (
-            <span className="desktop-3d-hud-title">{workspace?.name}</span>
-          )}
-        </div>
-        <div className="desktop-3d-overlay-center">
-          <DateTime />
-          <div className="desktop-3d-overlay-search">
-            <SearchBar id="searchBar" />
+        {!windowFocused && (
+          <div className="desktop-3d-overlay-title">
+            {isDesktopsEnabled ? (
+              <button
+                type="button"
+                className="desktop-3d-hud-title-btn"
+                onClick={() => toggleRenameDesktopModalWindow()}
+              >
+                {name}
+              </button>
+            ) : (
+              <span className="desktop-3d-hud-title">{workspace?.name}</span>
+            )}
           </div>
+        )}
+        <div className="desktop-3d-overlay-center">
+          {windowFocused ? (
+            <Desktop3DAddressBar onClose={leaveFocusedWindow} />
+          ) : (
+            <>
+              <DateTime />
+              <div className="desktop-3d-overlay-search">
+                <SearchBar id="searchBar" />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      <LaunchPad3D fullscreen={roomScene} showChrome={false} />
+      <DesktopWindows3D
+        clearZoomToken={localClearZoomToken}
+        onZoomedChange={onZoomedChange}
+      />
+      {/* Live guests must sit in this stacking context above the WebGL canvas */}
+      <Desktop3DWebViewHost />
+      {windowFocused ? (
+        <Desktop3DTabDots focusedCardId={focusedCardId} />
+      ) : null}
     </div>
   );
 }

@@ -60,6 +60,7 @@ function Desktop(props) {
       "2d"
   );
   const is3dDesktop = desktopVisualMode === "3d";
+  const isSelectedDesktop = desktop?.id === props.id;
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const items = useSelector((state: any) => state.workspace.items);
   const openWindows = useSelector((state: any) => state.session.openWindows);
@@ -87,6 +88,9 @@ function Desktop(props) {
   const [widgets, setWidgets] = useState([]);
   const [partition, setPartition] = useState("");
   const [isLaunchpadActive, setIsLaunchpadActive] = useState(true);
+  /** 3D: 2D launchpad overlay over the Scene desktop */
+  const [isLaunchpadOverlayOpen, setIsLaunchpadOverlayOpen] = useState(false);
+  const [clearZoomToken, setClearZoomToken] = useState(0);
   const [showBrowserTabSwitcher, setShowBrowserTabSwitcher] = useState(false);
   const [showAppTabSwitcher, setShowAppTabSwitcher] = useState(false);
   const [showBuiltinAppsSwitcher, setShowBuiltinAppsSwitcher] = useState(false);
@@ -153,6 +157,10 @@ function Desktop(props) {
   }, [activeTabId]);
 
   useEffect(() => {
+    if (is3dDesktop && activeWindowId && activeWindowId !== "launchpad") {
+      setIsLaunchpadOverlayOpen(false);
+      setIsLaunchpadActive(false);
+    }
     if (activeWindowId === "launchpad") {
       setIsLaunchpadActive(true);
     } else {
@@ -413,6 +421,11 @@ function Desktop(props) {
     const app = openWindows[appId];
     if (!app) return;
 
+    if (is3dDesktop) {
+      setIsLaunchpadOverlayOpen(false);
+      setIsLaunchpadActive(false);
+    }
+
     if (activeWindowId === appId) {
       // Already on this app — toggle flat tab screenshot switcher
       if (showAppTabSwitcher && appTabSwitcherWindowId === appId) {
@@ -442,8 +455,9 @@ function Desktop(props) {
         (activeTabForApp && openTabs[activeTabForApp]) ||
         (tabIds[0] && openTabs[tabIds[0]]);
       if (
-        openWindows[app.id].sleeping === true ||
-        wakeTab?.sleeping === true
+        !is3dDesktop &&
+        (openWindows[app.id].sleeping === true ||
+          wakeTab?.sleeping === true)
       ) {
         dispatch(appActions.showSplashScreen({}));
       }
@@ -451,8 +465,26 @@ function Desktop(props) {
   }
 
   function handleLaunchpadClick() {
-    setIsLaunchpadActive(true);
     closeAllSwitchers();
+    if (is3dDesktop) {
+      setIsLaunchpadOverlayOpen((open) => {
+        const next = !open;
+        if (next) {
+          setClearZoomToken((t) => t + 1);
+          setIsLaunchpadActive(true);
+          dispatch(
+            sessionActionsImport.getBackToLaunchPad({
+              data: { desktopId: desktop.id },
+            })
+          );
+        } else {
+          setIsLaunchpadActive(false);
+        }
+        return next;
+      });
+      return;
+    }
+    setIsLaunchpadActive(true);
     dispatch(
       sessionActionsImport.getBackToLaunchPad({
         data: {
@@ -536,14 +568,50 @@ function Desktop(props) {
 
   return (
     <>
-      {activeTabId === "launchpad" &&
-        (is3dDesktop ? (
+      {is3dDesktop && isSelectedDesktop ? (
+        <>
           <Desktop3D
             id={props.id}
             name={name}
-            isLaunchpadActive={isLaunchpadActive}
+            clearZoomToken={clearZoomToken}
           />
-        ) : (
+          {isLaunchpadOverlayOpen && (
+            <div className="desktop-3d-launchpad-overlay">
+              <div
+                className="desktop-3d-launchpad-overlay-backdrop"
+                onClick={() => {
+                  setIsLaunchpadOverlayOpen(false);
+                  setIsLaunchpadActive(false);
+                }}
+              />
+              <div className="desktop-3d-launchpad-overlay-panel">
+                <div className="container-fluid launchpad-container h-100">
+                  {isDesktopsEnabled ? (
+                    <div className="row">
+                      <div className="col">
+                        <div className="d-flex justify-content-center mt-3">
+                          <span
+                            className="desktop-name"
+                            onClick={() => toggleRenameDesktopModalWindow()}
+                          >
+                            {name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="row flex-grow-1">
+                    <div className="col">
+                      <LaunchPadBody />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        activeTabId === "launchpad" && (
         <div
           id={props.id}
           className={`w-100 space-container ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}
@@ -652,7 +720,8 @@ function Desktop(props) {
             </div>
           </div>
         </div>
-        ))}
+        )
+      )}
       
       <AppsOverlayMenu
         apps={apps}
@@ -666,7 +735,9 @@ function Desktop(props) {
         onBrowserHoverEnd={handleDockIconHoverEnd}
         onAppHoverStart={handleAppHoverStart}
         onAppHoverEnd={handleDockIconHoverEnd}
-        isLaunchpadActive={isLaunchpadActive}
+        isLaunchpadActive={
+          is3dDesktop ? isLaunchpadOverlayOpen : isLaunchpadActive
+        }
         isUtilitiesActive={showBuiltinAppsSwitcher}
         isSharedAppsActive={showSharedAppsSwitcher}
         browserTabsCount={browserTabsCount}
@@ -674,7 +745,8 @@ function Desktop(props) {
           showBrowserTabSwitcher ||
           showAppTabSwitcher ||
           showBuiltinAppsSwitcher ||
-          showSharedAppsSwitcher
+          showSharedAppsSwitcher ||
+          isLaunchpadOverlayOpen
         }
       />
 

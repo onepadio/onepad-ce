@@ -35,6 +35,12 @@ function MacTopBar() {
   const sessionState = useSelector((state: any) => state.session);
 
   const version = useSelector((state: any) => state.app.version);
+  const desktopVisualMode = useSelector(
+    (state: any) =>
+      state.settings.desktopVisualMode ||
+      state.settings.launchpadVisualMode ||
+      "2d"
+  );
   const isWorkspacesEnabled = useSelector(
 
     (state: any) => state.settings.isWorkspacesEnabled
@@ -239,9 +245,9 @@ function MacTopBar() {
           </div>
         </div>
       </Navbar>
-      {activeTab?.type !== "remote" && !shouldHideAddressBar(activeTab) && (
-        <AddressBar />
-      )}
+      {desktopVisualMode !== "3d" &&
+        activeTab?.type !== "remote" &&
+        !shouldHideAddressBar(activeTab) && <AddressBar />}
     </>
   );
 }

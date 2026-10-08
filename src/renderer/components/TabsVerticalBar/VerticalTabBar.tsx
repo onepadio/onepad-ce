@@ -477,7 +477,7 @@ function VerticalTabBar(){
         const createdA = tabA.created || 0;
         const createdB = tabB.created || 0;
 
-        return createdB - createdA;
+        return createdA - createdB;
       });
     }
 
@@ -511,22 +511,22 @@ function VerticalTabBar(){
               </Row>
             </Container>
             <div className="tabs-menu-container">
-              <div className="new-tab-button-fixed">
+              <ListGroup className="w-100 bg-dark tabs-menu-scrollable">
+                {sortedTabs.map((tabId) => style === "list" ? tabItem(tabId) : tilesTabItem(tabId))}
                 <ListGroupItem
                   key="new-tab-button"
                   className="cursor-pointer"
                   onClick={() => handleNewTab()}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div className="col-12 d-flex align-items-center justify-content-center py-2">
+                  <div className="col-12 d-flex align-items-center justify-content-center py-2 new-tab-button-fixed-item">
                     <PlusCircle size={20} color="white" className="mr-2" />
-                    <span className="text-white">New Tab</span>
                   </div>
                 </ListGroupItem>
-              </div>
-              <ListGroup className="w-100 bg-dark tabs-menu-scrollable">
-                {sortedTabs.map((tabId) => style === "list" ? tabItem(tabId) : tilesTabItem(tabId))}
               </ListGroup>
+              <div className="new-tab-button-fixed">
+                
+              </div>
             </div>
           </>;
         }else{

@@ -11,8 +11,13 @@ function SplashScreen(props: any) {
     const dispatch = useDispatch();
 
     const isVisible = useSelector((state: any) => state.app.splashScreenVisible);
-
-
+    const desktopVisualMode = useSelector(
+        (state: any) =>
+            state.settings.desktopVisualMode ||
+            state.settings.launchpadVisualMode ||
+            "2d"
+    );
+    const is3dDesktop = desktopVisualMode === "3d";
 
     const isSharedAppsEnabled = useSelector((state: any) => state.settings.isSharedAppsEnabled);
 
@@ -31,9 +36,16 @@ function SplashScreen(props: any) {
     const domId = "splash-screen-id";
     const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-
+    // 3D desktop: never show splash — clear if something still requests it
+    useEffect(() => {
+        if (is3dDesktop && isVisible) {
+            dispatch(appActions.hideSplashScreen({}));
+        }
+    }, [is3dDesktop, isVisible, dispatch]);
 
     useEffect(() => {
+        if (is3dDesktop) return;
+
         const domElement = document.getElementById(domId);
         if (!domElement) return;
 
@@ -83,7 +95,7 @@ function SplashScreen(props: any) {
             }
         };
     }
-    , [isVisible, dispatch]);
+    , [isVisible, dispatch, is3dDesktop]);
 
     useEffect (() => {
         let _window = openWindows[activeWindowId];
@@ -97,6 +109,10 @@ function SplashScreen(props: any) {
             }
         }
     }, [activeWindowId, openWindows]);
+
+    if (is3dDesktop) {
+        return null;
+    }
 
     return (
         <div

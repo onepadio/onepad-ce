@@ -15,6 +15,14 @@ export interface LaunchPadCard {
   isActive?: boolean;
   /** True when tab/window is sleeping */
   isSleeping?: boolean;
+  /** True when a live active tab exists — show webview; otherwise show icon */
+  hasLiveTab?: boolean;
+  /**
+   * How to paint imageUrl on the mesh:
+   * - screenshot: full-bleed preview
+   * - icon: small centered favicon/app icon (no live tab / no shot)
+   */
+  previewMode?: "screenshot" | "icon";
 }
 
 export interface CardPose {

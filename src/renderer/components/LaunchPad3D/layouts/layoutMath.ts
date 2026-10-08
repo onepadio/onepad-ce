@@ -298,7 +298,8 @@ export function getCameraTargetForLayout(
   ringViewPitch: number | null = null,
   ringZoomCardIndex: number | null = null,
   browseOffset = 0,
-  ringZoomPhase: "approach" | "front" | null = null
+  ringZoomPhase: "approach" | "front" | null = null,
+  sceneAngleOffset = 0
 ): {
   position: [number, number, number];
   lookAt: [number, number, number];
@@ -309,7 +310,7 @@ export function getCameraTargetForLayout(
       return getSceneScreenCamera(focusedIndex, cardCount);
     }
     return applySceneZoomDistance(
-      getSceneOverviewCamera(cardCount),
+      getSceneOverviewCamera(cardCount, focusedIndex, sceneAngleOffset),
       overviewZoomDistance
     );
   }

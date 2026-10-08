@@ -139,29 +139,43 @@
 }
 
 .launchpad-3d-card-label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   text-align: center;
-  min-width: 120px;
-  max-width: 220px;
+  box-sizing: border-box;
+  width: min(280px, 55vw);
+  max-width: 280px;
+  margin: 0 auto;
   pointer-events: none;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 6px 14px 8px;
+  overflow: hidden;
+}
+
+.launchpad-3d-card-title,
+.launchpad-3d-card-subtitle {
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .launchpad-3d-card-title {
   color: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .launchpad-3d-card-subtitle {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 11px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 3px;
 }
 
 /* Tab switcher 3D overlay */

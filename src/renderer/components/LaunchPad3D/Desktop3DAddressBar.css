@@ -1,0 +1,58 @@
+.desktop-3d-address-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(520px, 72vw);
+  min-height: 36px;
+  padding: 6px 10px 6px 14px;
+  border-radius: 20px;
+  background: rgba(22, 26, 34, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.desktop-3d-address-bar-lock {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+}
+
+.desktop-3d-address-bar-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: default;
+}
+
+.desktop-3d-address-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.desktop-3d-address-bar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}

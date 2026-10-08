@@ -160,6 +160,10 @@
     gap: 8px;
 }
 
+.desktop-3d-fullscreen .desktop-top-controls {
+    z-index: 1100;
+}
+
 .desktop-top-controls.chat-assistant-open {
     right: calc(40% + 4px); /* 400px chat width + 4px original right margin */
 }
@@ -245,6 +249,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    /* Stacking context for canvas (0) + webview layer (50) + HUD (1100) */
+    isolation: isolate;
 }
 
 .desktop-3d-fullscreen.chat-assistant-open {
@@ -277,7 +283,7 @@
     top: 48px;
     left: 0;
     right: 0;
-    z-index: 110;
+    z-index: 1100;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -317,5 +323,53 @@
 
 .desktop-3d-hud-title-btn:hover {
     color: #fff;
+}
+
+/* 2D launchpad overlay on top of 3D Scene desktop */
+.desktop-3d-launchpad-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.desktop-3d-launchpad-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 20, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: auto;
+}
+
+.desktop-3d-launchpad-overlay-panel {
+    position: relative;
+    z-index: 1;
+    width: min(1100px, 92vw);
+    max-height: calc(100vh - 120px);
+    margin: 72px auto 80px;
+    overflow: auto;
+    pointer-events: auto;
+    border-radius: 16px;
+    background: rgba(20, 28, 40, 0.72);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.desktop-3d-overlay-search .address-bar,
+.desktop-3d-overlay-search .sp-address-bar,
+.desktop-3d-overlay-search > * {
+    width: 100%;
+}
+
+/* Focused window: address bar sits just above the inset webview */
+.desktop-3d-window-focused .desktop-3d-overlay-top {
+    top: 58px;
+}
+
+.desktop-3d-window-focused .desktop-3d-overlay-center {
+    gap: 0;
 }
 
