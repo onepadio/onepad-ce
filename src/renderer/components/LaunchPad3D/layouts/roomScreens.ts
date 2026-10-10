@@ -11,6 +11,8 @@ export const SCENE_SCREEN_W = 6.4;
 export const SCENE_SCREEN_H = 3.8;
 export const SCENE_SCREEN_GAP = 4.0;
 export const SCENE_SCREEN_Y = 0.5;
+/** Outer frame corner radius (world units) */
+export const DESK_FRAME_RADIUS = 0.28;
 
 const CARD_W = 2.4;
 const CARD_H = 1.5;
@@ -24,10 +26,28 @@ export const ARENA_FLOOR_Y = -2.8;
  * Keep fixed — do NOT pull back when window count grows (that packed neighbors
  * into view and made Electron paint multiple webviews).
  */
-const OVERVIEW_DIST = 8.2;
+export const OVERVIEW_DIST = 8.2;
 const DOLLY_DIST = 1.8;
 /** Fixed FOV so the front screen stays dominant regardless of ring size */
 const OVERVIEW_FOV = 56;
+
+/**
+ * Desk-room work camera: always seated looking at the front (−Z) screen slot.
+ * The screen ring rotates under this fixed view when focus changes.
+ */
+export function getDeskWorkCamera(count = 1): {
+  position: [number, number, number];
+  lookAt: [number, number, number];
+  fov: number;
+} {
+  const radius = getArenaRadius(Math.max(count, 1));
+  const eyeY = SCENE_SCREEN_Y;
+  return {
+    position: [0, eyeY, -radius + OVERVIEW_DIST],
+    lookAt: [0, eyeY, -radius],
+    fov: OVERVIEW_FOV,
+  };
+}
 
 export interface ScreenSlot {
   position: [number, number, number];
@@ -142,6 +162,44 @@ export function computeSceneScreenPose(
     rotation: slot.rotation,
     scale: scale * scaleMult,
     opacity,
+  };
+}
+
+/**
+ * Desk worlds: focused window is always on the fixed front (−Z) desk slot.
+ * Neighbors sit at ±step — no parent ring rotation (avoids webview/order desync).
+ */
+export function computeDeskScreenPose(
+  index: number,
+  focusedIndex: number,
+  count: number,
+  angleOffset = 0
+): CardPose {
+  const n = Math.max(count, 1);
+  const radius = getArenaRadius(n);
+  const angleStep = (Math.PI * 2) / n;
+  const scale = getSceneScreenCardScale(null);
+
+  // Relative yaw: focused → 0 (front). Drag offset turns the carousel under the seat.
+  let rel = (index - focusedIndex) * angleStep - angleOffset;
+  // Normalize to (−π, π] so GSAP never takes the long way around
+  const TWO_PI = Math.PI * 2;
+  rel = ((rel + Math.PI) % TWO_PI + TWO_PI) % TWO_PI - Math.PI;
+
+  const x = radius * Math.sin(rel);
+  const z = -radius * Math.cos(rel);
+
+  // Visibility from visual angle (not discrete index) so continuous settle
+  // matches control-room orbit — neighbors fade in while rotating onto the desk
+  const absRel = Math.abs(rel);
+  const nearFront = absRel < 0.12;
+  const neighbor = absRel < angleStep * 1.05;
+
+  return {
+    position: [x, SCENE_SCREEN_Y, z],
+    rotation: [0, -rel, 0],
+    scale,
+    opacity: nearFront ? 1 : neighbor ? 0.4 : 0,
   };
 }
 

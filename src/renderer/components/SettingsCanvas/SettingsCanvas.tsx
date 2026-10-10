@@ -127,7 +127,6 @@ function SettingsCanvas() {
       "coverflow"
   );
 
-  
   const productName = useSelector((state: any) => state.user.product);
 
   const toggleSettings = () => {
@@ -345,7 +344,6 @@ function SettingsCanvas() {
                 </Col>
               </Row>
             </FormGroup>
-
             <ListGroup
               horizontal
               className="open-windows mt-3 justify-content-start"

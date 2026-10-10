@@ -137,6 +137,12 @@
   color: #fff;
 }
 
+/* 3D desk: window facing the seat (browsing) — bg only, no underline */
+.app-menu-item.desk-front:not(.active) {
+  background-color: rgba(62, 100, 140, 0.72);
+  color: #fff;
+}
+
 /* Link opened a new tab — draw attention to the related dock icon */
 .app-menu-item-pulse {
   animation: appMenuItemPulse 0.85s ease-out;

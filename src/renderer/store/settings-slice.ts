@@ -43,6 +43,8 @@ const settingsSlice = createSlice({
     desktop3dRingViewPitch: null as number | null,
     /** Persisted Mission camera Z distance (null = default) */
     desktop3dMissionZoomDistance: null as number | null,
+    /** Live mirror of current space's 3D experience (not userSettings) */
+    desktop3dExperience: "control-room" as string,
   },
   reducers: {
     toggleWorkspaces(state, action) {
@@ -222,6 +224,11 @@ const settingsSlice = createSlice({
       ) {
         state.desktop3dLayout = layout;
       }
+    },
+    setDesktop3dExperience(state, action) {
+      const id = action.payload;
+      state.desktop3dExperience =
+        typeof id === "string" && id.length > 0 ? id : "control-room";
     },
   },
 });

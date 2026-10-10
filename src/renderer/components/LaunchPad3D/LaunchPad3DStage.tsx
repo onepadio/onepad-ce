@@ -17,9 +17,10 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useDispatch, useSelector } from "react-redux";
 
 import CardMesh from "./CardMesh";
-import ControlRoomEnvironment from "./ControlRoomEnvironment";
+import DeskRoom, { DESK_ROOM } from "./DeskRoom";
 import MonitorBank from "./MonitorBank";
 import WebViewProjector from "./WebViewProjector";
+import { getExperience } from "./experiences/registry";
 import {
   computeCardPose,
   getCameraTargetForLayout,
@@ -36,6 +37,7 @@ import {
 import {
   ARENA_FLOOR_Y,
   getArenaRadius,
+  getDeskWorkCamera,
   getSceneFrontIndex,
   dragDeltaToSceneAngle,
   snapSceneAngle,
@@ -154,6 +156,13 @@ interface SceneProps {
   sceneAngleOffset?: number;
   /** Reset scene rotation offset to 0 (called on card select) */
   onResetSceneAngle?: () => void;
+  /** Scene active (warm space visible) — pause motion when false */
+  sceneActive?: boolean;
+  /** Controlled explore mode from parent chrome */
+  exploreMode?: boolean;
+  onExploreModeChange?: (explore: boolean) => void;
+  /** Override experience id (warm space cache) */
+  experienceId?: string | null;
 }
 
 function CameraRig({
@@ -172,6 +181,14 @@ function CameraRig({
   ringZoomCardIndex = -1,
   ringZoomPhase = null,
   sceneAngleOffset = 0,
+  clearColor = 0x2a3a52,
+  exploreMode = false,
+  /** Desk worlds: camera stays seated; screen ring rotates instead */
+  fixedDesk = false,
+  idleYawAmp = 0.012,
+  idlePitchAmp = 0.006,
+  idlePeriodSec = 8,
+  reducedMotion = false,
 }: {
   layout: Launchpad3dLayoutId;
   active: boolean;
@@ -188,6 +205,13 @@ function CameraRig({
   ringZoomCardIndex?: number;
   ringZoomPhase?: "approach" | "front" | null;
   sceneAngleOffset?: number;
+  clearColor?: number;
+  exploreMode?: boolean;
+  fixedDesk?: boolean;
+  idleYawAmp?: number;
+  idlePitchAmp?: number;
+  idlePeriodSec?: number;
+  reducedMotion?: boolean;
 }) {
   const { camera, gl, controls } = useThree();
   const roomScene = usesRoomScene(layout) || !!fullscreen;
@@ -195,17 +219,35 @@ function CameraRig({
   zoomDistRef.current = overviewZoomDistance;
   // Room scene: drive camera by angle on the ring (never cartesian lerp — that bends walls)
   const roomAngleRef = useRef<number | null>(null);
+  const exploreBlendRef = useRef(0);
+  const exploreTweenRef = useRef<gsap.core.Tween | null>(null);
 
   useEffect(() => {
-    gl.setClearColor(roomScene ? 0x2a3a52 : 0x000000, roomScene ? 1 : 0);
-  }, [gl, roomScene]);
+    gl.setClearColor(roomScene ? clearColor : 0x000000, roomScene ? 1 : 0);
+  }, [gl, roomScene, clearColor]);
+
+  useEffect(() => {
+    exploreTweenRef.current?.kill();
+    const proxy = { t: exploreBlendRef.current };
+    exploreTweenRef.current = gsap.to(proxy, {
+      t: exploreMode ? 1 : 0,
+      duration: reducedMotion ? 0.01 : 0.75,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        exploreBlendRef.current = proxy.t;
+      },
+    });
+    return () => {
+      exploreTweenRef.current?.kill();
+    };
+  }, [exploreMode, reducedMotion]);
 
   useEffect(() => {
     // Recenter angle tracking when ring size / mode changes
     roomAngleRef.current = null;
   }, [cardCount, roomScene]);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!active || !roomScene) return;
     const cam = camera as THREE.PerspectiveCamera;
     const orbit = controls as OrbitControlsImpl | null;
@@ -232,25 +274,48 @@ function CameraRig({
       }
     }
 
-    const target = getCameraTargetForLayout(
-      layout,
-      roomScene,
-      focusedIndex,
-      zoomToScreen,
-      cardCount,
-      zoomToScreen ? null : zoomDistRef.current,
-      ringZoomDistance,
-      missionScrollY,
-      missionZoomDistance,
-      ringViewPitch,
-      ringZoomCardIndex,
-      browseOffset,
-      ringZoomPhase,
-      // Pass the smoothed angle as offset relative to focusedIndex
-      roomAngleRef.current - focusedIndex * angleStep
-    );
-    cam.position.set(...target.position);
-    const look = new THREE.Vector3(...target.lookAt);
+    // Desk worlds: stay seated. Control room: orbit with focus.
+    const target = fixedDesk
+      ? getDeskWorkCamera(cardCount)
+      : getCameraTargetForLayout(
+          layout,
+          roomScene,
+          focusedIndex,
+          zoomToScreen,
+          cardCount,
+          zoomToScreen ? null : zoomDistRef.current,
+          ringZoomDistance,
+          missionScrollY,
+          missionZoomDistance,
+          ringViewPitch,
+          ringZoomCardIndex,
+          browseOffset,
+          ringZoomPhase,
+          roomAngleRef.current - focusedIndex * angleStep
+        );
+
+    const workPos = new THREE.Vector3(...target.position);
+    const workLook = new THREE.Vector3(...target.lookAt);
+    // Idle breathe around work pose (disabled in explore / reduced motion)
+    if (!reducedMotion && exploreBlendRef.current < 0.05) {
+      const t = clock.elapsedTime;
+      const period = Math.max(4, idlePeriodSec);
+      workPos.x += Math.sin(t * ((Math.PI * 2) / period)) * idleYawAmp * 8;
+      workPos.y +=
+        Math.cos(t * ((Math.PI * 2) / (period * 1.15))) * idlePitchAmp * 6;
+    }
+
+    const expPos = new THREE.Vector3(...DESK_ROOM.exploreCamPos);
+    const expLook = new THREE.Vector3(...DESK_ROOM.exploreLookAt);
+    // Seat-relative explore: turn around from the fixed desk camera
+    if (fixedDesk) {
+      const seat = getDeskWorkCamera(cardCount);
+      expPos.set(seat.position[0], seat.position[1] + 0.15, seat.position[2]);
+      expLook.set(0, seat.lookAt[1], Math.abs(seat.lookAt[2]) + 6);
+    }
+    const blend = exploreBlendRef.current;
+    cam.position.lerpVectors(workPos, expPos, blend);
+    const look = new THREE.Vector3().lerpVectors(workLook, expLook, blend);
     cam.lookAt(look);
     const fov = target.fov ?? 56;
     if (Math.abs(cam.fov - fov) > 0.01) {
@@ -335,6 +400,73 @@ function CameraRig({
     ringZoomPhase,
     sceneAngleOffset,
   ]);
+
+  return null;
+}
+
+/**
+ * Desk worlds: same continuous-angle settle as control-room camera orbit.
+ * Camera stays seated; this lerps the screen carousel toward the focused slot
+ * so cold focus jumps (dock / click) ease instead of snapping.
+ */
+function DeskAngleBridge({
+  enabled,
+  focusedIndex,
+  sceneAngleOffset,
+  cardCount,
+  onOffset,
+}: {
+  enabled: boolean;
+  focusedIndex: number;
+  sceneAngleOffset: number;
+  cardCount: number;
+  onOffset: (offset: number) => void;
+}) {
+  const angleRef = useRef<number | null>(null);
+  const lastSentRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      angleRef.current = null;
+      lastSentRef.current = null;
+      onOffset(0);
+    }
+  }, [enabled, onOffset]);
+
+  useFrame(() => {
+    if (!enabled) return;
+    const n = Math.max(cardCount, 1);
+    const angleStep = (Math.PI * 2) / n;
+    const target = focusedIndex * angleStep + sceneAngleOffset;
+
+    if (angleRef.current == null) {
+      angleRef.current = target;
+    } else if (Math.abs(sceneAngleOffset) > 0.0001) {
+      // Drag / key orbit already animates sceneAngleOffset — follow exactly
+      angleRef.current = target;
+    } else {
+      let a = angleRef.current;
+      const TWO_PI = Math.PI * 2;
+      let delta = target - a;
+      delta = ((delta % TWO_PI) + TWO_PI) % TWO_PI;
+      if (delta > Math.PI) delta -= TWO_PI;
+      if (Math.abs(delta) < 0.0005) {
+        angleRef.current = target;
+      } else {
+        // Same settle rate as control-room CameraRig
+        angleRef.current = a + delta * 0.22;
+      }
+    }
+
+    const next = angleRef.current - focusedIndex * angleStep;
+    if (
+      lastSentRef.current == null ||
+      Math.abs(next - lastSentRef.current) > 0.0002
+    ) {
+      lastSentRef.current = next;
+      onOffset(next);
+    }
+  });
 
   return null;
 }
@@ -526,6 +658,10 @@ function SceneContent({
   onDeactivateFront,
   sceneAngleOffset = 0,
   onResetSceneAngle,
+  sceneActive = true,
+  exploreMode: exploreModeProp = false,
+  onExploreModeChange,
+  experienceId: experienceIdProp = null,
 }: SceneProps) {
   const roomScene = usesRoomScene(layout) || !!fullscreen;
   const limited = cards.slice(
@@ -536,6 +672,55 @@ function SceneContent({
     (state: any) =>
       (state.settings.desktop3dSceneZoomDistance as number | null) ?? null
   );
+  const experienceIdFromSettings = useSelector(
+    (state: any) => state.settings.desktop3dExperience || "control-room"
+  );
+  const experienceId = experienceIdProp || experienceIdFromSettings;
+  const experience = useMemo(
+    () => getExperience(experienceId),
+    [experienceId]
+  );
+  const reducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  }, []);
+  const [exploreMode, setExploreMode] = useState(!!exploreModeProp);
+  const [swapPulse, setSwapPulse] = useState(0);
+  const prevFocusedRef = useRef(focusedIndex);
+
+  useEffect(() => {
+    setExploreMode(!!exploreModeProp);
+  }, [exploreModeProp]);
+
+  const setExplore = useCallback(
+    (next: boolean) => {
+      setExploreMode(next);
+      onExploreModeChange?.(next);
+    },
+    [onExploreModeChange]
+  );
+
+  useEffect(() => {
+    if (prevFocusedRef.current === focusedIndex) return;
+    prevFocusedRef.current = focusedIndex;
+    setSwapPulse(1);
+    const t = window.setTimeout(() => setSwapPulse(0), 320);
+    return () => window.clearTimeout(t);
+  }, [focusedIndex]);
+
+  // Esc exits explore first
+  useEffect(() => {
+    if (!exploreMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setExplore(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [exploreMode, setExplore]);
+
   const [cameraZoomed, setCameraZoomed] = useState(false);
   /** Window desktop: bring webview to HUD frame without moving the camera */
   const [frontWebViewId, setFrontWebViewId] = useState<string | null>(null);
@@ -702,6 +887,7 @@ function SceneContent({
             ".desktop-3d-overlay-top",
             ".desktop-top-controls",
             ".desktop-3d-chrome",
+            ".desktop-3d-experience-picker",
             ".desktop-3d-launchpad-overlay",
             ".desktop-3d-tab-dots",
             "#vertical-tab-bar",
@@ -763,7 +949,7 @@ function SceneContent({
       const i = limited.findIndex((c) => c.id === id);
       if (i < 0) return;
 
-      // Window Scene: orbit to face selected card, then expand webview to full HUD
+      // Window Scene: bring card to the desk front, then expand webview to HUD
       if (roomScene && projectWebViews) {
         dismissedFrontIdRef.current = null;
         appliedExternalZoomRef.current = id;
@@ -771,10 +957,19 @@ function SceneContent({
         onFocusIndex(i);
         setHoveredIndex(i);
         onResetSceneAngle?.();
-        // Expand the clicked card's webview to full-screen HUD overlay
-        frontWebViewOpenedAtRef.current = performance.now();
-        setFrontWebViewId(id);
-        onSelect(id);
+        const openHud = () => {
+          frontWebViewOpenedAtRef.current = performance.now();
+          setFrontWebViewId(id);
+          onSelect(id);
+        };
+        // Desk worlds: wait a frame so the ring has snapped to front and the
+        // projector caches the seated pose — otherwise the webview flies in
+        // from the previous slot and order looks mixed.
+        if (experience.usesDeskRoom !== false) {
+          requestAnimationFrame(() => requestAnimationFrame(openHud));
+        } else {
+          openHud();
+        }
         return;
       }
 
@@ -844,6 +1039,8 @@ function SceneContent({
       clearActivateTimer,
       projectWebViews,
       frontWebViewId,
+      experience.usesDeskRoom,
+      onResetSceneAngle,
     ]
   );
 
@@ -874,7 +1071,18 @@ function SceneContent({
     (roomScene || layout === "mission" || layout === "ring") &&
     cameraZoomed;
 
+  const deskFixed = experience.usesDeskRoom !== false;
+  const [deskVisualOffset, setDeskVisualOffset] = useState(0);
+  const onDeskVisualOffset = useCallback((offset: number) => {
+    setDeskVisualOffset(offset);
+  }, []);
+  // Desk uses continuous-angle settle; control room uses sceneAngleOffset on the camera
+  const deskPoseOffset =
+    deskFixed && roomScene ? deskVisualOffset : sceneAngleOffset;
   const cameraLookAt = useMemo((): [number, number, number] => {
+    if (deskFixed && roomScene) {
+      return getDeskWorkCamera(limited.length).lookAt;
+    }
     const t = getCameraTargetForLayout(
       layout,
       roomScene,
@@ -893,6 +1101,7 @@ function SceneContent({
     );
     return t.lookAt;
   }, [
+    deskFixed,
     layout,
     roomScene,
     focusedIndex,
@@ -921,7 +1130,7 @@ function SceneContent({
       )}
       <CameraRig
         layout={layout}
-        active={active}
+        active={active && sceneActive}
         fullscreen={roomScene}
         focusedIndex={focusedIndex}
         zoomToScreen={zoomToIcon}
@@ -935,6 +1144,20 @@ function SceneContent({
         ringZoomCardIndex={ringZoomCardIndex}
         ringZoomPhase={ringZoomPhase}
         sceneAngleOffset={sceneAngleOffset}
+        clearColor={experience.clearColor}
+        exploreMode={exploreMode}
+        fixedDesk={experience.usesDeskRoom !== false}
+        idleYawAmp={experience.motion?.idleYawAmp}
+        idlePitchAmp={experience.motion?.idlePitchAmp}
+        idlePeriodSec={experience.motion?.idlePeriodSec}
+        reducedMotion={!!reducedMotion}
+      />
+      <DeskAngleBridge
+        enabled={deskFixed && roomScene && active && sceneActive}
+        focusedIndex={focusedIndex}
+        sceneAngleOffset={sceneAngleOffset}
+        cardCount={limited.length}
+        onOffset={onDeskVisualOffset}
       />
       {roomScene && (
         <SceneOrbitControls
@@ -942,7 +1165,7 @@ function SceneContent({
           lookAt={cameraLookAt}
           cardCount={limited.length}
           workspace={workspace}
-          locked={!!projectWebViews}
+          locked={!!projectWebViews || exploreMode}
         />
       )}
 
@@ -964,31 +1187,44 @@ function SceneContent({
 
       {roomScene ? (
         <>
-          <ControlRoomEnvironment count={limited.length} />
-          <MonitorBank
-            count={limited.length}
-            focusedIndex={
-              projectWebViews
-                ? frontWebViewIndex
-                : cameraZoomed
-                  ? focusedIndex
-                  : -1
-            }
-            hoveredIndex={hoveredIndex}
-          />
-          <ContactShadows
-            position={[0, ARENA_FLOOR_Y + 0.02, 0]}
-            opacity={0.55}
-            scale={getArenaRadius(limited.length) * 2.4}
-            blur={2.2}
-            far={14}
-          />
-          {/* Floor click returns to overview */}
+          {experience.usesDeskRoom !== false && (
+            <DeskRoom
+              count={limited.length}
+              exploreMode={exploreMode}
+              swapPulse={swapPulse}
+              active={active && sceneActive}
+              experienceId={experience.id}
+            />
+          )}
+          {(() => {
+            const Vista = experience.Vista;
+            return (
+              <Vista
+                count={limited.length}
+                active={active && sceneActive}
+              />
+            );
+          })()}
+          {/* Soft contact shadows look like a transparent blur on the desk surface */}
+          {!deskFixed && (
+            <ContactShadows
+              position={[0, ARENA_FLOOR_Y + 0.02, 0]}
+              opacity={0.55}
+              scale={getArenaRadius(limited.length) * 2.4}
+              blur={2.2}
+              far={14}
+            />
+          )}
+          {/* Floor click returns to overview / exits explore */}
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
             position={[0, ARENA_FLOOR_Y + 0.03, 0]}
             onClick={(e) => {
               e.stopPropagation();
+              if (exploreMode) {
+                setExplore(false);
+                return;
+              }
               leaveZoom();
               setHoveredIndex(-1);
             }}
@@ -1016,13 +1252,34 @@ function SceneContent({
       )}
 
       <group>
+        {roomScene && !deskFixed ? (
+          <MonitorBank
+            count={limited.length}
+            focusedIndex={
+              projectWebViews
+                ? frontWebViewIndex >= 0
+                  ? frontWebViewIndex
+                  : focusedIndex
+                : cameraZoomed
+                  ? focusedIndex
+                  : focusedIndex
+            }
+            hoveredIndex={hoveredIndex}
+          />
+        ) : null}
         {limited.map((card, index) => {
           const pose = computeCardPose(layout, {
             index,
             count: limited.length,
-            focusedIndex: roomScene ? focusedIndex : focusedIndex,
+            focusedIndex,
             browseOffset,
+            deskFixed: deskFixed && roomScene,
+            sceneAngleOffset: deskFixed && roomScene ? deskPoseOffset : 0,
           });
+          // Desk: skip invisible neighbors so they can't steal order / depth
+          if (deskFixed && roomScene && pose.opacity < 0.05) {
+            return null;
+          }
           const focused = index === highlightIndex;
           return (
             <group key={card.id}>
@@ -1031,23 +1288,31 @@ function SceneContent({
                 pose={pose}
                 focused={focused}
                 variant={roomScene ? "screen" : "card"}
-                moveDuration={layout === "ring" ? 0.85 : undefined}
+                moveDuration={
+                  deskFixed && roomScene
+                    ? 0
+                    : layout === "ring"
+                      ? 0.85
+                      : undefined
+                }
                 blockStageDrag={layout === "mission"}
                 projectWebView={
                   projectWebViews && !!card.hasLiveTab
                 }
-                // Hide mesh texture when live webview is painted on this card
                 contentTransparent={
                   projectWebViews &&
+                  !!card.hasLiveTab &&
                   (card.id === interactiveWebViewId ||
-                    card.id === sceneFocusedCardId)
+                    card.id === sceneFocusedCardId ||
+                    (deskFixed &&
+                      roomScene &&
+                      index === focusedIndex))
                 }
                 onSelect={handleCardSelect}
                 onFocus={(id) => {
                   const i = limited.findIndex((c) => c.id === id);
                   if (i < 0) return;
                   if (layout === "mission") {
-                    // Mission: hover only highlights — don't pan the grid
                     setHoveredIndex(i);
                     return;
                   }
@@ -1055,19 +1320,16 @@ function SceneContent({
                     setHoveredIndex(i);
                     return;
                   }
-                  // While zoomed on a ring icon, keep focus locked
                   if (layout === "ring" && cameraZoomed) {
                     setHoveredIndex(i);
                     return;
                   }
-                  // Ring / Cover: moving over icons rotates focus to that card
                   setHoveredIndex(i);
                   onFocusIndex(i);
                 }}
                 onBlur={() => setHoveredIndex(-1)}
               />
               {index === highlightIndex && (() => {
-                // Same label placement for icon and webview — under the card plane
                 const contentHalf = 1.5 / 2;
                 const gap = 0.18;
                 const yOff = contentHalf * pose.scale + gap * pose.scale;
@@ -1078,7 +1340,6 @@ function SceneContent({
                       pose.position[1] - yOff,
                       pose.position[2] + (roomScene ? 0.08 : 0.15),
                     ]}
-                    // Horizontal center only — top of label starts below icon/card
                     distanceFactor={
                       roomScene
                         ? cameraZoomed
@@ -1095,7 +1356,10 @@ function SceneContent({
                     }}
                   >
                     <div className="launchpad-3d-card-label">
-                      <div className="launchpad-3d-card-title" title={card.title}>
+                      <div
+                        className="launchpad-3d-card-title"
+                        title={card.title}
+                      >
                         {card.title}
                       </div>
                       {card.subtitle ? (
@@ -1137,6 +1401,11 @@ export interface LaunchPad3DStageProps {
   externalZoomCardId?: string | null;
   externalClearZoom?: boolean;
   onDeactivateFront?: () => void;
+  /** When false (warm space hidden), pause WebGL frameloop */
+  sceneActive?: boolean;
+  exploreMode?: boolean;
+  onExploreModeChange?: (explore: boolean) => void;
+  experienceId?: string | null;
 }
 
 function LaunchPad3DStage({
@@ -1158,6 +1427,10 @@ function LaunchPad3DStage({
   externalZoomCardId = null,
   externalClearZoom = false,
   onDeactivateFront,
+  sceneActive = true,
+  exploreMode = false,
+  onExploreModeChange,
+  experienceId = null,
 }: LaunchPad3DStageProps) {
   const dispatch = useDispatch();
   const workspace = useSelector(
@@ -1728,9 +2001,16 @@ function LaunchPad3DStage({
           alpha: !roomScene,
           powerPreference: "high-performance",
         }}
-        frameloop={frameloop}
+        frameloop={sceneActive ? frameloop : "never"}
         onCreated={({ gl }) => {
-          gl.setClearColor(roomScene ? 0x2a3a52 : 0x000000, roomScene ? 1 : 0);
+          const exp = getExperience(
+            // read once at create; CameraRig updates live
+            undefined
+          );
+          gl.setClearColor(
+            roomScene ? exp.clearColor : 0x000000,
+            roomScene ? 1 : 0
+          );
         }}
       >
         <SceneContent
@@ -1755,6 +2035,10 @@ function LaunchPad3DStage({
           onDeactivateFront={onDeactivateFront}
           sceneAngleOffset={sceneAngleOffset}
           onResetSceneAngle={() => setSceneAngleOffset(0)}
+          sceneActive={sceneActive}
+          exploreMode={exploreMode}
+          onExploreModeChange={onExploreModeChange}
+          experienceId={experienceId}
         />
       </Canvas>
     </div>

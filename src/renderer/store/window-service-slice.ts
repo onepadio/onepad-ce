@@ -11,6 +11,8 @@ const windowServiceSlice = createSlice({
     /** Window id whose dock icon should animate (link-opened new tab) */
     dockPulseWindowId: "",
     dockPulseToken: 0,
+    /** 3D desk: window/card currently facing the seat (may differ from activeWindowId while browsing) */
+    desktop3dDeskWindowId: "" as string,
     closeTabId: "",
     closeWindowId: "",
     showCloseWindowConfirmation: false,
@@ -44,6 +46,9 @@ const windowServiceSlice = createSlice({
     pulseDockIcon(state, action) {
         state.dockPulseWindowId = action.payload.windowId || "";
         state.dockPulseToken = Date.now();
+    },
+    setDesktop3dDeskWindowId(state, action) {
+        state.desktop3dDeskWindowId = action.payload || "";
     },
     openRemoteApp(state, action) {
         state.newRemoteApp.name = action.payload.name;

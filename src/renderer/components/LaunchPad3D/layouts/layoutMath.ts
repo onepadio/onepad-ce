@@ -1,6 +1,7 @@
 import type { CardPose, LayoutComputeArgs, Launchpad3dLayoutId } from "../types";
 import {
   computeSceneScreenPose,
+  computeDeskScreenPose,
   getSceneOverviewCamera,
   getSceneScreenCamera,
   applySceneZoomDistance,
@@ -245,7 +246,17 @@ export function computeSceneConsolePose({
   index,
   focusedIndex,
   count,
+  deskFixed = false,
+  sceneAngleOffset = 0,
 }: LayoutComputeArgs): CardPose {
+  if (deskFixed) {
+    return computeDeskScreenPose(
+      index,
+      focusedIndex,
+      count,
+      sceneAngleOffset
+    );
+  }
   return computeSceneScreenPose(index, focusedIndex, count);
 }
 

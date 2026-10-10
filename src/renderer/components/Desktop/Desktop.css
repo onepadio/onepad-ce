@@ -278,6 +278,66 @@
     background: #1a2436;
 }
 
+.desktop-3d-exp-control-room .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-control-room .launchpad-3d-stage-fullscreen {
+    background: #1a2436;
+}
+.desktop-3d-exp-desert-pyramids .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-desert-pyramids .launchpad-3d-stage-fullscreen {
+    background: #c4a574;
+}
+.desktop-3d-exp-office-tower .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-office-tower .launchpad-3d-stage-fullscreen {
+    background: #6a8498;
+}
+.desktop-3d-exp-space-station .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-space-station .launchpad-3d-stage-fullscreen {
+    background: #0a1020;
+}
+.desktop-3d-exp-library-hall .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-library-hall .launchpad-3d-stage-fullscreen {
+    background: #3d3228;
+}
+.desktop-3d-exp-mountain-lodge .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-mountain-lodge .launchpad-3d-stage-fullscreen {
+    background: #4a6a48;
+}
+
+.desktop-3d-scene-paused {
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+}
+
+.desktop-3d-explore-hint {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    font-weight: 500;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    padding: 8px 14px;
+    border-radius: 16px;
+    background: rgba(12, 16, 24, 0.45);
+}
+
+.space-desktop-warm-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+}
+
+.space-desktop-warm-layer.is-active {
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 101;
+}
+
+.space-desktop-warm-layer.is-inactive {
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 99;
+}
+
 .desktop-3d-overlay-top {
     position: absolute;
     top: 48px;

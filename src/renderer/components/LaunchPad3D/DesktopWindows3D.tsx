@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { sessionActions } from "../../store/session-slice";
+import { windowServiceActions } from "../../store/window-service-slice";
 import { isOnlineToolWindow } from "../../builtin";
 import { isSharedAppWindow } from "../../util/sharedApps";
 import { resolveIconUrl } from "./resolveIconUrl";
@@ -24,6 +25,13 @@ interface DesktopWindows3DProps {
   /** Increment to force overview (e.g. launchpad overlay opened) */
   clearZoomToken?: number;
   className?: string;
+  /** Override workspace filter (warm-space keep-alive) */
+  workspaceId?: string | null;
+  /** When false, pause WebGL frameloop */
+  sceneActive?: boolean;
+  exploreMode?: boolean;
+  onExploreModeChange?: (explore: boolean) => void;
+  experienceId?: string | null;
 }
 
 function windowToCard(
@@ -89,6 +97,11 @@ function DesktopWindows3D({
   onZoomedChange,
   clearZoomToken = 0,
   className,
+  workspaceId: workspaceIdProp = null,
+  sceneActive = true,
+  exploreMode = false,
+  onExploreModeChange,
+  experienceId = null,
 }: DesktopWindows3DProps) {
   const dispatch = useDispatch();
   const openWindows = useSelector((state: any) => state.session.openWindows);
@@ -101,9 +114,13 @@ function DesktopWindows3D({
   const activeWindowId = useSelector(
     (state: any) => state.session.activeWindowId
   );
-  const workspace = useSelector(
+  const selectedWorkspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
+  const workspace =
+    workspaceIdProp && selectedWorkspace?.id !== workspaceIdProp
+      ? { ...selectedWorkspace, id: workspaceIdProp }
+      : selectedWorkspace;
   const selectedDesktop = useSelector(
     (state: any) => state.workspace.selectedDesktop
   );
@@ -252,6 +269,22 @@ function DesktopWindows3D({
     setFocusedIndex(index);
   }, []);
 
+  // Publish desk-front window so the dock can highlight which app is on the monitor
+  useEffect(() => {
+    if (!sceneActive) {
+      dispatch(windowServiceActions.setDesktop3dDeskWindowId(""));
+      return;
+    }
+    const id = cards[focusedIndex]?.id || "";
+    dispatch(windowServiceActions.setDesktop3dDeskWindowId(id));
+  }, [dispatch, sceneActive, cards, focusedIndex]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(windowServiceActions.setDesktop3dDeskWindowId(""));
+    };
+  }, [dispatch]);
+
   return (
     <div className={className || "launchpad-3d-root launchpad-3d-root-fullscreen"}>
       <LaunchPad3DStage
@@ -268,6 +301,10 @@ function DesktopWindows3D({
         externalZoomCardId={externalZoomCardId}
         externalClearZoom={externalClearZoom}
         onDeactivateFront={deactivateFront}
+        sceneActive={sceneActive}
+        exploreMode={exploreMode}
+        onExploreModeChange={onExploreModeChange}
+        experienceId={experienceId}
       />
     </div>
   );

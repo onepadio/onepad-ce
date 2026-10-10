@@ -18,6 +18,7 @@ import {
   isOnlineToolWindow,
 } from "../../builtin";
 import { isSharedAppWindow } from "../../util/sharedApps";
+import { OTHERS_BROWSER_CARD_ID } from "../LaunchPad3D/othersBrowser";
 
 import defaultIcon from "../../images/default_icon.png";
 
@@ -101,6 +102,9 @@ function AppsOverlayMenu({
       state.settings.desktopVisualMode ||
       state.settings.launchpadVisualMode ||
       "2d"
+  );
+  const desktop3dDeskWindowId = useSelector(
+    (state: any) => state.windowService.desktop3dDeskWindowId || ""
   );
   useEffect(() => {
     suppressAutoHideRef.current = suppressAutoHide;
@@ -416,15 +420,24 @@ function AppsOverlayMenu({
     }
   };
 
+  const is3dDesktop = desktopVisualMode === "3d";
+  const isDeskFrontApp = (appId: string) =>
+    is3dDesktop &&
+    !!desktop3dDeskWindowId &&
+    desktop3dDeskWindowId === appId;
+  const isDeskFrontBrowser =
+    is3dDesktop && desktop3dDeskWindowId === OTHERS_BROWSER_CARD_ID;
+
   const renderAppButton = (app: any) => {
     const isActive = activeWindowId === app.id;
+    const isDeskFront = isDeskFrontApp(app.id);
     const isRunning = hasAwakeTab(app.id);
     return (
       <button
         key={app.id}
         className={`app-menu-item ${isActive ? "active" : ""} ${
-          pulsingWindowId === app.id ? "app-menu-item-pulse" : ""
-        }`}
+          isDeskFront && !isActive ? "desk-front" : ""
+        } ${pulsingWindowId === app.id ? "app-menu-item-pulse" : ""}`}
         onClick={(e) => {
           closeSidebarWindowIfOpen();
           const rect = e.currentTarget.getBoundingClientRect();
@@ -527,8 +540,8 @@ function AppsOverlayMenu({
             e.currentTarget.src = defaultIcon;
           }}
         />
-        {/* Running indicator when ≥1 tab is awake; active bar already covers focus */}
-        {isRunning && !isActive && (
+        {/* Running indicator when ≥1 tab is awake; active/desk-front cover focus */}
+        {isRunning && !isActive && !isDeskFront && (
           <span className="app-running-indicator" aria-hidden="true" />
         )}
         {hoveredApp === app.id && (
@@ -643,8 +656,16 @@ function AppsOverlayMenu({
 
           {/* Others — end of dock */}
           <button
-            className={`app-menu-item position-relative ${activeWindowId?.startsWith("browser_") ? "active" : ""} ${
-              pulsingWindowId?.startsWith("browser_") ? "app-menu-item-pulse" : ""
+            className={`app-menu-item position-relative ${
+              activeWindowId?.startsWith("browser_") ? "active" : ""
+            } ${
+              isDeskFrontBrowser && !activeWindowId?.startsWith("browser_")
+                ? "desk-front"
+                : ""
+            } ${
+              pulsingWindowId?.startsWith("browser_")
+                ? "app-menu-item-pulse"
+                : ""
             }`}
             onClick={() => {
               closeSidebarWindowIfOpen();

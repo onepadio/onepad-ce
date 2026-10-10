@@ -33,7 +33,10 @@ import SplashScreen from "../../components/SplashScreen/SplashScreen";
 import TabsScreen from "../../components/TabsScreen/TabsScreen";
 import SPNavBar from "../../components/SPNavBar/SPNavBar";
 import Desktop from "../../components/Desktop/Desktop";
+import Desktop3D from "../../components/Desktop/Desktop3D";
 import TabWindow from "../../components/WindowContainter/TabWindow";
+import { SpaceService } from "../../services/space";
+import { WARM_SPACE_MAX } from "../../util/warmSpaces";
 import BuiltinAppsHost from "../../components/BuiltinApps/BuiltinAppsHost";
 import SideBar from "../../components/SideBar/SideBar";
 import SettingsCanvas from "../../components/SettingsCanvas/SettingsCanvas";
@@ -143,6 +146,16 @@ function Home() {
       "2d"
   );
   const is3dDesktop = desktopVisualMode === "3d";
+  const warmSpaceIds = useSelector(
+    (state: any) => state.workspace.warmSpaceIds || []
+  );
+  const warmSpaceCache = useSelector(
+    (state: any) => state.workspace.warmSpaceCache || {}
+  );
+  const selectedWorkspace = useSelector(
+    (state: any) => state.workspace.selectedWorkspace
+  );
+  const prevWarmRef = React.useRef<string[]>([]);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const activeWindow = useSelector((state) => state.session.activeWindow);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -216,6 +229,43 @@ function Home() {
   const isSpaceOSEnabled = useSelector((state) => state.settings.isSpaceOSEnabled);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isSleepingTabsEnabled = useSelector((state) => state.settings.isSleepingTabsEnabled);
+
+  // Pause session tabs/windows for spaces that fell off the warm LRU
+  useEffect(() => {
+    const prev = prevWarmRef.current || [];
+    const next = warmSpaceIds || [];
+    prev
+      .filter((id) => id && !next.includes(id))
+      .forEach((workspaceId) => {
+        try {
+          SpaceService.pauseSpace(
+            workspaceId,
+            openTabs || {},
+            openWindows || {},
+            dispatch
+          );
+        } catch (e) {
+          log.debug("warm space eviction pause failed", workspaceId, e);
+        }
+        dispatch(workspaceActions.evictWarmSpace({ workspaceId }));
+      });
+    prevWarmRef.current = next.slice(0, WARM_SPACE_MAX);
+  }, [warmSpaceIds, openTabs, openWindows, dispatch]);
+
+  // Ensure current space is warm when entering 3D / home
+  useEffect(() => {
+    if (!selectedWorkspace?.id) return;
+    dispatch(
+      workspaceActions.touchWarmSpace({
+        workspaceId: selectedWorkspace.id,
+        workspace: selectedWorkspace,
+        apps: workspaceState?.apps,
+        links: workspaceState?.links,
+        desktops: desktops,
+        max: WARM_SPACE_MAX,
+      })
+    );
+  }, [selectedWorkspace?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [stepsEnabled, setStepsEnabled] = useState(false);
   const [hintsEnabled, setHintsEnabled] = useState(false);
@@ -617,6 +667,41 @@ function Home() {
           </>
         ) : (
           <Fade className="mt-2" tag="div">
+            {/* Warm-space Desktop3D keep-alive (selected = active, others paused) */}
+            {is3dDesktop &&
+              (warmSpaceIds?.length
+                ? warmSpaceIds
+                : selectedWorkspace?.id
+                  ? [selectedWorkspace.id]
+                  : []
+              ).map((wsId: string) => {
+                const cache = warmSpaceCache[wsId];
+                const isActive = wsId === selectedWorkspace?.id;
+                const desk = isActive
+                  ? desktops?.[0] || {
+                      id: `warm-${wsId}`,
+                      name: selectedWorkspace?.name || "Space",
+                    }
+                  : cache?.desktops?.[0] || {
+                      id: `warm-${wsId}`,
+                      name: cache?.workspace?.name || "Space",
+                    };
+                return (
+                  <div
+                    key={wsId}
+                    className={`space-desktop-warm-layer ${
+                      isActive ? "is-active" : "is-inactive"
+                    }`}
+                  >
+                    <Desktop3D
+                      id={desk.id}
+                      name={desk.name}
+                      workspaceId={wsId}
+                      sceneActive={isActive}
+                    />
+                  </div>
+                );
+              })}
             {desktops && desktops?.map((desktop: any) => <Desktop
               key={desktop.id}
               id={desktop.id}

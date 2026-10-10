@@ -18,6 +18,7 @@ import default_bg from "../images/default_bg.jpg";
 import XAppService from './xapp';
 import { focusBuiltinWindow, isBuiltinWindow } from '../builtin';
 import { hydrateDesktop3dZoomsFromWorkspace } from '../util/desktop3dZooms';
+import { hydrateDesktop3dExperienceFromWorkspace } from '../util/desktop3dExperience';
 
 export const LOCAL_WORKSPACE_ID = "device";
 export const LOCAL_WORKSPACE_NAME = "Device";
@@ -133,10 +134,21 @@ export class WorkspaceService{
         let links = await LinkService.getLinksByWorkspaceIdAndDesktopId(id, desktop.id);
         dispatch(workspaceActions.selectWorkspace({ workspace: workspace }));
         hydrateDesktop3dZoomsFromWorkspace(dispatch, workspace);
+        hydrateDesktop3dExperienceFromWorkspace(dispatch, workspace);
         dispatch(workspaceActions.setDesktops({ desktops: desktops }));
         dispatch(workspaceActions.selectDesktop({desktop: desktop}));
         dispatch(workspaceActions.setApps({ apps: _apps }));
         dispatch(workspaceActions.setLinks({ links: links }));
+        dispatch(
+            workspaceActions.touchWarmSpace({
+                workspaceId: workspace.id,
+                workspace,
+                apps: _apps,
+                links: links,
+                desktops: desktops,
+                max: 3,
+            })
+        );
 
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
         dispatchWorkspaceFocus(
@@ -194,10 +206,23 @@ export class WorkspaceService{
         let links = await LinkService.getLinksByWorkspaceIdAndDesktopId(id, desktop.id);
         dispatch(workspaceActions.selectWorkspace({ workspace: workspace }));
         hydrateDesktop3dZoomsFromWorkspace(dispatch, workspace);
+        hydrateDesktop3dExperienceFromWorkspace(dispatch, workspace);
         dispatch(workspaceActions.setDesktops({ desktops: desktops }));
         dispatch(workspaceActions.selectDesktop({desktop: desktop}));
         dispatch(workspaceActions.setApps({ apps: _apps }));
         dispatch(workspaceActions.setLinks({ links: links }));
+
+        // Warm-space LRU snapshot (Home pauses spaces that fall off the list)
+        dispatch(
+            workspaceActions.touchWarmSpace({
+                workspaceId: workspace.id,
+                workspace,
+                apps: _apps,
+                links: links,
+                desktops: desktops,
+                max: 3,
+            })
+        );
 
         // @ts-expect-error TS(2571): Object is of type 'unknown'.
         let browserState = await BrowserStateService.getBrowserStateByWorkspaceId(workspace.id);

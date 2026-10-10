@@ -38,4 +38,8 @@ export interface LayoutComputeArgs {
   focusedIndex: number;
   /** Extra offset for ring/coverflow browsing (fractional) */
   browseOffset: number;
+  /** Desk worlds: seat is fixed; poses are relative to focusedIndex */
+  deskFixed?: boolean;
+  /** Continuous desk-carousel drag yaw (radians) */
+  sceneAngleOffset?: number;
 }

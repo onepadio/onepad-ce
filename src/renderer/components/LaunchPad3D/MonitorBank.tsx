@@ -6,6 +6,8 @@ interface MonitorBankProps {
   count: number;
   focusedIndex?: number;
   hoveredIndex?: number;
+  /** Desk rooms: skip neighbor bezels so nothing sits in the view cone */
+  onlyFocused?: boolean;
 }
 
 function MonitorBezel({
@@ -49,18 +51,28 @@ function MonitorBank({
   count,
   focusedIndex = -1,
   hoveredIndex = -1,
+  onlyFocused = false,
 }: MonitorBankProps) {
   const slots = useMemo(() => getSceneScreenSlots(count), [count]);
+  const showIndex =
+    onlyFocused && focusedIndex < 0
+      ? 0
+      : focusedIndex;
 
   return (
     <group>
-      {slots.map((slot, i) => (
-        <MonitorBezel
-          key={`mon-${i}`}
-          slot={slot}
-          lit={i === focusedIndex || i === hoveredIndex}
-        />
-      ))}
+      {slots.map((slot, i) => {
+        if (onlyFocused && i !== showIndex && i !== hoveredIndex) {
+          return null;
+        }
+        return (
+          <MonitorBezel
+            key={`mon-${i}`}
+            slot={slot}
+            lit={i === focusedIndex || i === hoveredIndex}
+          />
+        );
+      })}
     </group>
   );
 }

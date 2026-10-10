@@ -21,6 +21,13 @@ const workSpaceSlice = createSlice({
     currentSession: {},
     widgetConfig: {},
     selectedWidgetId: 0,
+    /** LRU of warm space ids (max 3); [0] = most recently selected */
+    warmSpaceIds: [] as string[],
+    /** Snapshot of apps/links/desktops per warm space for keep-alive mount */
+    warmSpaceCache: {} as Record<
+      string,
+      { apps: any[]; links: any[]; desktops: any[]; workspace: any }
+    >,
   },
   reducers: {
     reset(state, action){
@@ -40,6 +47,8 @@ const workSpaceSlice = createSlice({
         state.currentSession = {};
         state.widgetConfig = {};
         state.selectedWidgetId = 0;
+        state.warmSpaceIds = [];
+        state.warmSpaceCache = {};
     },
     setWorkspaces(state, action){
         state.workspaces = action.payload.workspaces.filter((workspace: any) => workspace.archived !== 1);
@@ -135,6 +144,50 @@ const workSpaceSlice = createSlice({
     },
     setSelectedWidgetId(state, action){
         state.selectedWidgetId = action.payload;
+    },
+    /** Touch space as most-recent warm; evict oldest beyond max (caller persists) */
+    touchWarmSpace(state, action) {
+      const {
+        workspaceId,
+        apps,
+        links,
+        desktops,
+        workspace,
+        max = 3,
+      } = action.payload || {};
+      if (!workspaceId) return;
+      const prev = (state.warmSpaceIds || []).filter(
+        (id: string) => id !== workspaceId
+      );
+      state.warmSpaceIds = [workspaceId, ...prev].slice(0, max);
+      if (!state.warmSpaceCache) state.warmSpaceCache = {};
+      state.warmSpaceCache[workspaceId] = {
+        apps: apps || state.apps || [],
+        links: links || state.links || [],
+        desktops: desktops || state.desktops || [],
+        workspace: workspace || state.selectedWorkspace || {},
+      };
+      // Drop cache entries no longer warm
+      Object.keys(state.warmSpaceCache).forEach((id) => {
+        if (!state.warmSpaceIds.includes(id)) {
+          delete state.warmSpaceCache[id];
+        }
+      });
+    },
+    evictWarmSpace(state, action) {
+      const workspaceId = action.payload?.workspaceId;
+      if (!workspaceId) return;
+      state.warmSpaceIds = (state.warmSpaceIds || []).filter(
+        (id: string) => id !== workspaceId
+      );
+      if (state.warmSpaceCache) {
+        delete state.warmSpaceCache[workspaceId];
+      }
+    },
+    setWarmSpaceIds(state, action) {
+      state.warmSpaceIds = Array.isArray(action.payload)
+        ? action.payload.slice(0, 3)
+        : [];
     },
   },
 });

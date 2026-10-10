@@ -18,9 +18,8 @@ const FOCUS_HEIGHT_FILL = 0.96;
 const FOCUS_ASPECT = 16 / 10;
 
 /**
- * Native resolution at which every webview always renders.
+ * Native resolution at which every webview always renders on the wall.
  * The outer host div is scaled DOWN via CSS scale() to fit the wall card.
- * This keeps webview render quality identical whether on the wall or in HUD.
  * NOTE: scale() is safe with Electron <webview> — only rotate/matrix3d blank it.
  */
 const NATIVE_W = 1280;
@@ -103,8 +102,6 @@ function getFocusFramePose(originLeft = 0, originTop = 0): RectPose {
     width = bandW;
     height = width / FOCUS_ASPECT;
   }
-  height = Math.min(height, bandH * FOCUS_HEIGHT_FILL);
-  width = Math.min(width, height * FOCUS_ASPECT, bandW);
 
   return {
     left: (vw - width) / 2 - originLeft,
@@ -118,14 +115,11 @@ function getDesktopOrigin(): { left: number; top: number } {
   const root = document.querySelector(
     ".desktop-3d-fullscreen"
   ) as HTMLElement | null;
-  const r = root?.getBoundingClientRect();
-  return { left: r?.left ?? 0, top: r?.top ?? 0 };
+  if (!root) return { left: 0, top: 0 };
+  const r = root.getBoundingClientRect();
+  return { left: r.left, top: r.top };
 }
 
-/**
- * Axis-aligned screen rect covering the projected plane.
- * No rotate / matrix3d — Electron <webview> goes blank under those transforms.
- */
 function getProjectedPose(
   object: THREE.Object3D,
   camera: THREE.Camera,
@@ -190,7 +184,6 @@ function getProjectedPose(
   const bottom = Math.max(tl.y, tr.y, br.y, bl.y);
   const width = right - left;
   const height = bottom - top;
-  // Allow the projected rect to be larger than the canvas (card fills/overflows screen)
   if (width < 8 || height < 8) return null;
 
   return { left, top, width, height };
@@ -201,9 +194,9 @@ function getProjectedPose(
  *
  * For wall cards (projected = true):
  *   - Outer div is positioned at card screen location, sized to native resolution
- *   - CSS scale() shrinks it to match projected card size  ← render quality preserved
+ *   - CSS scale() shrinks it to match projected card size
  * For HUD overlay (projected = false):
- *   - Outer div is sized directly to pose (no scale needed)
+ *   - Outer div is sized directly to pose (full resolution)
  */
 function applyPose(
   el: HTMLElement,
@@ -226,8 +219,6 @@ function applyPose(
   el.style.zIndex = opts.interactive || opts.elevating ? "20" : "10";
 
   if (opts.projected) {
-    // Scale native resolution down to projected card size.
-    // scale() is safe with Electron <webview> — only rotate/matrix3d blank it.
     const scaleX = pose.width / NATIVE_W;
     const scaleY = pose.height / NATIVE_H;
     el.style.left = `${pose.left}px`;
@@ -237,7 +228,6 @@ function applyPose(
     el.style.transformOrigin = "0 0";
     el.style.transform = `scale(${scaleX}, ${scaleY})`;
   } else {
-    // HUD overlay: render at exact pose size (full resolution)
     el.style.left = `${pose.left}px`;
     el.style.top = `${pose.top}px`;
     el.style.width = `${Math.max(1, pose.width)}px`;
@@ -335,20 +325,23 @@ function WebViewProjector({
       }
 
       if (anim && anim.id === id) {
-        if (anim.reversing && projected) {
-          anim.to = projected;
+        if (projected) {
+          if (anim.reversing) {
+            anim.to = projected;
+          } else {
+            anim.to = getFocusFramePose(originLeft, originTop);
+          }
         } else if (!anim.reversing) {
           anim.to = getFocusFramePose(originLeft, originTop);
         }
         const raw = Math.min(1, (now - anim.startedAt) / anim.duration);
         const t = easeOutCubic(raw);
-        // During animation: lerp between projected (wall) and HUD sizes.
-        // Use projected mode while collapsing, HUD mode while expanding.
         const expanding = !anim.reversing;
         applyPose(el, lerpPose(anim.from, anim.to, t), {
           interactive: expanding && raw >= 1,
           elevating: true,
-          projected: false, // animate in screen space at interpolated size
+          // Animate in HUD pixel space so resolution matches control room
+          projected: false,
         });
         if (raw >= 1) {
           animRef.current = null;
@@ -357,7 +350,6 @@ function WebViewProjector({
       }
 
       if (interactiveId != null && interactiveId === id) {
-        // HUD full-size overlay — render at pose dimensions (full resolution)
         applyPose(el, getFocusFramePose(originLeft, originTop), {
           interactive: true,
           elevating: false,
@@ -367,7 +359,6 @@ function WebViewProjector({
       }
 
       // Scene overview: only the focused card's webview — never paint neighbors
-      // (painting many Electron webviews at once causes blank/corrupt renders).
       if (sceneFocusedId != null) {
         if (id !== sceneFocusedId || !projected) {
           hidePose(el);
@@ -381,7 +372,6 @@ function WebViewProjector({
         return;
       }
 
-      // No focused/interactive card — keep every host hidden
       hidePose(el);
     });
   });

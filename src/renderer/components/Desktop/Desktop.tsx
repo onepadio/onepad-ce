@@ -18,7 +18,6 @@ import { Robot } from "react-bootstrap-icons";
 
 import Widget from "./Widget";
 import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
-import Desktop3D from "./Desktop3D";
 import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import Pages from "../Pages/Pages";
@@ -471,6 +470,7 @@ function Desktop(props) {
         const next = !open;
         if (next) {
           setClearZoomToken((t) => t + 1);
+          window.dispatchEvent(new CustomEvent("desktop3d-clear-zoom"));
           setIsLaunchpadActive(true);
           dispatch(
             sessionActionsImport.getBackToLaunchPad({
@@ -570,11 +570,7 @@ function Desktop(props) {
     <>
       {is3dDesktop && isSelectedDesktop ? (
         <>
-          <Desktop3D
-            id={props.id}
-            name={name}
-            clearZoomToken={clearZoomToken}
-          />
+          {/* Desktop3D is mounted by Home warm-space layers (keep-alive) */}
           {isLaunchpadOverlayOpen && (
             <div className="desktop-3d-launchpad-overlay">
               <div
