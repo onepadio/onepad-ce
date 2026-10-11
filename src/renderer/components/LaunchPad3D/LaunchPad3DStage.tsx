@@ -38,7 +38,6 @@ import {
   ARENA_FLOOR_Y,
   getArenaRadius,
   getDeskWorkCamera,
-  getSceneFrontIndex,
   dragDeltaToSceneAngle,
   snapSceneAngle,
 } from "./layouts/roomScreens";
@@ -55,7 +54,7 @@ import { OTHERS_BROWSER_CARD_ID } from "./othersBrowser";
 /** Soft cap for wallpaper layouts (ring / mission / cover) */
 const WALLPAPER_CARD_MAX = 48;
 
-/** True when the pointer is over the focused HUD webview (guest should own scroll). */
+/** True when the pointer is over the focused HUD / My Apps overlay webview. */
 function isPointerOverFocusedWebView(
   clientX: number,
   clientY: number,
@@ -65,12 +64,17 @@ function isPointerOverFocusedWebView(
   if (hit) {
     const tag = hit.tagName?.toLowerCase?.() || "";
     if (tag === "webview" || hit.closest?.("webview")) return true;
+    if (hit.closest?.("[data-desktop3d-overlay-webview]")) return true;
     if (hit.closest?.("[data-desktop3d-webview]")) return true;
   }
   if (!frontCardId) return false;
-  const host = document.querySelector(
-    `[data-desktop3d-webview="${frontCardId}"]`
-  ) as HTMLElement | null;
+  const host =
+    (document.querySelector(
+      `[data-desktop3d-overlay-webview="${frontCardId}"]`
+    ) as HTMLElement | null) ||
+    (document.querySelector(
+      `[data-desktop3d-webview="${frontCardId}"]`
+    ) as HTMLElement | null);
   if (!host) return false;
   const r = host.getBoundingClientRect();
   return (
@@ -471,42 +475,21 @@ function DeskAngleBridge({
   return null;
 }
 
-/** Keep live webviews mounted for windows near the camera front (+ focused). */
+/**
+ * Keep non-sleeping scene webviews mounted (like 2D) — projector only hides
+ * off-front ones. Sleeping tabs never get a host (getWindowLiveActiveTab).
+ */
 function SceneVisibilityTracker({
   cards,
-  focusedIndex,
-  cameraZoomed,
 }: {
   cards: LaunchPadCard[];
   focusedIndex: number;
   cameraZoomed: boolean;
 }) {
-  const { camera } = useThree();
   const lastKey = useRef("");
 
   useFrame(() => {
-    const n = cards.length;
-    if (n === 0) {
-      if (lastKey.current !== "") {
-        lastKey.current = "";
-        setVisibleSceneWindowIds([]);
-      }
-      return;
-    }
-    const front = cameraZoomed
-      ? focusedIndex
-      : getSceneFrontIndex(n, camera.position.x, camera.position.z);
-    // Mount webviews only near the front; projector hides off-front ones
-    const radius = cameraZoomed ? 1 : 2;
-    const ids: string[] = [];
-    for (let d = -radius; d <= radius; d++) {
-      const i = ((front + d) % n + n) % n;
-      if (cards[i]) ids.push(cards[i].id);
-    }
-    // Always mount the focused card's webview
-    if (cards[focusedIndex] && !ids.includes(cards[focusedIndex].id)) {
-      ids.push(cards[focusedIndex].id);
-    }
+    const ids = cards.map((c) => c.id);
     const key = ids.join("|");
     if (key === lastKey.current) return;
     lastKey.current = key;
@@ -763,6 +746,12 @@ function SceneContent({
     setRingZoomPhase(null);
   }, [clearActivateTimer, projectWebViews]);
 
+  // Explore looks out the window — dismiss HUD webview so it doesn't float mid-screen
+  useEffect(() => {
+    if (!exploreMode) return;
+    leaveZoom();
+  }, [exploreMode, leaveZoom]);
+
   /** User dismiss: clear front frame + deactivate the app in session */
   const dismissFrontAndDeactivate = useCallback(() => {
     leaveZoom();
@@ -793,8 +782,13 @@ function SceneContent({
 
   // In scene overview (no card expanded): show focused card's webview on the wall.
   // When a card is expanded (frontWebViewId set), hide the wall webview — HUD overlay takes over.
+  // Explore mode: hide all projected webviews (camera faces the vista).
   const sceneFocusedCardId =
-    roomScene && projectWebViews && !frontWebViewId && limited[focusedIndex]?.hasLiveTab
+    roomScene &&
+    projectWebViews &&
+    !exploreMode &&
+    !frontWebViewId &&
+    limited[focusedIndex]?.hasLiveTab
       ? limited[focusedIndex].id
       : null;
 
@@ -831,12 +825,12 @@ function SceneContent({
     clearActivateTimer();
     onFocusIndex(i);
     setHoveredIndex(i);
-    // Expand webview to HUD overlay (same as clicking the card)
+    // Session activate (card click) → HUD. Dock uses bringDesktop3dCardToFront
+    // without setActiveWindow, so it never hits this path.
     if (roomScene && projectWebViews) {
       frontWebViewOpenedAtRef.current = performance.now();
       setFrontWebViewId(externalZoomCardId);
     }
-    // No dolly in scene mode — camera stays at fixed OVERVIEW_DIST from wall
   }, [
     externalZoomCardId,
     projectWebViews,
@@ -1406,6 +1400,9 @@ export interface LaunchPad3DStageProps {
   exploreMode?: boolean;
   onExploreModeChange?: (explore: boolean) => void;
   experienceId?: string | null;
+  /** My Apps / xapp overlay owns keyboard + mouse — freeze scene controls */
+  overlayAppFocused?: boolean;
+  overlayWindowId?: string | null;
 }
 
 function LaunchPad3DStage({
@@ -1431,6 +1428,8 @@ function LaunchPad3DStage({
   exploreMode = false,
   onExploreModeChange,
   experienceId = null,
+  overlayAppFocused = false,
+  overlayWindowId = null,
 }: LaunchPad3DStageProps) {
   const dispatch = useDispatch();
   const workspace = useSelector(
@@ -1487,18 +1486,38 @@ function LaunchPad3DStage({
   focusedIndexRef.current = focusedIndex;
   const sceneKeyOrbitTweenRef = useRef<gsap.core.Tween | null>(null);
 
+  const hudZoomedRef = useRef(false);
+
   const notifyZoomedChange = useCallback(
     (zoomed: boolean, cardId: string | null) => {
-      windowFrontActiveRef.current = zoomed;
-      frontCardIdRef.current = zoomed ? cardId : null;
-      if (!zoomed) {
+      hudZoomedRef.current = zoomed;
+      // Overlay apps also own input — keep scene frozen while either is active
+      windowFrontActiveRef.current = zoomed || overlayAppFocused;
+      frontCardIdRef.current = zoomed
+        ? cardId
+        : overlayAppFocused
+          ? overlayWindowId
+          : null;
+      if (!zoomed && !overlayAppFocused) {
         tabWheelAccum.current = 0;
         tabWheelLockUntil.current = 0;
       }
       onZoomedChange?.(zoomed, cardId);
     },
-    [onZoomedChange]
+    [onZoomedChange, overlayAppFocused, overlayWindowId]
   );
+
+  // My Apps / xapp overlay: treat like HUD focus for orbit / keys / wheel
+  useEffect(() => {
+    windowFrontActiveRef.current = hudZoomedRef.current || overlayAppFocused;
+    if (overlayAppFocused && overlayWindowId) {
+      frontCardIdRef.current = overlayWindowId;
+    } else if (!hudZoomedRef.current) {
+      frontCardIdRef.current = null;
+      tabWheelAccum.current = 0;
+      tabWheelLockUntil.current = 0;
+    }
+  }, [overlayAppFocused, overlayWindowId]);
 
   const cycleFocusedWindowTab = useCallback(
     (dir: 1 | -1) => {
@@ -1720,6 +1739,8 @@ function LaunchPad3DStage({
   );
 
   const handlePointerDown = useCallback((e: PointerEvent) => {
+    // My Apps / HUD webview owns the pointer — don't start scene drag
+    if (windowFrontActiveRef.current) return;
     // Ignore presses that start on a card label / interactive chrome
     const target = e.target as HTMLElement | null;
     if (target?.closest?.(".launchpad-3d-card-label")) return;
@@ -1740,6 +1761,8 @@ function LaunchPad3DStage({
 
       // Scene: horizontal drag smoothly rotates the camera around the ring
       if (layout === "scene") {
+        // HUD-focused: don't orbit to another window via drag
+        if (windowFrontActiveRef.current) return;
         if (!dragRef.current.panning) {
           if (Math.abs(dx) < 8) return;
           dragRef.current.panning = true;
@@ -1827,6 +1850,10 @@ function LaunchPad3DStage({
     dragRef.current.mode = null;
     // Scene: snap accumulated angle offset to nearest card, then reset offset to 0
     if (layout === "scene" && sceneAngleOffset !== 0) {
+      if (windowFrontActiveRef.current) {
+        setSceneAngleOffset(0);
+        return;
+      }
       const { index } = snapSceneAngle(focusedIndex, sceneAngleOffset, cards.length);
       onFocusIndex(index);
       setSceneAngleOffset(0);
@@ -1844,7 +1871,7 @@ function LaunchPad3DStage({
       const target = e.target as HTMLElement | null;
       if (
         target?.closest?.(
-          "input, textarea, select, [contenteditable='true'], webview, .desktop-3d-address-bar"
+          "input, textarea, select, [contenteditable='true'], webview, .desktop-3d-address-bar, [data-desktop3d-overlay-webview]"
         )
       ) {
         return;
@@ -1853,6 +1880,12 @@ function LaunchPad3DStage({
       if (isTab) {
         const dir = e.key === "ArrowDown" ? 1 : -1;
         if (cycleFocusedWindowTab(dir)) e.preventDefault();
+        return;
+      }
+
+      // HUD / My Apps focused: ←/→ must not orbit the scene
+      if (windowFrontActiveRef.current) {
+        e.preventDefault();
         return;
       }
 
@@ -1941,6 +1974,7 @@ function LaunchPad3DStage({
 
       const dir = tabWheelAccum.current > 0 ? 1 : -1;
       tabWheelAccum.current = 0;
+      // Multi-tab: cycle. Single-tab: swallow — never orbit scene windows.
       if (cycleFocusedWindowTab(dir)) {
         tabWheelLockUntil.current = now + 260;
       }
@@ -1980,7 +2014,9 @@ function LaunchPad3DStage({
 
   return (
     <div
-      className={className}
+      className={`${className || ""}${
+        overlayAppFocused ? " is-overlay-app-focused" : ""
+      }`}
       style={style}
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}

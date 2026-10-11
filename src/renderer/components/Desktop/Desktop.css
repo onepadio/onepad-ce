@@ -75,6 +75,10 @@
     transition: width 0.3s ease;
 }
 
+.launchpad-tabs{
+    margin-top: 20px;
+}
+
 /* Ensure all child elements inherit the container width */
 .space-container.chat-assistant-open .launchpad-container,
 .space-container.chat-assistant-open .widget-container,
@@ -407,10 +411,10 @@
 
 .desktop-3d-launchpad-overlay-panel {
     position: relative;
-    z-index: 1;
+    z-index: 501;
     width: min(1100px, 92vw);
-    max-height: calc(100vh - 120px);
-    margin: 72px auto 80px;
+    max-height: calc(60vh);
+    margin: 272px auto 80px;
     overflow: auto;
     pointer-events: auto;
     border-radius: 16px;

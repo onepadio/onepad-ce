@@ -9,12 +9,14 @@ import DesktopMenu from "../DesktopMenu/DesktopMenu";
 import DesktopWindows3D from "../LaunchPad3D/DesktopWindows3D";
 import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
 import Desktop3DWebViewHost from "../LaunchPad3D/Desktop3DWebViewHost";
+import Desktop3DOverlayApps from "./Desktop3DOverlayApps";
 import Desktop3DAddressBar from "../LaunchPad3D/Desktop3DAddressBar";
 import Desktop3DTabDots from "../LaunchPad3D/Desktop3DTabDots";
 import { getExperience } from "../LaunchPad3D/experiences/registry";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { modalActions } from "../../store/modal-slice";
 import { storeActions } from "../../store/store-slice";
+import { isDesktop3dOverlayWindow } from "../../util/sharedApps";
 
 import "./Desktop.css";
 import "../LaunchPad3D/LaunchPad3D.css";
@@ -60,10 +62,22 @@ function Desktop3D({
         experienceIdFromSettings
       : experienceIdFromSettings;
   const experience = getExperience(experienceId);
+  const activeWindowId = useSelector(
+    (state: any) => state.session.activeWindowId
+  );
+  const openWindows = useSelector((state: any) => state.session.openWindows);
+  const homeWorkspaceId = useSelector(
+    (state: any) => state.user.homeWorkspace
+  );
+  const overlayFocused = isDesktop3dOverlayWindow(
+    activeWindowId ? openWindows?.[activeWindowId] : null,
+    homeWorkspaceId
+  );
   const [windowFocused, setWindowFocused] = useState(false);
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
   const [localClearZoomToken, setLocalClearZoomToken] = useState(0);
   const [exploreMode, setExploreMode] = useState(false);
+  const hudFocused = windowFocused || overlayFocused;
 
   useEffect(() => {
     if (!clearZoomToken) return;
@@ -84,6 +98,10 @@ function Desktop3D({
     }
   }, [experience.usesDeskRoom, exploreMode]);
 
+  useEffect(() => {
+    if (overlayFocused) setExploreMode(false);
+  }, [overlayFocused]);
+
   const onZoomedChange = useCallback((zoomed: boolean, cardId?: string | null) => {
     setWindowFocused(zoomed);
     setFocusedCardId(zoomed ? cardId ?? null : null);
@@ -91,8 +109,12 @@ function Desktop3D({
   }, []);
 
   const leaveFocusedWindow = useCallback(() => {
+    if (overlayFocused) {
+      window.dispatchEvent(new CustomEvent("desktop3d-overlay-dismiss"));
+      return;
+    }
     setLocalClearZoomToken((t) => t + 1);
-  }, []);
+  }, [overlayFocused]);
 
   function toggleAppStore() {
     dispatch(storeActions.setSelectedStore("web"));
@@ -111,7 +133,7 @@ function Desktop3D({
       className={`desktop-3d-fullscreen desktop-3d-room-scene ${
         experience.cssClass
       } ${isAIAssistantOpen ? "chat-assistant-open" : ""} ${
-        windowFocused ? "desktop-3d-window-focused" : ""
+        hudFocused ? "desktop-3d-window-focused" : ""
       } ${sceneActive ? "" : "desktop-3d-scene-paused"}`}
     >
       {sceneActive ? <DesktopMenu /> : null}
@@ -141,7 +163,7 @@ function Desktop3D({
 
       {sceneActive ? (
         <div className="desktop-3d-overlay-top">
-          {!windowFocused && !exploreMode && (
+          {!hudFocused && !exploreMode && (
             <div className="desktop-3d-overlay-title">
               {isDesktopsEnabled ? (
                 <button
@@ -157,7 +179,7 @@ function Desktop3D({
             </div>
           )}
           <div className="desktop-3d-overlay-center">
-            {windowFocused && !exploreMode ? (
+            {hudFocused && !exploreMode ? (
               <Desktop3DAddressBar onClose={leaveFocusedWindow} />
             ) : exploreMode ? (
               <div className="desktop-3d-explore-hint">Looking out the window</div>
@@ -181,9 +203,12 @@ function Desktop3D({
         exploreMode={exploreMode}
         onExploreModeChange={setExploreMode}
         experienceId={experienceId}
+        overlayAppFocused={overlayFocused}
+        overlayWindowId={overlayFocused ? activeWindowId : null}
       />
       {sceneActive ? <Desktop3DWebViewHost /> : null}
-      {sceneActive && windowFocused && !exploreMode ? (
+      {sceneActive ? <Desktop3DOverlayApps /> : null}
+      {sceneActive && !exploreMode ? (
         <Desktop3DTabDots focusedCardId={focusedCardId} />
       ) : null}
     </div>

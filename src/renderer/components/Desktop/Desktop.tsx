@@ -34,6 +34,7 @@ import {
   isSharedAppWindow,
 } from "../../util/sharedApps";
 import { isOnlineToolWindow } from "../../builtin";
+import { OTHERS_BROWSER_CARD_ID } from "../LaunchPad3D/othersBrowser";
 
 const SWITCHER_HOVER_OPEN_MS = 350;
 const SWITCHER_HOVER_CLOSE_MS = 280;
@@ -445,21 +446,37 @@ function Desktop(props) {
         app.is_stateful,
         app.show_controls
       );
-    } else {
-      dispatch(sessionActionsImport.setActiveWindow({ data: app }));
-      // Cover TabWindow until OPWebView finishes loading (or safety timeout)
-      const tabIds = windowTabs[app.id] || [];
-      const activeTabForApp = activeTabs[app.id];
-      const wakeTab =
-        (activeTabForApp && openTabs[activeTabForApp]) ||
-        (tabIds[0] && openTabs[tabIds[0]]);
-      if (
-        !is3dDesktop &&
-        (openWindows[app.id].sleeping === true ||
-          wakeTab?.sleeping === true)
-      ) {
-        dispatch(appActions.showSplashScreen({}));
+      return;
+    }
+
+    // 3D: orbit card to the desk without activating / HUD focus
+    if (is3dDesktop) {
+      if (activeWindowId && activeWindowId !== "launchpad") {
+        dispatch(
+          sessionActionsImport.getBackToLaunchPad({
+            data: { desktopId: desktop.id },
+          })
+        );
       }
+      window.dispatchEvent(new CustomEvent("desktop3d-clear-zoom"));
+      dispatch(
+        windowServiceActions.bringDesktop3dCardToFront({ cardId: appId })
+      );
+      return;
+    }
+
+    dispatch(sessionActionsImport.setActiveWindow({ data: app }));
+    // Cover TabWindow until OPWebView finishes loading (or safety timeout)
+    const tabIds = windowTabs[app.id] || [];
+    const activeTabForApp = activeTabs[app.id];
+    const wakeTab =
+      (activeTabForApp && openTabs[activeTabForApp]) ||
+      (tabIds[0] && openTabs[tabIds[0]]);
+    if (
+      openWindows[app.id].sleeping === true ||
+      wakeTab?.sleeping === true
+    ) {
+      dispatch(appActions.showSplashScreen({}));
     }
   }
 
@@ -509,6 +526,30 @@ function Desktop(props) {
 
     setShowBrowserTabSwitcher(false);
     setSwitcherPinned(false);
+
+    // 3D: bring Others screen to desk front without activating
+    if (is3dDesktop) {
+      const hasBrowser = Object.values(openWindows).some(
+        (w: any) => w?.type === "browser" && w.workspace === workspace.id
+      );
+      if (hasBrowser) {
+        if (activeWindowId && activeWindowId !== "launchpad") {
+          dispatch(
+            sessionActionsImport.getBackToLaunchPad({
+              data: { desktopId: desktop.id },
+            })
+          );
+        }
+        window.dispatchEvent(new CustomEvent("desktop3d-clear-zoom"));
+        dispatch(
+          windowServiceActions.bringDesktop3dCardToFront({
+            cardId: OTHERS_BROWSER_CARD_ID,
+          })
+        );
+        return;
+      }
+    }
+
     const homePage = "https://www.google.com/";
     activateBrowser(
       homePage,
@@ -550,12 +591,10 @@ function Desktop(props) {
     const isValidType =
       window.type === "app" || window.type === "link" || window.type === "xapp";
     if (!isValidType) return false;
+    // My Apps / xapps live in the My Apps menu, not the space dock
     if (isSharedAppWindow(window, homeWorkspaceId)) return false;
     if (isOnlineToolWindow(window)) return false;
-
-    if (window.type === "xapp") {
-      return window.desktop === workspace.id;
-    }
+    if (window.type === "xapp") return false;
     return window.workspace === workspace.id;
   });
 

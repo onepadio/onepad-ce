@@ -7,15 +7,29 @@ import { sessionActions } from '../store/session-slice';
 import { appActions } from '../store/app-slice';
 import { createNavHistoryState } from './navHistory';
 
+/**
+ * Cross-space apps (My Apps / xapps): available in every space, never
+ * placed as 3D scene cards — opened as a 2D webview overlay instead.
+ */
 export function isSharedAppWindow(
   window: any,
   homeWorkspaceId: string | null | undefined
 ): boolean {
-  if (!window || !homeWorkspaceId) return false;
-  if (window.type === 'xapp') {
-    return window.desktop === homeWorkspaceId;
-  }
+  if (!window) return false;
+  // Profile xapps follow the user across spaces
+  if (window.type === 'xapp') return true;
+  if (!homeWorkspaceId) return false;
   return window.workspace === homeWorkspaceId;
+}
+
+/** Windows that mount as 2D overlays on top of the 3D scene (not scene cards). */
+export function isDesktop3dOverlayWindow(
+  window: any,
+  homeWorkspaceId: string | null | undefined
+): boolean {
+  if (!window) return false;
+  if (isSharedAppWindow(window, homeWorkspaceId)) return true;
+  return false;
 }
 
 export function hasAwakeTab(

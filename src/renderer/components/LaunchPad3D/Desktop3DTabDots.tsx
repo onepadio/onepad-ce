@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -7,19 +7,20 @@ import {
   switchAppTab,
   switchBrowserTab,
 } from "../../util/browserTabGroups";
+import { isSharedAppWindow } from "../../util/sharedApps";
 import { OTHERS_BROWSER_CARD_ID } from "./othersBrowser";
+import { getWindowLiveActiveTab } from "./windowTab";
 
 import "./Desktop3DTabDots.css";
 
 interface Desktop3DTabDotsProps {
-  /** Focused 3D card id (window id, or Others card id) */
+  /** HUD-focused 3D card id (window id, or Others card id) */
   focusedCardId?: string | null;
 }
 
 /**
- * Vertical page-dot pagination for the focused 3D window when it has multiple tabs.
- * Works for app/link/xapp windows and browser tab-groups (Others screen).
- * Portaled to document.body so Electron <webview> native layers cannot cover it.
+ * Vertical page-dot pagination when the front desk/HUD window has multiple tabs.
+ * Also tracks My Apps / xapp overlay hosts. Portaled so native webviews can't cover it.
  */
 function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
   const dispatch = useDispatch();
@@ -31,21 +32,45 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
     (state: any) => state.session.activeWindowId
   );
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
+  const homeWorkspaceId = useSelector(
+    (state: any) => state.user.homeWorkspace
+  );
+  /** Scene front window when HUD is not open */
+  const deskFrontCardId = useSelector(
+    (state: any) => state.windowService.desktop3dDeskWindowId || ""
+  );
 
-  const { windowId, tabIds, activeIndex } = useMemo(() => {
+  const { windowId, tabIds, activeIndex, cardKey, isOverlay } = useMemo(() => {
     const empty = {
       windowId: null as string | null,
       tabIds: [] as string[],
       activeIndex: -1,
+      cardKey: null as string | null,
+      isOverlay: false,
     };
 
-    let windowId: string | null =
-      focusedCardId || activeWindowId || null;
+    const activeWin = activeWindowId ? openWindows?.[activeWindowId] : null;
+    const overlayActive = isSharedAppWindow(activeWin, homeWorkspaceId);
+
+    // My Apps / xapp overlay takes priority over desk-front scene cards
+    let cardKey: string | null = null;
+    let windowId: string | null = null;
+    let isOverlay = false;
+
+    if (overlayActive && activeWindowId) {
+      windowId = activeWindowId;
+      cardKey = activeWindowId;
+      isOverlay = true;
+    } else {
+      cardKey = focusedCardId || deskFrontCardId || null;
+      windowId = cardKey || activeWindowId || null;
+    }
 
     if (windowId === "launchpad") windowId = null;
 
     // Others screen → representative / active browser window
     if (windowId === OTHERS_BROWSER_CARD_ID) {
+      cardKey = OTHERS_BROWSER_CARD_ID;
       windowId =
         (activeWindowId && openWindows[activeWindowId]?.type === "browser"
           ? activeWindowId
@@ -64,87 +89,115 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
       const fromTab = tab?.window;
       if (fromTab && openWindows[fromTab]) {
         windowId = fromTab;
+        if (!cardKey) cardKey = fromTab;
+        if (isSharedAppWindow(openWindows[fromTab], homeWorkspaceId)) {
+          isOverlay = true;
+        }
       }
     }
 
     if (!windowId || !openWindows[windowId]) return empty;
 
-    let ids = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
-    if (ids.length <= 1) {
-      // Fallback if windowTabs is stale: gather from openTabs by window ref
-      const fromOpen = Object.keys(openTabs || {}).filter(
-        (id) => openTabs[id]?.window === windowId && !openTabs[id]?.sleeping
-      );
-      if (fromOpen.length > ids.length) {
-        ids = fromOpen.sort((a, b) => {
-          const ca = openTabs[a]?.created || 0;
-          const cb = openTabs[b]?.created || 0;
-          return ca - cb;
-        });
-      }
+    if (!isOverlay && isSharedAppWindow(openWindows[windowId], homeWorkspaceId)) {
+      isOverlay = true;
     }
 
+    let ids = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
+    if (ids.length === 0) {
+      ids = Object.keys(openTabs || {}).filter(
+        (id) => openTabs[id]?.window === windowId
+      );
+      ids.sort((a, b) => {
+        const ca = openTabs[a]?.created || 0;
+        const cb = openTabs[b]?.created || 0;
+        return ca - cb;
+      });
+    }
+
+    // Multi-tab only; hide while the card shows the app icon (no live tab)
+    if (ids.length <= 1) return empty;
+    if (!getWindowLiveActiveTab(windowId, activeTabs, openTabs)) return empty;
+
     const currentId =
-      activeTabId && ids.includes(activeTabId)
-        ? activeTabId
-        : activeTabs?.[windowId] || ids[0];
+      activeTabs?.[windowId] && ids.includes(activeTabs[windowId])
+        ? activeTabs[windowId]
+        : activeTabId && ids.includes(activeTabId)
+          ? activeTabId
+          : ids[0];
     const activeIndex = ids.indexOf(currentId);
-    return { windowId, tabIds: ids, activeIndex };
+    return {
+      windowId,
+      tabIds: ids,
+      activeIndex,
+      cardKey: cardKey || windowId,
+      isOverlay,
+    };
   }, [
     focusedCardId,
+    deskFrontCardId,
     activeWindowId,
     activeTabId,
     activeTabs,
     openWindows,
     openTabs,
     windowTabs,
+    homeWorkspaceId,
   ]);
 
-  // Sit just left of the focused webview host
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  // Track webview host every frame (same cadence as WebViewProjector scale)
+  const navRef = useRef<HTMLElement | null>(null);
+  const lastPosRef = useRef({ left: -1, top: -1 });
 
   useEffect(() => {
-    if (!windowId || tabIds.length <= 1) {
-      setPos(null);
-      return;
-    }
+    if (!windowId || tabIds.length <= 1) return;
 
-    const update = () => {
-      const cardKey =
-        focusedCardId === OTHERS_BROWSER_CARD_ID
-          ? OTHERS_BROWSER_CARD_ID
-          : windowId;
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const nav = navRef.current;
+      if (!nav) return;
+
+      const hostKey = cardKey || windowId;
       const host =
         (document.querySelector(
-          `[data-desktop3d-webview="${cardKey}"]`
+          `[data-desktop3d-overlay-webview="${windowId}"]`
+        ) as HTMLElement | null) ||
+        (document.querySelector(
+          `[data-desktop3d-webview="${hostKey}"]`
         ) as HTMLElement | null) ||
         (document.querySelector(
           `[data-desktop3d-webview="${windowId}"]`
         ) as HTMLElement | null);
-      if (!host) {
-        // Fallback: mid-left of viewport (outside FOCUS_SIDE_INSET band)
-        setPos({ left: 16, top: window.innerHeight * 0.5 });
+
+      let left = 16;
+      let top = window.innerHeight * 0.5;
+
+      if (
+        host &&
+        host.style.visibility !== "hidden" &&
+        host.style.opacity !== "0"
+      ) {
+        // Includes CSS scale() — same visual box the projector just wrote
+        const r = host.getBoundingClientRect();
+        if (r.width >= 40 && r.height >= 40) {
+          left = Math.max(10, r.left - 36);
+          top = r.top + r.height * 0.5;
+        }
+      }
+
+      const prev = lastPosRef.current;
+      if (Math.abs(prev.left - left) < 0.25 && Math.abs(prev.top - top) < 0.25) {
         return;
       }
-      const r = host.getBoundingClientRect();
-      if (r.width < 8 || r.height < 8) {
-        setPos({ left: 16, top: window.innerHeight * 0.5 });
-        return;
-      }
-      setPos({
-        left: Math.max(10, r.left - 36),
-        top: r.top + r.height * 0.5,
-      });
+      lastPosRef.current = { left, top };
+      nav.style.left = `${left}px`;
+      nav.style.top = `${top}px`;
+      nav.style.transform = "translateY(-50%)";
     };
 
-    update();
-    const id = window.setInterval(update, 120);
-    window.addEventListener("resize", update);
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener("resize", update);
-    };
-  }, [windowId, focusedCardId, tabIds.length]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [windowId, cardKey, tabIds.length, isOverlay]);
 
   if (!windowId || tabIds.length <= 1) return null;
 
@@ -162,18 +215,12 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
 
   const node = (
     <nav
-      className="desktop-3d-tab-dots"
+      ref={navRef}
+      className={`desktop-3d-tab-dots${
+        isOverlay ? " desktop-3d-tab-dots--overlay" : ""
+      }`}
       aria-label={
         win?.type === "browser" ? "Browser tab group" : "Window tabs"
-      }
-      style={
-        pos
-          ? {
-              left: pos.left,
-              top: pos.top,
-              transform: "translateY(-50%)",
-            }
-          : undefined
       }
     >
       {tabIds.map((tabId: string, i: number) => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { sessionActions } from "../../store/session-slice";
@@ -32,6 +32,9 @@ interface DesktopWindows3DProps {
   exploreMode?: boolean;
   onExploreModeChange?: (explore: boolean) => void;
   experienceId?: string | null;
+  /** My Apps / xapp overlay owns input — freeze scene controls */
+  overlayAppFocused?: boolean;
+  overlayWindowId?: string | null;
 }
 
 function windowToCard(
@@ -102,6 +105,8 @@ function DesktopWindows3D({
   exploreMode = false,
   onExploreModeChange,
   experienceId = null,
+  overlayAppFocused = false,
+  overlayWindowId = null,
 }: DesktopWindows3DProps) {
   const dispatch = useDispatch();
   const openWindows = useSelector((state: any) => state.session.openWindows);
@@ -143,9 +148,10 @@ function DesktopWindows3D({
         window.type === "xapp" ||
         window.type === "browser";
       if (!isValidType) return false;
+      // My Apps / xapps: overlay-only — never scene cards
       if (isSharedAppWindow(window, homeWorkspaceId)) return false;
       if (isOnlineToolWindow(window)) return false;
-      if (window.type === "xapp") return window.desktop === workspace?.id;
+      if (window.type === "xapp") return false;
       return window.workspace === workspace?.id;
     }) as any[];
 
@@ -202,7 +208,7 @@ function DesktopWindows3D({
     );
   }, [cards.length]);
 
-  // Dock / session activated a window → zoom to its scene card
+  // User clicked a scene card → activate opens HUD via externalZoom
   const cardIdsKey = cards.map((c) => c.id).join("|");
   useEffect(() => {
     if (!activeWindowId || activeWindowId === "launchpad") {
@@ -216,6 +222,40 @@ function DesktopWindows3D({
     setExternalClearZoom(false);
     setExternalZoomCardId(zoomCardId);
   }, [activeWindowId, cardIdsKey, openWindows]);
+
+  // Dock: orbit card to desk front only — no activate / HUD
+  const bringToFrontCardId = useSelector(
+    (state: any) => state.windowService.desktop3dBringToFrontCardId || ""
+  );
+  const bringToFrontToken = useSelector(
+    (state: any) => state.windowService.desktop3dBringToFrontToken || 0
+  );
+  const appliedBringTokenRef = useRef(0);
+  useEffect(() => {
+    if (!bringToFrontToken || !bringToFrontCardId) return;
+    // Only apply once per dock action — re-running on cards/activate would clear HUD
+    if (appliedBringTokenRef.current === bringToFrontToken) return;
+    appliedBringTokenRef.current = bringToFrontToken;
+
+    let cardId = bringToFrontCardId;
+    if (
+      cardId.startsWith("browser_") ||
+      isOthersBrowserActive(cardId, openWindows)
+    ) {
+      cardId = OTHERS_BROWSER_CARD_ID;
+    }
+    const i = cards.findIndex((c) => c.id === cardId);
+    if (i < 0) {
+      // Card list may not be ready yet; allow retry on next cards update
+      appliedBringTokenRef.current = 0;
+      return;
+    }
+    setExternalZoomCardId(null);
+    setExternalClearZoom(true);
+    setFocusedIndex(i);
+    const t = setTimeout(() => setExternalClearZoom(false), 50);
+    return () => clearTimeout(t);
+  }, [bringToFrontToken, bringToFrontCardId, cards, openWindows]);
 
   useEffect(() => {
     if (!clearZoomToken) return;
@@ -305,6 +345,8 @@ function DesktopWindows3D({
         exploreMode={exploreMode}
         onExploreModeChange={onExploreModeChange}
         experienceId={experienceId}
+        overlayAppFocused={overlayAppFocused}
+        overlayWindowId={overlayWindowId}
       />
     </div>
   );

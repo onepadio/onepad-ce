@@ -393,11 +393,7 @@ function AppsOverlayMenu({
   const hasOpenSharedApps = Object.values(openWindows || {}).some(
     (window: any) => {
       if (!window || window.type === "browser") return false;
-      const isShared =
-        window.type === "xapp"
-          ? window.desktop === homeWorkspaceId
-          : window.workspace === homeWorkspaceId;
-      if (!isShared) return false;
+      if (!isSharedAppWindow(window, homeWorkspaceId)) return false;
       return hasAwakeTab(window.id);
     }
   );

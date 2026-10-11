@@ -13,10 +13,10 @@ const CARD_HEIGHT = 1.5;
 /** Centered favicon/app icon size when there is no screenshot/webview */
 const ICON_SIZE = 0.55;
 /** Larger icon on desk/room monitors so the screen doesn’t look empty */
-const ICON_SIZE_SCREEN = 0.95;
+const ICON_SIZE_SCREEN = 0.50;
 /** Corner radius for the centered icon (world units) */
 const ICON_RADIUS = 0.12;
-const ICON_RADIUS_SCREEN = 0.18;
+const ICON_RADIUS_SCREEN = 0.12;
 /** Screen plate corner radius in local card units */
 const SCREEN_PLATE_RADIUS = 0.1;
 

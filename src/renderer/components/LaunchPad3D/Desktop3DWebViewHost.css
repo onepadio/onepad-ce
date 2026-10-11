@@ -24,6 +24,27 @@
   overflow: hidden;
 }
 
+/* Awake tabs stay mounted; only the active tab is shown */
+.desktop-3d-webview-tab {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.desktop-3d-webview-tab.is-active {
+  visibility: visible;
+  /* Stay non-interactive on the wall so 3D icon/card clicks pass through */
+  pointer-events: none;
+}
+
+/* HUD focus: host gets .is-interactive from WebViewProjector */
+.desktop-3d-webview-host.is-interactive .desktop-3d-webview-tab.is-active {
+  pointer-events: auto;
+}
+
 .desktop-3d-webview-inner .webview,
 .desktop-3d-webview-inner webview {
   position: absolute !important;

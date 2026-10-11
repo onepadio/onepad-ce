@@ -3,7 +3,11 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10000;
+  /*
+   * Portaled to body. Native <webview> layers often sit under body fixed UI,
+   * so keep space dots modest; overlay mode raises above My Apps webview.
+   */
+  z-index: 70;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,6 +20,11 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   pointer-events: auto;
+}
+
+/* My Apps / xapp: above overlay webview + HUD chrome, under dock (1999) */
+.desktop-3d-tab-dots--overlay {
+  z-index: 1150;
 }
 
 .desktop-3d-tab-dot {

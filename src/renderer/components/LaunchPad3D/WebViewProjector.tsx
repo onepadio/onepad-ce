@@ -88,7 +88,7 @@ function projectCorner(
 }
 
 /** Focus frame in coords relative to `.desktop-3d-fullscreen`. */
-function getFocusFramePose(originLeft = 0, originTop = 0): RectPose {
+export function getFocusFramePose(originLeft = 0, originTop = 0): RectPose {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const bandTop = FOCUS_TOP_INSET;
@@ -111,9 +111,9 @@ function getFocusFramePose(originLeft = 0, originTop = 0): RectPose {
   };
 }
 
-function getDesktopOrigin(): { left: number; top: number } {
+export function getDesktopOrigin(): { left: number; top: number } {
   const root = document.querySelector(
-    ".desktop-3d-fullscreen"
+    ".desktop-3d-fullscreen.is-active, .space-desktop-warm-layer.is-active .desktop-3d-fullscreen, .desktop-3d-fullscreen"
   ) as HTMLElement | null;
   if (!root) return { left: 0, top: 0 };
   const r = root.getBoundingClientRect();
@@ -217,6 +217,7 @@ function applyPose(
       : "0 8px 28px rgba(0, 0, 0, 0.35)";
   el.style.pointerEvents = opts.interactive ? "auto" : "none";
   el.style.zIndex = opts.interactive || opts.elevating ? "20" : "10";
+  el.classList.toggle("is-interactive", !!opts.interactive);
 
   if (opts.projected) {
     const scaleX = pose.width / NATIVE_W;
@@ -241,6 +242,7 @@ function hidePose(el: HTMLElement) {
   el.style.visibility = "hidden";
   el.style.pointerEvents = "none";
   el.style.opacity = "0";
+  el.classList.remove("is-interactive");
 }
 
 function WebViewProjector({
@@ -297,13 +299,10 @@ function WebViewProjector({
     const now = performance.now();
     const anim = animRef.current;
     const { left: originLeft, top: originTop } = getDesktopOrigin();
+    const planes = getRegisteredPlanes();
 
-    getRegisteredPlanes().forEach((object, id) => {
-      const el = document.querySelector(
-        `[data-desktop3d-webview="${id}"]`
-      ) as HTMLElement | null;
-      if (!el) return;
-
+    // Update cached projections for registered planes
+    planes.forEach((object, id) => {
       const projectedRaw = getProjectedPose(
         object,
         camera,
@@ -312,17 +311,28 @@ function WebViewProjector({
         rect.left,
         rect.top
       );
-      const projected = projectedRaw
-        ? {
-            left: projectedRaw.left - originLeft,
-            top: projectedRaw.top - originTop,
-            width: projectedRaw.width,
-            height: projectedRaw.height,
-          }
-        : null;
-      if (projected) {
-        lastPoses.current.set(id, projected);
-      }
+      if (!projectedRaw) return;
+      lastPoses.current.set(id, {
+        left: projectedRaw.left - originLeft,
+        top: projectedRaw.top - originTop,
+        width: projectedRaw.width,
+        height: projectedRaw.height,
+      });
+    });
+
+    // Visit every mounted host — not only registered planes. Desk worlds
+    // unregister off-front meshes; those hosts must still be hidden or they
+    // stay stuck at their last HUD size behind the active window.
+    const hosts = document.querySelectorAll(
+      "[data-desktop3d-webview]"
+    ) as NodeListOf<HTMLElement>;
+
+    hosts.forEach((el) => {
+      // My Apps / xapp overlays manage their own pose — never hide/resize here
+      if (el.hasAttribute("data-desktop3d-overlay-webview")) return;
+      const id = el.getAttribute("data-desktop3d-webview");
+      if (!id) return;
+      const projected = lastPoses.current.get(id) || null;
 
       if (anim && anim.id === id) {
         if (projected) {
@@ -340,7 +350,6 @@ function WebViewProjector({
         applyPose(el, lerpPose(anim.from, anim.to, t), {
           interactive: expanding && raw >= 1,
           elevating: true,
-          // Animate in HUD pixel space so resolution matches control room
           projected: false,
         });
         if (raw >= 1) {
@@ -349,26 +358,30 @@ function WebViewProjector({
         return;
       }
 
-      if (interactiveId != null && interactiveId === id) {
-        applyPose(el, getFocusFramePose(originLeft, originTop), {
-          interactive: true,
-          elevating: false,
-          projected: false,
-        });
+      if (interactiveId != null) {
+        if (id === interactiveId) {
+          applyPose(el, getFocusFramePose(originLeft, originTop), {
+            interactive: true,
+            elevating: false,
+            projected: false,
+          });
+        } else {
+          hidePose(el);
+        }
         return;
       }
 
-      // Scene overview: only the focused card's webview — never paint neighbors
+      // Scene overview: only the front card's webview
       if (sceneFocusedId != null) {
-        if (id !== sceneFocusedId || !projected) {
+        if (id === sceneFocusedId && projected) {
+          applyPose(el, projected, {
+            interactive: false,
+            elevating: false,
+            projected: true,
+          });
+        } else {
           hidePose(el);
-          return;
         }
-        applyPose(el, projected, {
-          interactive: false,
-          elevating: false,
-          projected: true,
-        });
         return;
       }
 

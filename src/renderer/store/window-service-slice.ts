@@ -13,6 +13,9 @@ const windowServiceSlice = createSlice({
     dockPulseToken: 0,
     /** 3D desk: window/card currently facing the seat (may differ from activeWindowId while browsing) */
     desktop3dDeskWindowId: "" as string,
+    /** 3D: dock asked to orbit a card to the front without activating / HUD focus */
+    desktop3dBringToFrontCardId: "" as string,
+    desktop3dBringToFrontToken: 0,
     closeTabId: "",
     closeWindowId: "",
     showCloseWindowConfirmation: false,
@@ -49,6 +52,11 @@ const windowServiceSlice = createSlice({
     },
     setDesktop3dDeskWindowId(state, action) {
         state.desktop3dDeskWindowId = action.payload || "";
+    },
+    /** Orbit a scene card to the desk front; does not activate the window. */
+    bringDesktop3dCardToFront(state, action) {
+        state.desktop3dBringToFrontCardId = action.payload?.cardId || action.payload || "";
+        state.desktop3dBringToFrontToken = Date.now();
     },
     openRemoteApp(state, action) {
         state.newRemoteApp.name = action.payload.name;

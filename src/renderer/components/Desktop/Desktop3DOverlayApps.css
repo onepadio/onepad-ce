@@ -1,0 +1,53 @@
+.desktop-3d-overlay-apps-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Above scene webviews (50); below dock/chrome (1100+) */
+  z-index: 80;
+  overflow: visible;
+}
+
+.desktop-3d-overlay-apps-host {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  background: #0d1118;
+  /* No CSS transform — Electron <webview> loses click hit-testing under transform */
+  transform: none !important;
+  transition: opacity 0.28s ease;
+}
+
+.desktop-3d-overlay-apps-host.is-open {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 80;
+}
+
+.desktop-3d-overlay-apps-host.is-open:not(.is-closing) {
+  animation: desktop-3d-overlay-apps-in 0.28s ease;
+}
+
+.desktop-3d-overlay-apps-host.is-closing {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure guest receives input (base host CSS leaves wall tabs non-interactive) */
+.desktop-3d-overlay-apps-host.is-interactive .desktop-3d-webview-tab.is-active,
+.desktop-3d-overlay-apps-host.is-interactive .desktop-3d-webview-tab.is-active webview,
+.desktop-3d-overlay-apps-host.is-interactive .desktop-3d-webview-tab.is-active .webview {
+  pointer-events: auto !important;
+}
+
+@keyframes desktop-3d-overlay-apps-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

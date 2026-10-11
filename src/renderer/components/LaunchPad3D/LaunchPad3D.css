@@ -31,6 +31,12 @@
   background: transparent;
 }
 
+/* My Apps / xapp overlay: don't let the WebGL canvas steal mouse / trackpad */
+.launchpad-3d-stage.is-overlay-app-focused,
+.launchpad-3d-stage.is-overlay-app-focused canvas {
+  pointer-events: none !important;
+}
+
 .launchpad-3d-header {
   padding: 0 8px 4px;
   z-index: 2;
