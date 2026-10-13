@@ -243,12 +243,16 @@ export function closeWindow(dispatch: any, sessionActions: any, windowId: any, o
             openWindows[windowId].type !== "browser" &&
             (activeWindowId == null || activeWindowId === windowId)
           ){
-            //dispatch(sessionActions.goBackToPreviousWindow({data: {
-            //    desktopId: desktop.id,
-            //  }}));
             dispatch(sessionActions.goBackToLaunchPad({data: {
               desktopId: desktop.id,
             }}));
+            // 3D: leave HUD / My Apps overlay focus when returning to desktop
+            try {
+              window.dispatchEvent(new CustomEvent("desktop3d-clear-zoom"));
+              window.dispatchEvent(new CustomEvent("desktop3d-overlay-dismiss"));
+            } catch (_) {
+              /* ignore */
+            }
           }
           
           let _activeTabs = Object.assign({}, activeTabs);

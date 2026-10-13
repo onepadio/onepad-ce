@@ -1,8 +1,10 @@
 .desktop-3d-tab-dots {
   position: fixed;
-  left: 16px;
+  /* Initial place is hidden until rAF locks onto the webview host */
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
+  visibility: hidden;
   /*
    * Portaled to body. Native <webview> layers often sit under body fixed UI,
    * so keep space dots modest; overlay mode raises above My Apps webview.

@@ -23,6 +23,26 @@ export function newTabForActiveWindow(dispatch: any, workspace: any, desktop: an
   }));
 }
 
+/** Prefer most recently accessed remaining tab (fallback: created / list order). */
+function pickNextTabByLastAccess(
+  remainingIds: string[],
+  openTabs: Record<string, any>
+): string | null {
+  if (!remainingIds.length) return null;
+  let bestId = remainingIds[0];
+  let bestTs =
+    openTabs[bestId]?.lastAccessed || openTabs[bestId]?.created || 0;
+  for (let i = 1; i < remainingIds.length; i++) {
+    const id = remainingIds[i];
+    const ts = openTabs[id]?.lastAccessed || openTabs[id]?.created || 0;
+    if (ts >= bestTs) {
+      bestId = id;
+      bestTs = ts;
+    }
+  }
+  return bestId;
+}
+
 export function closeTab(tab: any, dispatch: any, openTabs: any, windowTabs: any, openWindows: any, browserWindows: any, activeWindowId: any, activeTabId: any, activeTabs: any, desktop: any, isExternalWindowMode: any, sessionActions: any, onTabClose: any) {
     log.debug("Active tab",activeTabId);
     log.debug("Closing tab",tab.id);
@@ -121,22 +141,22 @@ export function closeTab(tab: any, dispatch: any, openTabs: any, windowTabs: any
       );
 
       if(tabId === activeTabId || tabId === activeTabs[tab.window]){
-        log.debug("Closing active tab");
-        log.debug("_updatedTabs",_updatedTabs);
-        log.debug("openTabs[_updatedTabs.at(-1)]",openTabs[_updatedTabs.at(-1)]);
+        const nextTabId = pickNextTabByLastAccess(_updatedTabs, openTabs);
+        log.debug("Closing active tab → next by lastAccessed", nextTabId);
 
-        let _activeTabs = Object.assign({}, activeTabs);
-        _activeTabs[tab.window] = _updatedTabs.at(-1);
-        dispatch(
-            sessionActions.setActiveTabs({
-            data: _activeTabs,
-            })
-        );
-        if(activeWindowId === tab.window){
-          // switch tab
-          dispatch(sessionActions.setActiveTab({
-              data: openTabs[_updatedTabs.at(-1)]
-          }));
+        if (nextTabId && openTabs[nextTabId]) {
+          let _activeTabs = Object.assign({}, activeTabs);
+          _activeTabs[tab.window] = nextTabId;
+          dispatch(
+              sessionActions.setActiveTabs({
+              data: _activeTabs,
+              })
+          );
+          if(activeWindowId === tab.window){
+            dispatch(sessionActions.setActiveTab({
+                data: openTabs[nextTabId]
+            }));
+          }
         }
       }
 

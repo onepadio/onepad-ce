@@ -146,7 +146,12 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
 
   // Track webview host every frame (same cadence as WebViewProjector scale)
   const navRef = useRef<HTMLElement | null>(null);
-  const lastPosRef = useRef({ left: -1, top: -1 });
+  const lastPosRef = useRef<{ left: number; top: number } | null>(null);
+
+  useEffect(() => {
+    // New host / window — drop stale coords so we don't stick to another card
+    lastPosRef.current = null;
+  }, [windowId, cardKey, isOverlay]);
 
   useEffect(() => {
     if (!windowId || tabIds.length <= 1) return;
@@ -169,30 +174,58 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
           `[data-desktop3d-webview="${windowId}"]`
         ) as HTMLElement | null);
 
-      let left = 16;
-      let top = window.innerHeight * 0.5;
-
-      if (
-        host &&
-        host.style.visibility !== "hidden" &&
-        host.style.opacity !== "0"
-      ) {
-        // Includes CSS scale() — same visual box the projector just wrote
-        const r = host.getBoundingClientRect();
-        if (r.width >= 40 && r.height >= 40) {
-          left = Math.max(10, r.left - 36);
-          top = r.top + r.height * 0.5;
+      // Only move when we have a stable, visible host box. During tab switches
+      // the projector may briefly hide/resize the host — keep last good pose
+      // instead of jumping to the left edge (over the vertical tab sidebar).
+      let next: { left: number; top: number } | null = null;
+      if (host) {
+        const cs = window.getComputedStyle(host);
+        const visible =
+          cs.visibility !== "hidden" &&
+          cs.display !== "none" &&
+          parseFloat(cs.opacity || "1") > 0.05;
+        if (visible) {
+          const r = host.getBoundingClientRect();
+          // Ignore tiny / off-screen flashes (e.g. mid-anim or unprojected)
+          if (
+            r.width >= 80 &&
+            r.height >= 80 &&
+            r.right > 40 &&
+            r.bottom > 40 &&
+            r.left < window.innerWidth - 40
+          ) {
+            // Sit in the gutter left of the webview (nav ~28px wide)
+            next = {
+              left: Math.max(8, r.left - 40),
+              top: r.top + r.height * 0.5,
+            };
+          }
         }
       }
 
+      if (!next) {
+        // Hold last good position; never snap to a hardcoded left-edge fallback
+        if (!lastPosRef.current) {
+          nav.style.visibility = "hidden";
+          return;
+        }
+        next = lastPosRef.current;
+      }
+
       const prev = lastPosRef.current;
-      if (Math.abs(prev.left - left) < 0.25 && Math.abs(prev.top - top) < 0.25) {
+      if (
+        prev &&
+        Math.abs(prev.left - next.left) < 0.25 &&
+        Math.abs(prev.top - next.top) < 0.25
+      ) {
+        nav.style.visibility = "visible";
         return;
       }
-      lastPosRef.current = { left, top };
-      nav.style.left = `${left}px`;
-      nav.style.top = `${top}px`;
+      lastPosRef.current = next;
+      nav.style.left = `${next.left}px`;
+      nav.style.top = `${next.top}px`;
       nav.style.transform = "translateY(-50%)";
+      nav.style.visibility = "visible";
     };
 
     raf = requestAnimationFrame(tick);

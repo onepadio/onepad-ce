@@ -1,10 +1,10 @@
 .desktop-3d-address-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: min(520px, 72vw);
+  gap: 6px;
+  width: min(560px, 78vw);
   min-height: 36px;
-  padding: 6px 10px 6px 14px;
+  padding: 6px 10px 6px 8px;
   border-radius: 20px;
   background: rgba(22, 26, 34, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -52,7 +52,12 @@
   flex-shrink: 0;
 }
 
-.desktop-3d-address-bar-btn:hover {
+.desktop-3d-address-bar-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.desktop-3d-address-bar-btn:disabled {
+  opacity: 0.28;
+  cursor: default;
 }
