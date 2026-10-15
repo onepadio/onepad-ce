@@ -59,20 +59,10 @@ export default class AppUpdater {
     });
 
     autoUpdater.on('update-downloaded', () => {
+      this.updateDownloaded = true;
       this.window.webContents.send('fromMain', {
         action: 'autoupdater-update-downloaded',
         data: 'update-downloaded',
-      });
-      dialog.showMessageBox({
-        title: 'Update Available',
-        message: 'Updates are ready to be installed.',
-        buttons: ['Install and Restart', 'Later'],
-        defaultId: 1,
-        cancelId: 1
-      }).then(({ response }) => {
-        if (response === 0) {
-          autoUpdater.quitAndInstall();
-        }
       });
     });
 

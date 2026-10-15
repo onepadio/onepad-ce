@@ -309,46 +309,69 @@ export function closeWindow(dispatch: any, sessionActions: any, windowId: any, o
 }
 
 
+/**
+ * Build a per-workspace snapshot for WorkspaceService.saveState.
+ *
+ * IMPORTANT: This does NOT free live session memory and must not be
+ * dispatched back into openWindows when warm spaces are kept alive.
+ * Other spaces' windows stay in Redux; we only omit them from *this*
+ * workspace's persisted state so they are not written into the wrong space.
+ *
+ * Cross-space apps (xapp / My Apps) are persisted via XAppService /
+ * sessionStorage, not in the workspace document.
+ */
 export function processWindows(workspaceId: any, openWindows: any, windowTabs: any, activeTabs: any, openTabs: any){
   let _openWindows = Object.assign({},openWindows);
   let _windowTabs = Object.assign({},windowTabs);
   let _activeTabs = Object.assign({},activeTabs);
 
   Object.keys(_openWindows).forEach((windowId) => {
-      if(_openWindows[windowId].data === null || _openWindows[windowId].workspace !== workspaceId){
-          log.debug("processWindows:deleted window:"+windowId);
+      const win = _openWindows[windowId];
+      if (!win) {
           delete _openWindows[windowId];
           delete _windowTabs[windowId];
           delete _activeTabs[windowId];
+          return;
       }
+
+      // Profile / My Apps — never store on a space document
+      if (win.type === "xapp") {
+          const tabIds = windowTabs[win.id] || [];
+          const _tabs: any = [];
+          tabIds.forEach((tabId: any) => {
+              const _tab = Object.assign({}, openTabs[tabId]);
+              const _state = Object.assign({}, _tab.state);
+              _state.id = tabId;
+              _tabs.push(_state);
+          });
+          XAppService.updateState(win.id, { tabs: _tabs }).then((res) => {
+              log.debug("XApp state updated", res);
+          }).catch((err) => {
+              log.error("XApp state update failed", err);
+          });
+          delete _openWindows[windowId];
+          delete _windowTabs[windowId];
+          delete _activeTabs[windowId];
+          return;
+      }
+
+      // Only this workspace belongs in its save payload (warm spaces stay in Redux)
+      if (win.data === null || win.workspace !== workspaceId) {
+          log.debug(
+              "processWindows:omit from workspace snapshot (still in session):",
+              windowId,
+              win.workspace
+          );
+          delete _openWindows[windowId];
+          delete _windowTabs[windowId];
+          delete _activeTabs[windowId];
+          return;
+      }
+
+      // Persist as sleeping — warm keep-alive in Redux is separate
+      _openWindows[windowId] = Object.assign({}, win, { sleeping: true });
   });
 
-  Object.keys(_openWindows).forEach((windowId) => {
-      let window = Object.assign({},_openWindows[windowId]);
-      switch(window.type){
-          case "xapp":
-              let _tabs: any = [];
-              windowTabs[window.id].forEach((tabId: any) => {
-                  let _tab = Object.assign({}, openTabs[tabId]);
-                  let _state = Object.assign({}, _tab.state);
-                  _state.id = tabId;
-                  _tabs.push(_state);
-              });
-              XAppService.updateState(window.id, {
-                  tabs: _tabs,
-              }).then((res) => {
-                  log.debug("XApp state updated",res);
-                  delete _openWindows[window.id];
-                  delete _windowTabs[window.id];
-                  delete _activeTabs[window.id];
-              });
-              break;
-          default:
-              break;
-      }
-      window.sleeping = true;
-      _openWindows[windowId] = window;
-  });
   return {
       openWindows: _openWindows,
       windowTabs: _windowTabs,

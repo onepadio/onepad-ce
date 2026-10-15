@@ -687,6 +687,7 @@ function App() {
         break;
       case "autoupdater-update-downloaded":
         log.debug("App.js: autoupdater-update-downloaded");
+        dispatch(appActions.setIsUpdateReady(true));
         break;
       case "newTab":
         log.debug("App.js: newTab");

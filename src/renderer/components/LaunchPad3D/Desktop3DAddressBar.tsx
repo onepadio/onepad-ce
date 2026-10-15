@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LockFill,
+  PauseFill,
   X,
 } from "react-bootstrap-icons";
 
@@ -25,8 +26,8 @@ interface Desktop3DAddressBarProps {
 }
 
 /**
- * Floating pill address bar for focused 3D window — back/forward, URL, reload, close tab.
- * Close uses the same WindowService.closeTab path as 2D AddressBar.
+ * Floating pill address bar for focused 3D window — back/forward, URL, reload, pause, close tab.
+ * Pause → WindowService.sleepWindow; close → WindowService.closeTab.
  */
 function Desktop3DAddressBar({ onClose }: Desktop3DAddressBarProps) {
   const dispatch = useDispatch();
@@ -146,6 +147,15 @@ function Desktop3DAddressBar({ onClose }: Desktop3DAddressBarProps) {
     dispatch(windowServiceActions.closeTab(tabId));
   }, [dispatch, tabId, onClose]);
 
+  /** Dismiss window, then sleep all of its tabs (WindowService.sleepWindow) */
+  const handlePauseWindow = useCallback(() => {
+    if (!activeWindowId || activeWindowId === "launchpad") {
+      onClose?.();
+      return;
+    }
+    dispatch(windowServiceActions.sleepWindow(activeWindowId));
+  }, [dispatch, activeWindowId, onClose]);
+
   const displayUrl = value || "about:blank";
 
   return (
@@ -189,6 +199,15 @@ function Desktop3DAddressBar({ onClose }: Desktop3DAddressBarProps) {
         aria-label="Reload"
       >
         <ArrowClockwise size={14} />
+      </button>
+      <button
+        type="button"
+        className="desktop-3d-address-bar-btn"
+        onClick={handlePauseWindow}
+        title="Pause window"
+        aria-label="Pause window"
+      >
+        <PauseFill size={14} />
       </button>
       <button
         type="button"

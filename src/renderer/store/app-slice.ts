@@ -57,6 +57,7 @@ const appSlice = createSlice({
     clipboard: "",
     clipboardHistory: [],
     isSyncing: false,
+    isUpdateReady: false,
 
   },
   reducers: {
@@ -159,7 +160,10 @@ const appSlice = createSlice({
     },
     updateScreenShotStatusVersion(state, action) {
       state.screenShotStatusVersion = Math.random()*1000;
-    }
+    },
+    setIsUpdateReady(state, action) {
+      state.isUpdateReady = action.payload;
+    },
   },
 });
 

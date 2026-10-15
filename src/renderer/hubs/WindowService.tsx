@@ -218,27 +218,45 @@ function WindowService() {
           );
         }
         break;
-      case "sleepWindow":
+      case "sleepWindow": {
         log.debug("sleepWindow action...");
+        const id = sleepWindowId;
+        if (!id || !openWindows[id]) break;
 
-        saveWindowState(sleepWindowId, () => {
-          closeWindow(
-            dispatch,
-            sessionActions,
-            sleepWindowId,
-            openWindows,
-            openTabs,
-            activeTabs,
-            windowTabs,
-            desktop,
-            isExternalWindowMode,
-            activeWindowId
+        // 1. Dismiss focused UI first (leave HUD / overlay), then sleep tabs
+        if (activeWindowId === id) {
+          dispatch(
+            sessionActions.getBackToLaunchPad({
+              data: { desktopId: desktop.id },
+            })
           );
-        }, () => {
-          log.error("sleepWindow", "Failed to save window state");
-        });
+          try {
+            window.dispatchEvent(new CustomEvent("desktop3d-clear-zoom"));
+            window.dispatchEvent(
+              new CustomEvent("desktop3d-overlay-dismiss")
+            );
+          } catch (_) {
+            /* ignore */
+          }
+        }
 
+        // 2. Persist (best-effort), then sleep all tabs — keep window in session
+        const doSleep = () => sleepTabs(id);
+        const win = openWindows[id];
+        if (
+          win?.type === "app" ||
+          win?.type === "link" ||
+          win?.type === "xapp"
+        ) {
+          saveWindowState(id, doSleep, () => {
+            log.error("sleepWindow", "Failed to save window state");
+            doSleep();
+          });
+        } else {
+          doSleep();
+        }
         break;
+      }
       case "closeAllWindows":
         log.debug("closeAllWindows action...");
         closeAllWindows();
@@ -571,13 +589,14 @@ function WindowService() {
       })
     );
 
-    windowTabs[windowId].forEach((tabId: any) => {
+    const tabIds = windowTabs[windowId] || [];
+    tabIds.forEach((tabId: any) => {
       let tab = _openTabs[tabId];
-      if (tab.id === undefined || tab.window !== windowId) return;
+      if (!tab || tab.id === undefined || tab.window !== windowId) return;
       if (!tab.sleeping) {
         let _tab = Object.assign({}, _openTabs[tab.id]);
         // Prefer last good cached preview; empty captures are rejected in main
-        screenshotManager.captureTab(_tab, 'WindowService.sleepTabs');
+        screenshotManager.captureTab(_tab, "WindowService.sleepTabs");
         _tab.sleeping = true;
         _openTabs[tab.id] = _tab;
       }

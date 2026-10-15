@@ -6,6 +6,8 @@ export type Channels = 'ipc-example';
 
 const electronHandler = {
   handleCloseTab: (callback: any) => ipcRenderer.on('close-tab', callback),
+  handlePauseWindow: (callback: any) =>
+    ipcRenderer.on('pause-window', callback),
   handleWindowOpened: (callback: any) =>
     ipcRenderer.on('window-opened', callback),
   handleWindowClosed: (callback: any) =>
@@ -125,6 +127,7 @@ const electronHandler = {
       'get-tab-memory-info',
       'get-all-tabs-memory',
       'fetch-website-metadata',
+      'fetch-image-data-url',
       'get-user-agent',
       'set-device-emulation',
       'pty-create',

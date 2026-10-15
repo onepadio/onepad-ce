@@ -25,6 +25,7 @@ import {
   desktopCapturer,
   systemPreferences,
   globalShortcut,
+  net,
 } from 'electron';
 import util from 'electron-util';
 import { autoUpdater } from 'electron-updater';
@@ -758,6 +759,10 @@ ipcMain.on(
         console.log('Checking for updates...');
         autoUpdater.checkForUpdates();
         break;
+      case 'install-update':
+        console.log('Installing update...');
+        autoUpdater.quitAndInstall();
+        break;
       // DISABLED: Clipboard sync functionality
       // case 'clipboard':
       //   clipboard.writeText(data.text);
@@ -1102,6 +1107,31 @@ ipcMain.on('electron-store-set', async (event, key, val) => {
 ipcMain.handle('convert-to-png', async (event, data) => {
   const img = nativeImage.createFromDataURL(data);
   return img.toPNG();
+});
+
+/** Fetch a remote image in main (bypasses renderer CSP connect-src + CORS). */
+ipcMain.handle('fetch-image-data-url', async (_event, url: string) => {
+  if (
+    typeof url !== 'string' ||
+    (!url.startsWith('http://') && !url.startsWith('https://'))
+  ) {
+    throw new Error('Invalid image URL');
+  }
+  const res = await net.fetch(url, {
+    redirect: 'follow',
+    headers: {
+      Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      'User-Agent': `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  const contentType = (res.headers.get('content-type') || 'image/png').split(
+    ';'
+  )[0];
+  return `data:${contentType};base64,${buf.toString('base64')}`;
 });
 
 ipcMain.handle('get-user-agent', async () => {

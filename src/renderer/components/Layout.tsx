@@ -6,6 +6,7 @@ import log from "loglevel";
 import { appActions } from '../store/app-slice';
 
 import WorkspaceRepository from '../repository/workspace';
+import UpdateAvailableToast from './UpdateAvailableToast/UpdateAvailableToast';
 
 import defaultBG from '../images/default_bg.jpg';
 
@@ -130,6 +131,7 @@ export function Layout() {
           <Outlet  onKeyDown={(e) => handleKeyDown(e)}/>
         </div>
       </div>
+      <UpdateAvailableToast />
     </div>
   </>;
 }

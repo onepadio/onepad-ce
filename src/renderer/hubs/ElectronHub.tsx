@@ -90,6 +90,11 @@ function ElectronHub() {
       window.electronAPI.handleCloseTab((event: any, data: any) => {
         setAction("handleCloseTab");
       });
+
+      // @ts-expect-error
+      window.electronAPI.handlePauseWindow((event: any, data: any) => {
+        setAction("handlePauseWindow");
+      });
     }
   }, []);
 
@@ -198,6 +203,13 @@ function ElectronHub() {
           return;
         }
         dispatch(windowServiceActions.closeTab(activeTabId));
+        break;
+      case "handlePauseWindow":
+        log.debug("ElectronHub: pauseWindow");
+        if (!activeWindow?.id || activeWindow.id === "launchpad") {
+          break;
+        }
+        dispatch(windowServiceActions.sleepWindow(activeWindow.id));
         break;
       default:
         break;

@@ -114,10 +114,10 @@ export function SPContextMenu(
       saveLinkAs: 'Save Link As…',
     },
     prepend: (defaultActions, params, browserWindow) => [
+      // —— Tabs / open ——
       {
         label: 'New Tab',
         click: () => {
-          // open in foreground tab
           contents.executeJavaScript(
             `window.open('about:blank', '_blank' );`
           );
@@ -127,7 +127,6 @@ export function SPContextMenu(
       {
         label: 'Open in New Tab',
         click: () => {
-          // open in foreground tab
           contents.executeJavaScript(
             `window.open('${params.linkURL}', '_blank' );`
           );
@@ -137,7 +136,6 @@ export function SPContextMenu(
       {
         label: 'Open in New Window',
         click: () => {
-          // open in new window
           mainWindow.webContents.send('open-external-window', params.linkURL);
         },
         visible: params.linkURL !== '',
@@ -145,10 +143,22 @@ export function SPContextMenu(
       {
         label: 'Open in New Incognito Window',
         click: () => {
-          // open in new incognito window
-          mainWindow.webContents.send('open-external-window', params.linkURL, 'private');
+          mainWindow.webContents.send(
+            'open-external-window',
+            params.linkURL,
+            'private'
+          );
         },
         visible: params.linkURL !== '',
+      },
+      { type: 'separator' },
+      // —— Window lifecycle ——
+      {
+        label: 'Pause Window',
+        click: () => {
+          // Renderer → WindowService.sleepWindow (dismiss, then sleep all tabs)
+          mainWindow.webContents.send('pause-window');
+        },
       },
       {
         label: 'Close Tab',
@@ -156,8 +166,8 @@ export function SPContextMenu(
           mainWindow.webContents.send('close-tab');
         },
       },
-      // divider
       { type: 'separator' },
+      // —— Navigation ——
       {
         label: 'Home',
         click: async () => {
@@ -166,6 +176,7 @@ export function SPContextMenu(
       },
       {
         label: 'Back',
+        enabled: contents.canGoBack(),
         click: async () => {
           if (contents.canGoBack()) {
             contents.goBack();
@@ -174,6 +185,7 @@ export function SPContextMenu(
       },
       {
         label: 'Forward',
+        enabled: contents.canGoForward(),
         click: async () => {
           if (contents.canGoForward()) {
             contents.goForward();
@@ -205,22 +217,22 @@ export function SPContextMenu(
           {
             label: 'Desktop Site',
             type: 'radio',
-            checked: !deviceModes.get(contents) || deviceModes.get(contents) === 'desktop',
+            checked:
+              !deviceModes.get(contents) ||
+              deviceModes.get(contents) === 'desktop',
             click: () => applyDeviceMode(contents, 'desktop', mainWindow),
           },
         ],
       },
       {
         label: 'Search for “{selection}”',
-        // Only show it when right-clicking text
         visible: params.selectionText.trim().length > 0,
         click: () => {
-          // open in new tab
           contents.executeJavaScript(
             `window.open('https://google.com/search?q=${encodeURIComponent(params.selectionText)}', '_blank');`
           );
         },
-    }
+      },
     ],
     append: () => [],
     showInspectElement: true,
