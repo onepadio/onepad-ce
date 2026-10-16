@@ -1,16 +1,16 @@
 import {
   ARENA_FLOOR_Y,
-  OVERVIEW_DIST,
   SCENE_SCREEN_H,
   SCENE_SCREEN_W,
   SCENE_SCREEN_Y,
-  getArenaRadius,
+  getDeskArenaRadius,
+  getDeskSlotCount,
 } from "../layouts/roomScreens";
 
 /**
  * Shared desk bounding box used by every world table.
- * Variants may change material / silhouette but must stay inside this volume
- * so the monitor, camera, and webview projection stay aligned.
+ * Circular desk: variants may change material / silhouette but must stay
+ * inside this volume so monitors, camera, and webview projection stay aligned.
  */
 export type DeskLayout = {
   radius: number;
@@ -18,6 +18,8 @@ export type DeskLayout = {
   camZ: number;
   deskW: number;
   deskDepth: number;
+  /** Outer radius of the circular table top */
+  tableRadius: number;
   /** Top surface Y (same for all worlds) */
   topY: number;
   /** Nominal top slab thickness — variants may use ±20% but top face stays at topY */
@@ -28,15 +30,18 @@ export type DeskLayout = {
   legInsetX: number;
   legZs: number[];
   floorY: number;
+  slotCount: number;
 };
 
-export function getDeskLayout(count: number): DeskLayout {
-  const n = Math.max(count, 1);
-  const radius = getArenaRadius(n);
+export function getDeskLayout(windowCount: number): DeskLayout {
+  const slotCount = Math.max(1, getDeskSlotCount(windowCount));
+  const radius = getDeskArenaRadius();
   const frontZ = -radius;
-  const camZ = frontZ + OVERVIEW_DIST;
-  const deskDepth = Math.max(4.5, OVERVIEW_DIST - 0.95);
-  const deskW = SCENE_SCREEN_W * 1.22;
+  const camZ = 0;
+  // Circular table reaches near the screen ring so monitor stands sit on the top
+  const tableRadius = Math.max(3.2, radius - 1.15);
+  const deskDepth = tableRadius * 2;
+  const deskW = tableRadius * 2;
   const cardScale =
     Math.min(SCENE_SCREEN_W / 2.4, SCENE_SCREEN_H / 1.5) * 0.98;
   const contentH = 1.5 * cardScale;
@@ -44,7 +49,8 @@ export function getDeskLayout(count: number): DeskLayout {
   const topY = SCENE_SCREEN_Y - (contentH / 2 + frameBorder) - 0.5;
   const topThick = 0.14;
   const legH = Math.max(0.55, topY - ARENA_FLOOR_Y - 0.06);
-  const deskCenterZ = frontZ + deskDepth * 0.5;
+  const deskCenterZ = 0;
+  const legR = tableRadius * 0.55;
 
   return {
     radius,
@@ -52,18 +58,15 @@ export function getDeskLayout(count: number): DeskLayout {
     camZ,
     deskW,
     deskDepth,
+    tableRadius,
     topY,
     topThick,
     legH,
     deskCenterZ,
-    legInsetX: deskW * 0.4,
-    legZs: [
-      frontZ + 0.35,
-      frontZ + deskDepth * 0.4,
-      frontZ + deskDepth * 0.7,
-      frontZ + deskDepth * 0.93,
-    ],
+    legInsetX: legR,
+    legZs: [-legR, legR],
     floorY: ARENA_FLOOR_Y,
+    slotCount,
   };
 }
 

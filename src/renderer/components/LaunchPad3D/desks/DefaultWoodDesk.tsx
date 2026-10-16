@@ -4,10 +4,9 @@ import * as THREE from "three";
 import { supportHeight } from "./deskLayout";
 import type { DeskTableProps } from "./types";
 
-/** Fallback rectangular wood desk (classic warm top + square legs). */
+/** Circular wood desk top + ring of legs under the screen arena. */
 export default function DefaultWoodDesk({ layout }: DeskTableProps) {
-  const { deskW, deskDepth, topY, topThick, deskCenterZ, legInsetX, legZs } =
-    layout;
+  const { tableRadius, topY, topThick, deskCenterZ } = layout;
 
   const wood = useMemo(
     () =>
@@ -20,6 +19,8 @@ export default function DefaultWoodDesk({ layout }: DeskTableProps) {
   );
 
   const legH = supportHeight(layout, topThick);
+  const legR = tableRadius * 0.62;
+  const legAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
 
   return (
     <group>
@@ -29,19 +30,21 @@ export default function DefaultWoodDesk({ layout }: DeskTableProps) {
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[deskW, topThick, deskDepth]} />
+        <cylinderGeometry args={[tableRadius, tableRadius, topThick, 48]} />
       </mesh>
-      {legZs.flatMap((lz, i) =>
-        ([-legInsetX, legInsetX] as number[]).map((lx, j) => (
-          <mesh
-            key={`${i}-${j}`}
-            position={[lx, topY - topThick - legH / 2, lz]}
-            material={wood}
-          >
-            <boxGeometry args={[0.1, legH, 0.1]} />
-          </mesh>
-        ))
-      )}
+      {legAngles.map((a, i) => (
+        <mesh
+          key={i}
+          position={[
+            Math.sin(a) * legR,
+            topY - topThick - legH / 2,
+            deskCenterZ - Math.cos(a) * legR,
+          ]}
+          material={wood}
+        >
+          <cylinderGeometry args={[0.06, 0.07, legH, 8]} />
+        </mesh>
+      ))}
     </group>
   );
 }

@@ -4,12 +4,9 @@ import * as THREE from "three";
 import { supportHeight } from "./deskLayout";
 import type { DeskTableProps } from "./types";
 
-/**
- * Orbital console — brushed metal top with chamfered corners, panel legs.
- */
+/** Circular orbital console — brushed metal top, panel legs. */
 export default function SpaceStationDesk({ layout }: DeskTableProps) {
-  const { deskW, deskDepth, topY, topThick, deskCenterZ, legInsetX, legZs } =
-    layout;
+  const { tableRadius, topY, topThick, deskCenterZ } = layout;
 
   const hull = useMemo(
     () =>
@@ -43,7 +40,8 @@ export default function SpaceStationDesk({ layout }: DeskTableProps) {
 
   const slabH = topThick;
   const legH = supportHeight(layout, slabH);
-  const inset = deskW * 0.06;
+  const legR = tableRadius * 0.6;
+  const legAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
 
   return (
     <group>
@@ -53,34 +51,33 @@ export default function SpaceStationDesk({ layout }: DeskTableProps) {
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[deskW - inset * 2, slabH, deskDepth]} />
+        <cylinderGeometry args={[tableRadius, tableRadius, slabH, 48]} />
       </mesh>
       <mesh
-        position={[0, topY - slabH / 2, deskCenterZ]}
-        material={hull}
-        castShadow
-      >
-        <boxGeometry args={[deskW, slabH, deskDepth - inset * 2]} />
-      </mesh>
-      <mesh
-        position={[0, topY - 0.01, deskCenterZ - deskDepth / 2 + 0.04]}
+        position={[0, topY - 0.01, deskCenterZ]}
         material={accent}
+        rotation={[-Math.PI / 2, 0, 0]}
       >
-        <boxGeometry args={[deskW * 0.7, 0.02, 0.03]} />
+        <ringGeometry args={[tableRadius * 0.55, tableRadius * 0.62, 48]} />
       </mesh>
 
-      {legZs.map((lz, i) =>
-        ([-legInsetX, legInsetX] as number[]).map((lx, j) => (
-          <group key={`${i}-${j}`} position={[lx, topY - slabH - legH / 2, lz]}>
-            <mesh material={dark} castShadow>
-              <boxGeometry args={[0.12, legH, 0.08]} />
-            </mesh>
-            <mesh position={[0, 0, 0.05]} material={hull}>
-              <boxGeometry args={[0.06, legH * 0.92, 0.02]} />
-            </mesh>
-          </group>
-        ))
-      )}
+      {legAngles.map((a, i) => (
+        <group
+          key={i}
+          position={[
+            Math.sin(a) * legR,
+            topY - slabH - legH / 2,
+            deskCenterZ - Math.cos(a) * legR,
+          ]}
+        >
+          <mesh material={dark} castShadow>
+            <boxGeometry args={[0.12, legH, 0.08]} />
+          </mesh>
+          <mesh position={[0, 0, 0.05]} material={hull}>
+            <boxGeometry args={[0.06, legH * 0.92, 0.02]} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }

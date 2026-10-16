@@ -13,9 +13,14 @@ export {
   getSceneOverviewCamera,
   getSceneScreenCamera,
   getSceneScreenSlots,
+  getDeskScreenSlots,
+  getDeskSlotCount,
+  getDeskArenaRadius,
+  getDeskWorkCamera,
   getSceneGrid,
   applySceneZoomDistance,
   SCENE_SCREEN_MAX,
+  DESK_SCREEN_MAX,
 } from "./roomScreens";
 
 const CARD_W = 2.4;
@@ -248,13 +253,15 @@ export function computeSceneConsolePose({
   count,
   deskFixed = false,
   sceneAngleOffset = 0,
+  deskFocusSlot = 0,
 }: LayoutComputeArgs): CardPose {
   if (deskFixed) {
     return computeDeskScreenPose(
       index,
       focusedIndex,
       count,
-      sceneAngleOffset
+      sceneAngleOffset,
+      deskFocusSlot
     );
   }
   return computeSceneScreenPose(index, focusedIndex, count);

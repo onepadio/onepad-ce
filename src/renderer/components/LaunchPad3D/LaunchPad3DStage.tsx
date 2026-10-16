@@ -37,10 +37,17 @@ import {
 import {
   ARENA_FLOOR_Y,
   getArenaRadius,
+  getDeskArenaRadius,
+  getDeskSlotCount,
+  getDeskSlotAngle,
   getDeskWorkCamera,
-  dragDeltaToSceneAngle,
   snapSceneAngle,
+  yawToNearestSlot,
 } from "./layouts/roomScreens";
+import {
+  DESK_SCREEN_MAX,
+  resolveDeskOrbitSnap,
+} from "./layouts/deskSlots";
 import { setVisibleSceneWindowIds } from "./sceneVisibility";
 import type { LaunchPadCard, Launchpad3dLayoutId } from "./types";
 import { persistDesktop3dZoomForWorkspace } from "../../util/desktop3dZooms";
@@ -158,6 +165,8 @@ interface SceneProps {
   onDeactivateFront?: () => void;
   /** Continuous scene ring rotation angle offset from drag (radians) */
   sceneAngleOffset?: number;
+  /** Desk slot holding the focused window (advances with orbit) */
+  deskFocusSlot?: number;
   /** Reset scene rotation offset to 0 (called on card select) */
   onResetSceneAngle?: () => void;
   /** Scene active (warm space visible) — pause motion when false */
@@ -185,6 +194,7 @@ function CameraRig({
   ringZoomCardIndex = -1,
   ringZoomPhase = null,
   sceneAngleOffset = 0,
+  deskFocusSlot = 0,
   clearColor = 0x2a3a52,
   exploreMode = false,
   /** Desk worlds: camera stays seated; screen ring rotates instead */
@@ -209,6 +219,8 @@ function CameraRig({
   ringZoomCardIndex?: number;
   ringZoomPhase?: "approach" | "front" | null;
   sceneAngleOffset?: number;
+  /** Slot where the focused window sits (desk orbit) */
+  deskFocusSlot?: number;
   clearColor?: number;
   exploreMode?: boolean;
   fixedDesk?: boolean;
@@ -255,9 +267,15 @@ function CameraRig({
     if (!active || !roomScene) return;
     const cam = camera as THREE.PerspectiveCamera;
     const orbit = controls as OrbitControlsImpl | null;
-    const n = Math.max(cardCount, 1);
-    const angleStep = (Math.PI * 2) / n;
-    const targetAngle = focusedIndex * angleStep + sceneAngleOffset;
+    const slotCount = fixedDesk
+      ? Math.max(getDeskSlotCount(cardCount), 1)
+      : Math.max(cardCount, 1);
+    const angleStep = (Math.PI * 2) / slotCount;
+    // Desk: look at the slot that currently holds the focused window (advances with orbit)
+    const homeYaw = fixedDesk
+      ? getDeskSlotAngle(deskFocusSlot, slotCount)
+      : focusedIndex * angleStep;
+    const targetAngle = homeYaw + sceneAngleOffset;
 
     if (roomAngleRef.current == null) {
       roomAngleRef.current = targetAngle;
@@ -278,9 +296,9 @@ function CameraRig({
       }
     }
 
-    // Desk worlds: stay seated. Control room: orbit with focus.
+    // Desk worlds: yaw around the circular desk. Control room: orbit with focus.
     const target = fixedDesk
-      ? getDeskWorkCamera(cardCount)
+      ? getDeskWorkCamera(roomAngleRef.current)
       : getCameraTargetForLayout(
           layout,
           roomScene,
@@ -311,11 +329,15 @@ function CameraRig({
 
     const expPos = new THREE.Vector3(...DESK_ROOM.exploreCamPos);
     const expLook = new THREE.Vector3(...DESK_ROOM.exploreLookAt);
-    // Seat-relative explore: turn around from the fixed desk camera
+    // Seat-relative explore: turn around from the current desk camera
     if (fixedDesk) {
-      const seat = getDeskWorkCamera(cardCount);
+      const seat = getDeskWorkCamera(roomAngleRef.current ?? 0);
       expPos.set(seat.position[0], seat.position[1] + 0.15, seat.position[2]);
-      expLook.set(0, seat.lookAt[1], Math.abs(seat.lookAt[2]) + 6);
+      expLook.set(
+        -seat.lookAt[0] * 0.2,
+        seat.lookAt[1],
+        -seat.lookAt[2] * 0.35 + getDeskArenaRadius() * 0.5
+      );
     }
     const blend = exploreBlendRef.current;
     cam.position.lerpVectors(workPos, expPos, blend);
@@ -403,28 +425,28 @@ function CameraRig({
     ringZoomCardIndex,
     ringZoomPhase,
     sceneAngleOffset,
+    deskFocusSlot,
   ]);
 
   return null;
 }
 
 /**
- * Desk worlds: same continuous-angle settle as control-room camera orbit.
- * Camera stays seated; this lerps the screen carousel toward the focused slot
- * so cold focus jumps (dock / click) ease instead of snapping.
+ * Desk worlds: settle absolute camera yaw toward the focus slot.
+ * Poses use this yaw for facing opacity; slots themselves stay fixed.
  */
 function DeskAngleBridge({
   enabled,
-  focusedIndex,
+  deskFocusSlot,
   sceneAngleOffset,
   cardCount,
   onOffset,
 }: {
   enabled: boolean;
-  focusedIndex: number;
+  deskFocusSlot: number;
   sceneAngleOffset: number;
   cardCount: number;
-  onOffset: (offset: number) => void;
+  onOffset: (absoluteYaw: number) => void;
 }) {
   const angleRef = useRef<number | null>(null);
   const lastSentRef = useRef<number | null>(null);
@@ -439,14 +461,13 @@ function DeskAngleBridge({
 
   useFrame(() => {
     if (!enabled) return;
-    const n = Math.max(cardCount, 1);
-    const angleStep = (Math.PI * 2) / n;
-    const target = focusedIndex * angleStep + sceneAngleOffset;
+    const slotCount = Math.max(getDeskSlotCount(cardCount), 1);
+    const homeYaw = getDeskSlotAngle(deskFocusSlot, slotCount);
+    const target = homeYaw + sceneAngleOffset;
 
     if (angleRef.current == null) {
       angleRef.current = target;
     } else if (Math.abs(sceneAngleOffset) > 0.0001) {
-      // Drag / key orbit already animates sceneAngleOffset — follow exactly
       angleRef.current = target;
     } else {
       let a = angleRef.current;
@@ -457,12 +478,11 @@ function DeskAngleBridge({
       if (Math.abs(delta) < 0.0005) {
         angleRef.current = target;
       } else {
-        // Same settle rate as control-room CameraRig
         angleRef.current = a + delta * 0.22;
       }
     }
 
-    const next = angleRef.current - focusedIndex * angleStep;
+    const next = angleRef.current;
     if (
       lastSentRef.current == null ||
       Math.abs(next - lastSentRef.current) > 0.0002
@@ -640,6 +660,7 @@ function SceneContent({
   externalClearZoom = false,
   onDeactivateFront,
   sceneAngleOffset = 0,
+  deskFocusSlot = 0,
   onResetSceneAngle,
   sceneActive = true,
   exploreMode: exploreModeProp = false,
@@ -1066,16 +1087,17 @@ function SceneContent({
     cameraZoomed;
 
   const deskFixed = experience.usesDeskRoom !== false;
-  const [deskVisualOffset, setDeskVisualOffset] = useState(0);
-  const onDeskVisualOffset = useCallback((offset: number) => {
-    setDeskVisualOffset(offset);
+  const [deskYaw, setDeskYaw] = useState(0);
+  const onDeskYaw = useCallback((yaw: number) => {
+    setDeskYaw(yaw);
   }, []);
-  // Desk uses continuous-angle settle; control room uses sceneAngleOffset on the camera
+  // Desk: absolute settled yaw for poses / facing. Control room: sceneAngleOffset on camera.
   const deskPoseOffset =
-    deskFixed && roomScene ? deskVisualOffset : sceneAngleOffset;
+    deskFixed && roomScene ? deskYaw : sceneAngleOffset;
+  const deskSlotCount = getDeskSlotCount(limited.length);
   const cameraLookAt = useMemo((): [number, number, number] => {
     if (deskFixed && roomScene) {
-      return getDeskWorkCamera(limited.length).lookAt;
+      return getDeskWorkCamera(deskYaw).lookAt;
     }
     const t = getCameraTargetForLayout(
       layout,
@@ -1096,6 +1118,7 @@ function SceneContent({
     return t.lookAt;
   }, [
     deskFixed,
+    deskYaw,
     layout,
     roomScene,
     focusedIndex,
@@ -1138,6 +1161,7 @@ function SceneContent({
         ringZoomCardIndex={ringZoomCardIndex}
         ringZoomPhase={ringZoomPhase}
         sceneAngleOffset={sceneAngleOffset}
+        deskFocusSlot={deskFocusSlot}
         clearColor={experience.clearColor}
         exploreMode={exploreMode}
         fixedDesk={experience.usesDeskRoom !== false}
@@ -1148,10 +1172,10 @@ function SceneContent({
       />
       <DeskAngleBridge
         enabled={deskFixed && roomScene && active && sceneActive}
-        focusedIndex={focusedIndex}
+        deskFocusSlot={deskFocusSlot}
         sceneAngleOffset={sceneAngleOffset}
         cardCount={limited.length}
-        onOffset={onDeskVisualOffset}
+        onOffset={onDeskYaw}
       />
       {roomScene && (
         <SceneOrbitControls
@@ -1188,6 +1212,11 @@ function SceneContent({
               swapPulse={swapPulse}
               active={active && sceneActive}
               experienceId={experience.id}
+              focusedIndex={
+                deskSlotCount > 0
+                  ? yawToNearestSlot(deskYaw, deskSlotCount)
+                  : focusedIndex
+              }
             />
           )}
           {(() => {
@@ -1269,6 +1298,7 @@ function SceneContent({
             browseOffset,
             deskFixed: deskFixed && roomScene,
             sceneAngleOffset: deskFixed && roomScene ? deskPoseOffset : 0,
+            deskFocusSlot: deskFixed && roomScene ? deskFocusSlot : 0,
           });
           // Desk: skip invisible neighbors so they can't steal order / depth
           if (deskFixed && roomScene && pose.opacity < 0.05) {
@@ -1472,19 +1502,69 @@ function LaunchPad3DStage({
   const ringBrowseLockUntil = useRef(0);
   const coverWheelAccum = useRef(0);
   const coverBrowseLockUntil = useRef(0);
-  const sceneWheelSnapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** HUD-focused window (webview expanded) — wheel switches tabs instead of orbiting */
   const windowFrontActiveRef = useRef(false);
   const frontCardIdRef = useRef<string | null>(null);
   const tabWheelAccum = useRef(0);
+  /** Short cooldown between tab steps so continuous scroll doesn't skip too fast */
   const tabWheelLockUntil = useRef(0);
-  /** Continuous scene ring rotation offset in radians (drag → smooth, release → snap) */
+  /** Scene ring rotation offset in radians (control-room key tween; drag is stepped) */
   const [sceneAngleOffset, setSceneAngleOffset] = useState(0);
   const sceneAngleOffsetRef = useRef(0);
   sceneAngleOffsetRef.current = sceneAngleOffset;
   const focusedIndexRef = useRef(focusedIndex);
   focusedIndexRef.current = focusedIndex;
+  /** Which desk monitor holds the focused window — advances with orbit (no reverse snap) */
+  const [deskFocusSlot, setDeskFocusSlot] = useState(() =>
+    Math.max(0, focusedIndex)
+  );
+  const deskFocusSlotRef = useRef(deskFocusSlot);
+  deskFocusSlotRef.current = deskFocusSlot;
+  /** Non-zero while an orbit snap commit is in flight (generation id) */
+  const deskOrbitCommitRef = useRef(0);
   const sceneKeyOrbitTweenRef = useRef<gsap.core.Tween | null>(null);
+
+  // External focus (menu / activate): N≤6 → slot=index; N>6 → bring to front slot 0
+  useEffect(() => {
+    if (deskOrbitCommitRef.current) return;
+    const n = cards.length;
+    const slotCount = Math.max(getDeskSlotCount(n), 1);
+    if (n <= DESK_SCREEN_MAX) {
+      setDeskFocusSlot(Math.min(Math.max(0, focusedIndex), slotCount - 1));
+    } else {
+      setDeskFocusSlot(0);
+    }
+  }, [focusedIndex, cards.length]);
+
+  const commitDeskOrbitSnap = useCallback(
+    (offset: number) => {
+      const n = cards.length;
+      const { focusedIndex: nextFocus, focusSlot: nextSlot } =
+        resolveDeskOrbitSnap(
+          focusedIndexRef.current,
+          deskFocusSlotRef.current,
+          offset,
+          n
+        );
+      // Keep flag through React commit + useEffect so external focus sync
+      // does not reset deskFocusSlot to 0 (N>6) and reverse the camera.
+      const gen = ++deskOrbitCommitRef.current;
+      setDeskFocusSlot(nextSlot);
+      deskFocusSlotRef.current = nextSlot;
+      onFocusIndex(nextFocus);
+      focusedIndexRef.current = nextFocus;
+      setSceneAngleOffset(0);
+      sceneAngleOffsetRef.current = 0;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (deskOrbitCommitRef.current === gen) {
+            deskOrbitCommitRef.current = 0;
+          }
+        });
+      });
+    },
+    [cards.length, onFocusIndex]
+  );
 
   const hudZoomedRef = useRef(false);
 
@@ -1537,7 +1617,9 @@ function LaunchPad3DStage({
           : activeTabs?.[windowId] || tabIds[0];
       let idx = tabIds.indexOf(currentId);
       if (idx < 0) idx = 0;
-      const nextId = tabIds[(idx + dir + tabIds.length) % tabIds.length];
+      const nextIdx = idx + dir;
+      if (nextIdx < 0 || nextIdx >= tabIds.length) return false;
+      const nextId = tabIds[nextIdx];
       const tab = openTabs[nextId];
       if (!tab) return false;
       const win = openWindows[windowId];
@@ -1660,28 +1742,16 @@ function LaunchPad3DStage({
     });
   }, [focusedIndex, layout, wallpaperCount]);
 
+  const experienceForControls = getExperience(experienceId);
+  const deskOrbit =
+    (fullscreen || usesRoomScene(layout)) &&
+    experienceForControls.usesDeskRoom !== false;
+
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      // Scene: trackpad/wheel smoothly rotates camera; stops → snap to nearest card
+      // Scene (desk + control room): no wheel window switch — use ←/→ / drag.
+      // HUD-focused tab wheel is a separate capture listener.
       if (layout === "scene") {
-        // HUD-focused: tab switching is handled by the window wheel listener
-        if (windowFrontActiveRef.current) return;
-        const n = cards.length;
-        if (n <= 1) return;
-        const rawDelta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
-        if (Math.abs(rawDelta) < 4) return;
-        const angle = dragDeltaToSceneAngle(rawDelta, n, window.innerWidth);
-        setSceneAngleOffset((prev) => prev + angle);
-        // Restart snap timer on each wheel tick
-        if (sceneWheelSnapTimer.current) clearTimeout(sceneWheelSnapTimer.current);
-        sceneWheelSnapTimer.current = setTimeout(() => {
-          sceneWheelSnapTimer.current = null;
-          setSceneAngleOffset((cur) => {
-            const { index } = snapSceneAngle(focusedIndex, cur, n);
-            onFocusIndex(index);
-            return 0;
-          });
-        }, 200);
         return;
       }
       e.preventDefault();
@@ -1735,7 +1805,12 @@ function LaunchPad3DStage({
       coverBrowseLockUntil.current = now + 240;
       onBrowseDelta(dir);
     },
-    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom, cards, focusedIndex, onFocusIndex]
+    [
+      onBrowseDelta,
+      layout,
+      wallpaperCount,
+      schedulePersistZoom,
+    ]
   );
 
   const handlePointerDown = useCallback((e: PointerEvent) => {
@@ -1759,7 +1834,7 @@ function LaunchPad3DStage({
       const dx = e.clientX - dragRef.current.x;
       const dy = e.clientY - dragRef.current.y;
 
-      // Scene: horizontal drag smoothly rotates the camera around the ring
+      // Scene: horizontal drag steps one window at a time (not continuous)
       if (layout === "scene") {
         // HUD-focused: don't orbit to another window via drag
         if (windowFrontActiveRef.current) return;
@@ -1769,9 +1844,33 @@ function LaunchPad3DStage({
           dragRef.current.x = e.clientX;
           return;
         }
-        // Accumulate continuous angle offset — camera follows finger without jumping
-        const angle = dragDeltaToSceneAngle(dx, cards.length, window.innerWidth);
-        setSceneAngleOffset((prev) => prev + angle);
+        const n = cards.length;
+        if (n <= 1) return;
+        const now = performance.now();
+        if (now < ringBrowseLockUntil.current) return;
+        const dragStep = 96;
+        if (Math.abs(dx) <= dragStep) return;
+        ringBrowseLockUntil.current = now + 280;
+        const dir = dx < 0 ? 1 : -1;
+        const slotN = deskOrbit
+          ? Math.max(getDeskSlotCount(n), 1)
+          : n;
+        const angleStep = (Math.PI * 2) / slotN;
+        sceneKeyOrbitTweenRef.current?.kill();
+        sceneKeyOrbitTweenRef.current = null;
+        if (deskOrbit) {
+          commitDeskOrbitSnap(dir * angleStep);
+        } else {
+          const { index } = snapSceneAngle(
+            focusedIndexRef.current,
+            dir * angleStep,
+            n
+          );
+          onFocusIndex(index);
+          focusedIndexRef.current = index;
+          setSceneAngleOffset(0);
+          sceneAngleOffsetRef.current = 0;
+        }
         dragRef.current.x = e.clientX;
         dragRef.current.y = e.clientY;
         return;
@@ -1841,24 +1940,49 @@ function LaunchPad3DStage({
         dragRef.current.y = e.clientY;
       }
     },
-    [onBrowseDelta, layout, wallpaperCount, schedulePersistZoom, cards, focusedIndex, onFocusIndex]
+    [
+      onBrowseDelta,
+      layout,
+      wallpaperCount,
+      schedulePersistZoom,
+      cards.length,
+      onFocusIndex,
+      deskOrbit,
+      commitDeskOrbitSnap,
+    ]
   );
 
   const handlePointerUp = useCallback(() => {
     dragRef.current.active = false;
     dragRef.current.panning = false;
     dragRef.current.mode = null;
-    // Scene: snap accumulated angle offset to nearest card, then reset offset to 0
+    // Residual key-tween offset — snap on release
     if (layout === "scene" && sceneAngleOffset !== 0) {
       if (windowFrontActiveRef.current) {
         setSceneAngleOffset(0);
         return;
       }
-      const { index } = snapSceneAngle(focusedIndex, sceneAngleOffset, cards.length);
-      onFocusIndex(index);
-      setSceneAngleOffset(0);
+      if (deskOrbit) {
+        commitDeskOrbitSnap(sceneAngleOffset);
+      } else {
+        const { index } = snapSceneAngle(
+          focusedIndex,
+          sceneAngleOffset,
+          cards.length
+        );
+        onFocusIndex(index);
+        setSceneAngleOffset(0);
+      }
     }
-  }, [layout, sceneAngleOffset, focusedIndex, cards.length, onFocusIndex]);
+  }, [
+    layout,
+    sceneAngleOffset,
+    focusedIndex,
+    cards.length,
+    onFocusIndex,
+    deskOrbit,
+    commitDeskOrbitSnap,
+  ]);
 
   // ←/→ orbit screens; ↑/↓ cycle tabs in the active window
   useEffect(() => {
@@ -1896,8 +2020,19 @@ function LaunchPad3DStage({
 
       // ArrowRight → next screen; ArrowLeft → previous
       const dir = e.key === "ArrowRight" ? 1 : -1;
-      const angleStep = (Math.PI * 2) / n;
+      const slotN = deskOrbit
+        ? Math.max(getDeskSlotCount(n), 1)
+        : n;
+      const angleStep = (Math.PI * 2) / slotN;
       sceneKeyOrbitTweenRef.current?.kill();
+      sceneKeyOrbitTweenRef.current = null;
+
+      // Desk: advance focus/slot directly — camera shortest-arc settles forward.
+      // Animating sceneAngleOffset then clearing it caused a reverse settle.
+      if (deskOrbit) {
+        commitDeskOrbitSnap(dir * angleStep);
+        return;
+      }
 
       const start = sceneAngleOffsetRef.current;
       const end = start + dir * angleStep;
@@ -1925,7 +2060,15 @@ function LaunchPad3DStage({
       sceneKeyOrbitTweenRef.current?.kill();
       sceneKeyOrbitTweenRef.current = null;
     };
-  }, [layout, fullscreen, cards, onFocusIndex, cycleFocusedWindowTab]);
+  }, [
+    layout,
+    fullscreen,
+    cards,
+    onFocusIndex,
+    cycleFocusedWindowTab,
+    deskOrbit,
+    commitDeskOrbitSnap,
+  ]);
 
   // Focused window: wheel outside webview jumps tabs (webview keeps its own scroll)
   useEffect(() => {
@@ -1963,25 +2106,23 @@ function LaunchPad3DStage({
       e.stopPropagation();
 
       const now = performance.now();
-      if (now < tabWheelLockUntil.current) {
-        tabWheelAccum.current = 0;
-        return;
-      }
+      if (now < tabWheelLockUntil.current) return;
 
       tabWheelAccum.current += delta;
-      const threshold = 48;
+      const threshold = 200;
       if (Math.abs(tabWheelAccum.current) < threshold) return;
 
-      const dir = tabWheelAccum.current > 0 ? 1 : -1;
+      const dir = tabWheelAccum.current > 0 ? -1 : 1;
+      // Drop remainder so one gesture doesn't chain multiple tabs
       tabWheelAccum.current = 0;
-      // Multi-tab: cycle. Single-tab: swallow — never orbit scene windows.
-      if (cycleFocusedWindowTab(dir)) {
-        tabWheelLockUntil.current = now + 260;
-      }
+      tabWheelLockUntil.current = now + 160;
+      cycleFocusedWindowTab(dir);
     };
 
     window.addEventListener("wheel", onWheel, { capture: true, passive: false });
-    return () => window.removeEventListener("wheel", onWheel, true);
+    return () => {
+      window.removeEventListener("wheel", onWheel, true);
+    };
   }, [projectWebViews, layout, fullscreen, cycleFocusedWindowTab]);
 
   const overviewZoomDistance = useSelector(
@@ -2070,6 +2211,7 @@ function LaunchPad3DStage({
           externalClearZoom={externalClearZoom}
           onDeactivateFront={onDeactivateFront}
           sceneAngleOffset={sceneAngleOffset}
+          deskFocusSlot={deskFocusSlot}
           onResetSceneAngle={() => setSceneAngleOffset(0)}
           sceneActive={sceneActive}
           exploreMode={exploreMode}

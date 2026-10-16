@@ -208,7 +208,7 @@ function DesktopWindows3D({
     );
   }, [cards.length]);
 
-  // User clicked a scene card → activate opens HUD via externalZoom
+  // Active window (dock menu / card / session) → desk bank + HUD webview
   const cardIdsKey = cards.map((c) => c.id).join("|");
   useEffect(() => {
     if (!activeWindowId || activeWindowId === "launchpad") {
@@ -218,7 +218,11 @@ function DesktopWindows3D({
     const zoomCardId = isOthersBrowserActive(activeWindowId, openWindows)
       ? OTHERS_BROWSER_CARD_ID
       : activeWindowId;
-    if (!cardIdsKey.split("|").includes(zoomCardId)) return;
+    const ids = cardIdsKey ? cardIdsKey.split("|") : [];
+    const i = ids.indexOf(zoomCardId);
+    if (i < 0) return;
+    // Sliding bank: put active window on the facing slot (no orbit needed)
+    setFocusedIndex(i);
     setExternalClearZoom(false);
     setExternalZoomCardId(zoomCardId);
   }, [activeWindowId, cardIdsKey, openWindows]);

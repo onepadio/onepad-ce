@@ -1,4 +1,11 @@
 import type { CardPose } from "../types";
+import {
+  DESK_SCREEN_MAX,
+  deskSlotIndexForWindow,
+  getDeskSlotCount,
+} from "./deskSlots";
+
+export { DESK_SCREEN_MAX, getDeskSlotCount } from "./deskSlots";
 
 /** Soft cap — single-row ring stays readable while orbiting */
 export const SCENE_SCREEN_MAX = 128;
@@ -32,21 +39,81 @@ const DOLLY_DIST = 1.8;
 const OVERVIEW_FOV = 56;
 
 /**
- * Desk-room work camera: always seated looking at the front (−Z) screen slot.
- * The screen ring rotates under this fixed view when focus changes.
+ * Fixed radius sized for DESK_SCREEN_MAX so camera distance stays stable
+ * as window count (and thus slot count) changes.
  */
-export function getDeskWorkCamera(count = 1): {
+export function getDeskArenaRadius(): number {
+  return getArenaRadius(DESK_SCREEN_MAX);
+}
+
+export function getDeskSlotAngle(slotIndex: number, slotCount: number): number {
+  const n = Math.max(slotCount, 1);
+  return (slotIndex * (Math.PI * 2)) / n;
+}
+
+/** Nearest slot index for a camera yaw (radians). Slot 0 faces −Z. */
+export function yawToNearestSlot(yaw: number, slotCount: number): number {
+  const n = Math.max(slotCount, 1);
+  const step = (Math.PI * 2) / n;
+  const TWO_PI = Math.PI * 2;
+  let a = ((yaw % TWO_PI) + TWO_PI) % TWO_PI;
+  // Snap relative to slot 0 at yaw 0
+  let idx = Math.round(a / step) % n;
+  if (idx < 0) idx += n;
+  return idx;
+}
+
+/**
+ * Desk work camera: seated at the desk center, looking toward the wall at `yaw`.
+ * Slot 0 is at yaw 0 (−Z). Scroll/keys change yaw to turn around the circle.
+ */
+export function getDeskWorkCamera(yaw = 0): {
   position: [number, number, number];
   lookAt: [number, number, number];
   fov: number;
 } {
-  const radius = getArenaRadius(Math.max(count, 1));
+  const radius = getDeskArenaRadius();
   const eyeY = SCENE_SCREEN_Y;
+  const sx = radius * Math.sin(yaw);
+  const sz = -radius * Math.cos(yaw);
+  // Sit slightly inward from the screen so FOV matches the old desk overview
+  const dist = Math.min(OVERVIEW_DIST, radius * 0.82);
+  const ix = -Math.sin(yaw);
+  const iz = Math.cos(yaw);
   return {
-    position: [0, eyeY, -radius + OVERVIEW_DIST],
-    lookAt: [0, eyeY, -radius],
+    position: [sx + ix * dist, eyeY, sz + iz * dist],
+    lookAt: [sx, eyeY, sz],
     fov: OVERVIEW_FOV,
   };
+}
+
+/** Fixed screen slots for the circular desk (1…DESK_SCREEN_MAX). */
+export function getDeskScreenSlots(slotCount: number): ScreenSlot[] {
+  const n = getDeskSlotCount(slotCount);
+  if (n === 0) return [];
+
+  const radius = getDeskArenaRadius();
+  const angleStep = (Math.PI * 2) / n;
+  const w = SCENE_SCREEN_W;
+  const h = SCENE_SCREEN_H;
+  const slots: ScreenSlot[] = [];
+
+  for (let i = 0; i < n; i++) {
+    const theta = i * angleStep;
+    const x = radius * Math.sin(theta);
+    const z = -radius * Math.cos(theta);
+    slots.push({
+      col: i,
+      row: 0,
+      width: w,
+      height: h,
+      radius,
+      theta,
+      position: [x, SCENE_SCREEN_Y, z],
+      rotation: [0, -theta, 0],
+    });
+  }
+  return slots;
 }
 
 export interface ScreenSlot {
@@ -166,40 +233,56 @@ export function computeSceneScreenPose(
 }
 
 /**
- * Desk worlds: focused window is always on the fixed front (−Z) desk slot.
- * Neighbors sit at ±step — no parent ring rotation (avoids webview/order desync).
+ * Desk worlds: static slots on a circle; camera yaws (cameraYaw).
+ * `focusSlot` is where the focused window sits (advances with orbit so the
+ * camera does not reverse back to slot 0 after a turn).
  */
 export function computeDeskScreenPose(
   index: number,
   focusedIndex: number,
   count: number,
-  angleOffset = 0
+  cameraYaw = 0,
+  focusSlot = 0
 ): CardPose {
-  const n = Math.max(count, 1);
-  const radius = getArenaRadius(n);
-  const angleStep = (Math.PI * 2) / n;
+  const slotCount = getDeskSlotCount(count);
   const scale = getSceneScreenCardScale(null);
+  const hidden: CardPose = {
+    position: [0, SCENE_SCREEN_Y, -getDeskArenaRadius()],
+    rotation: [0, 0, 0],
+    scale,
+    opacity: 0,
+  };
+  if (slotCount === 0 || count <= 0) return hidden;
 
-  // Relative yaw: focused → 0 (front). Drag offset turns the carousel under the seat.
-  let rel = (index - focusedIndex) * angleStep - angleOffset;
-  // Normalize to (−π, π] so GSAP never takes the long way around
-  const TWO_PI = Math.PI * 2;
-  rel = ((rel + Math.PI) % TWO_PI + TWO_PI) % TWO_PI - Math.PI;
+  const slotOfWindow = deskSlotIndexForWindow(
+    index,
+    focusedIndex,
+    count,
+    focusSlot
+  );
+  if (slotOfWindow < 0) return hidden;
 
-  const x = radius * Math.sin(rel);
-  const z = -radius * Math.cos(rel);
+  const slots = getDeskScreenSlots(slotCount);
+  const slot = slots[slotOfWindow];
+  if (!slot) return hidden;
 
-  // Visibility from visual angle (not discrete index) so continuous settle
-  // matches control-room orbit — neighbors fade in while rotating onto the desk
-  const absRel = Math.abs(rel);
-  const nearFront = absRel < 0.12;
-  const neighbor = absRel < angleStep * 1.05;
+  const facing = yawToNearestSlot(cameraYaw, slotCount);
+  const focused = index === focusedIndex;
+  const dist = Math.min(
+    (slotOfWindow - facing + slotCount) % slotCount,
+    (facing - slotOfWindow + slotCount) % slotCount
+  );
+  const opacity = focused ? 1 : dist <= 1 ? 0.85 : 0.65;
+
+  const inward = 0.08;
+  const nx = -Math.sin(slot.theta) * inward;
+  const nz = Math.cos(slot.theta) * inward;
 
   return {
-    position: [x, SCENE_SCREEN_Y, z],
-    rotation: [0, -rel, 0],
-    scale,
-    opacity: nearFront ? 1 : neighbor ? 0.4 : 0,
+    position: [slot.position[0] + nx, slot.position[1], slot.position[2] + nz],
+    rotation: slot.rotation,
+    scale: focused ? scale * 1.02 : scale,
+    opacity,
   };
 }
 

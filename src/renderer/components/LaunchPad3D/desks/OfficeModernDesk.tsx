@@ -4,12 +4,9 @@ import * as THREE from "three";
 import { supportHeight } from "./deskLayout";
 import type { DeskTableProps } from "./types";
 
-/**
- * Sleek office desk — thin dark laminate, chrome legs, soft rounded top.
- */
+/** Sleek circular office desk — dark laminate, chrome legs. */
 export default function OfficeModernDesk({ layout }: DeskTableProps) {
-  const { deskW, deskDepth, topY, topThick, deskCenterZ, legInsetX, legZs } =
-    layout;
+  const { tableRadius, topY, topThick, deskCenterZ } = layout;
 
   const laminate = useMemo(
     () =>
@@ -32,7 +29,8 @@ export default function OfficeModernDesk({ layout }: DeskTableProps) {
 
   const slabH = topThick * 0.75;
   const legH = supportHeight(layout, slabH);
-  const endZs = [legZs[0], legZs[legZs.length - 1]];
+  const legR = tableRadius * 0.6;
+  const legAngles = [0.4, Math.PI / 2 + 0.4, Math.PI + 0.4, (Math.PI * 3) / 2 + 0.4];
 
   return (
     <group>
@@ -42,27 +40,31 @@ export default function OfficeModernDesk({ layout }: DeskTableProps) {
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[deskW, slabH, deskDepth]} />
+        <cylinderGeometry args={[tableRadius, tableRadius, slabH, 48]} />
       </mesh>
       <mesh
         position={[0, topY - slabH - 0.015, deskCenterZ]}
         material={chrome}
       >
-        <boxGeometry args={[deskW * 0.995, 0.03, deskDepth * 0.995]} />
+        <cylinderGeometry
+          args={[tableRadius * 0.995, tableRadius * 0.995, 0.03, 48]}
+        />
       </mesh>
 
-      {endZs.flatMap((lz, i) =>
-        ([-legInsetX, legInsetX] as number[]).map((lx, j) => (
-          <mesh
-            key={`${i}-${j}`}
-            position={[lx, topY - slabH - legH / 2, lz]}
-            material={chrome}
-            castShadow
-          >
-            <cylinderGeometry args={[0.035, 0.04, legH, 12]} />
-          </mesh>
-        ))
-      )}
+      {legAngles.map((a, i) => (
+        <mesh
+          key={i}
+          position={[
+            Math.sin(a) * legR,
+            topY - slabH - legH / 2,
+            deskCenterZ - Math.cos(a) * legR,
+          ]}
+          material={chrome}
+          castShadow
+        >
+          <cylinderGeometry args={[0.035, 0.04, legH, 12]} />
+        </mesh>
+      ))}
     </group>
   );
 }

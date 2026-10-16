@@ -40,6 +40,8 @@ export interface LayoutComputeArgs {
   browseOffset: number;
   /** Desk worlds: seat is fixed; poses are relative to focusedIndex */
   deskFixed?: boolean;
-  /** Continuous desk-carousel drag yaw (radians) */
+  /** Continuous desk camera yaw (radians), absolute */
   sceneAngleOffset?: number;
+  /** Desk slot index where the focused window currently sits */
+  deskFocusSlot?: number;
 }
