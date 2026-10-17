@@ -8,7 +8,10 @@ import {
   switchBrowserTab,
 } from "../../util/browserTabGroups";
 import { isSharedAppWindow } from "../../util/sharedApps";
-import { OTHERS_BROWSER_CARD_ID } from "./othersBrowser";
+import {
+  OTHERS_BROWSER_CARD_ID,
+  getRepresentativeBrowserWindowId,
+} from "./othersBrowser";
 import { getWindowLiveActiveTab } from "./windowTab";
 
 import "./Desktop3DTabDots.css";
@@ -39,6 +42,15 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
   const deskFrontCardId = useSelector(
     (state: any) => state.windowService.desktop3dDeskWindowId || ""
   );
+  const activeBrowserWindowId = useSelector(
+    (state: any) => state.session.activeBrowserWindowId
+  );
+  const browserWindows = useSelector(
+    (state: any) => state.session.browserWindows
+  );
+  const workspace = useSelector(
+    (state: any) => state.workspace.selectedWorkspace
+  );
 
   const { windowId, tabIds, activeIndex, cardKey, isOverlay } = useMemo(() => {
     const empty = {
@@ -68,17 +80,17 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
 
     if (windowId === "launchpad") windowId = null;
 
-    // Others screen → representative / active browser window
+    // Others screen → representative / last remembered browser window
     if (windowId === OTHERS_BROWSER_CARD_ID) {
       cardKey = OTHERS_BROWSER_CARD_ID;
-      windowId =
-        (activeWindowId && openWindows[activeWindowId]?.type === "browser"
-          ? activeWindowId
-          : null) ||
-        Object.keys(openWindows).find(
-          (id) => openWindows[id]?.type === "browser"
-        ) ||
-        null;
+      windowId = getRepresentativeBrowserWindowId(
+        openWindows,
+        browserWindows,
+        windowTabs,
+        activeWindowId,
+        workspace?.id,
+        activeBrowserWindowId
+      );
     }
 
     // Fallback: tab → window
@@ -142,6 +154,9 @@ function Desktop3DTabDots({ focusedCardId = null }: Desktop3DTabDotsProps) {
     openTabs,
     windowTabs,
     homeWorkspaceId,
+    browserWindows,
+    activeBrowserWindowId,
+    workspace?.id,
   ]);
 
   // Track webview host every frame (same cadence as WebViewProjector scale)

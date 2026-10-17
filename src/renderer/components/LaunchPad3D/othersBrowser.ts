@@ -12,14 +12,17 @@ export function isBrowserTypeWindow(win: any): boolean {
 
 /**
  * Which real browser window feeds the Others screen:
- * active browser window if any, otherwise first registered browser window in workspace.
+ * 1) active browser window if any
+ * 2) last remembered browser window (activeBrowserWindowId) — survives dismiss → launchpad
+ * 3) first registered browser window in workspace
  */
 export function getRepresentativeBrowserWindowId(
   openWindows: Record<string, any>,
   browserWindows: any[],
   windowTabs: Record<string, string[]>,
   activeWindowId: string | null | undefined,
-  workspaceId?: string | null
+  workspaceId?: string | null,
+  preferredBrowserWindowId?: string | null
 ): string | null {
   const ids = getBrowserWindowIds(
     openWindows || {},
@@ -32,6 +35,9 @@ export function getRepresentativeBrowserWindowId(
 
   if (ids.length === 0) return null;
   if (activeWindowId && ids.includes(activeWindowId)) return activeWindowId;
+  if (preferredBrowserWindowId && ids.includes(preferredBrowserWindowId)) {
+    return preferredBrowserWindowId;
+  }
   return ids[0];
 }
 

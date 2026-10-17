@@ -47,6 +47,8 @@ import { openAppWindow, closeWindow } from "../../services/window";
 import { newTabForActiveWindow } from "../../util/tabs";
 import { closeTab } from "../../util/tabs";
 import { sessionActions } from "../../store/session-slice";
+import { appActions } from "../../store/app-slice";
+import { ScreenshotService } from "../../services/screenshot";
 import "./BrowserWindow.css";
 
 import {BrowserState, BrowserStateFactory} from "../../model/state";
@@ -277,14 +279,39 @@ function BrowserWindow(props: any) {
     dispatch(sessionActions.setOpenTabs({data: _openTabs}));
   }, [mediaPlaying]);
 
-  // Screenshot capture is now handled by ScreenshotManagerHub
-  // Components retrieve cached screenshots as needed
+  // Capture after first paint so new windows get a thumb ASAP
   useEffect(() => {
-    if(takeScreenShot && props.location === "main"){
-      setTakeScreenShot(false);
-      // Screenshots are automatically captured by background service
-    }
-  }, [takeScreenShot]);
+    if (!takeScreenShot || props.location !== "main") return;
+    setTakeScreenShot(false);
+    const timer = setTimeout(() => {
+      let webContentsId: number | null =
+        typeof openTabs[props.tabId]?.webContentsId === "number"
+          ? openTabs[props.tabId].webContentsId
+          : null;
+      if (
+        webContentsId == null &&
+        webview &&
+        typeof (webview as any).getWebContentsId === "function"
+      ) {
+        try {
+          webContentsId = (webview as any).getWebContentsId();
+        } catch {
+          webContentsId = null;
+        }
+      }
+      if (typeof webContentsId === "number") {
+        ScreenshotService.capture(
+          webContentsId,
+          props.tabId,
+          "BrowserWindow.dom-ready"
+        );
+        setTimeout(() => {
+          dispatch(appActions.updateScreenShotStatusVersion());
+        }, 350);
+      }
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [takeScreenShot, props.location, props.tabId, openTabs, webview, dispatch]);
 
   useEffect(() => {
     const container = document.getElementById(props.tabId);

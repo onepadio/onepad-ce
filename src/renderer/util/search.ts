@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { openInternalWindow} from '../services/window'
 import { windowServiceActions } from "../store/window-service-slice";
 import { createNavHistoryState } from "./navHistory";
+import { createBrowserGroup } from "./browser";
 
 // @ts-expect-error
 import globe_icon from '../images/globe_icon_96.png';
@@ -127,71 +128,29 @@ function linkTab(windowId: any, url: any, icon: any, title: any, desktop: any, w
     }
   }
 
+/** Always open a new browser window/group — never add a tab to the active browser. */
 export function handleSpaceBrowserSearch(
-    queryOrUrl: any, searchQuery: any, links: any, openWindows: any, activeBrowserWindowId: any, activeTabs: any, desktop: any, workspace: any, dispatch: any, sessionActions: any, setSearchQuery: any, isLocal: any, openTabs: any, windowTabs: any
+    queryOrUrl: any, searchQuery: any, links: any, openWindows: any, activeBrowserWindowId: any, activeTabs: any, desktop: any, workspace: any, dispatch: any, sessionActions: any, setSearchQuery: any, isLocal: any, openTabs: any, windowTabs: any,
+    items: any = null, browserWindowsLength: number | null = null
     ){
     log.debug("searchQuery", searchQuery);
-    let _openWindows = Object.assign({}, openWindows);
-    let _openTabs = Object.assign({}, openTabs);
-    let _windowTabs = Object.assign({}, windowTabs);
-    let _id = "browser_".concat(uuidv4());
-    if(activeBrowserWindowId !== "" && _openWindows[activeBrowserWindowId] !== undefined){
-        let window = _openWindows[activeBrowserWindowId];
-
-        // Use WindowService to create tab
-        dispatch(windowServiceActions.openNewTab({
-            windowId: window.id,
-            url: queryOrUrl
-        }));
-
-        // ActiveWindow
-        dispatch(sessionActions.setActiveWindow({data: window}));
-        setSearchQuery("");
-    }else{
-        let window = {
-            workspace: workspace.id,
-            id: _id,
-            url: ":browser",
-            location: "main",
-        }
-
-        openInternalWindow(
-            window,
-            links,
-            openWindows,
-            isLocal,
-            (result: any) => {
-                if(result === undefined || result === null){
-                    return;
-                }
-                let _result = Object.assign({}, result);
-                _result.type = "browser";
-                _result.url = queryOrUrl;
-                _result.location = "main";
-                _result.desktop = desktop.id;
-                _result.workspace = workspace.id;
-
-                log.debug("Result:"+_result);
-                // OpenWindows
-                _openWindows[result.id] = _result;
-                dispatch(
-                  sessionActions.setOpenWindows({
-                  data: _openWindows,
-                }));
-
-                // Use WindowService to create tab
-                dispatch(windowServiceActions.openNewTab({
-                    windowId: _result.id,
-                    url: queryOrUrl
-                }));
-
-                dispatch(sessionActions.setActiveWindow({data: _result}));
-                dispatch(sessionActions.addBrowserWindow({data: _id}));
-                dispatch(sessionActions.setActiveBrowserWindowId({data: _id}));
-                setSearchQuery("");
-            },
-        );
-    }
+    const browserCount =
+      browserWindowsLength != null
+        ? browserWindowsLength
+        : Object.values(openWindows || {}).filter(
+            (w: any) => w?.type === "browser"
+          ).length;
+    createBrowserGroup(
+      openWindows,
+      items || links,
+      isLocal,
+      desktop,
+      workspace,
+      dispatch,
+      queryOrUrl,
+      browserCount
+    );
+    setSearchQuery("");
 }
 
 export function handleSearch(

@@ -1,0 +1,147 @@
+.overview-tab-switcher {
+  position: fixed;
+  /* left/top set each frame from the projected desk screen */
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1110;
+  max-height: min(70vh, 560px);
+  pointer-events: auto;
+  visibility: hidden;
+}
+
+/* Tabs scroll; New stays pinned at the bottom */
+.overview-tab-switcher-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-height: min(70vh, 560px);
+  padding: 10px 10px 12px;
+  border-radius: 14px;
+  background: rgba(12, 16, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.overview-tab-switcher-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+.overview-tab-switcher-new {
+  flex: 0 0 auto;
+}
+
+.overview-tab-switcher-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.overview-tab-switcher-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+}
+
+.overview-tab-switcher-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 108px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.overview-tab-switcher-frame {
+  display: block;
+  width: 104px;
+  height: 66px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.overview-tab-switcher-item:hover .overview-tab-switcher-frame {
+  border-color: rgba(255, 255, 255, 0.55);
+  transform: translateX(2px);
+}
+
+.overview-tab-switcher-item.is-active .overview-tab-switcher-frame {
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.overview-tab-switcher-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.overview-tab-switcher-item.is-icon .overview-tab-switcher-img {
+  object-fit: contain;
+  padding: 14px;
+  background: rgba(20, 28, 40, 0.9);
+}
+
+.overview-tab-switcher-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(40, 52, 72, 0.9),
+    rgba(18, 24, 36, 0.95)
+  );
+}
+
+.overview-tab-switcher-label {
+  max-width: 104px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+
+.overview-tab-switcher-item.is-active .overview-tab-switcher-label {
+  color: #fff;
+}
+
+.overview-tab-switcher-new-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(20, 28, 40, 0.85);
+}
+
+.overview-tab-switcher-new:hover .overview-tab-switcher-new-frame {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+}

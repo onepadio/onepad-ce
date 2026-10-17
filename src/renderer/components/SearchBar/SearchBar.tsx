@@ -9,8 +9,6 @@ import { sessionActions } from '../../store/session-slice';
 import { launchpadActions } from "../../store/launchpad-slice";
 import { appActions } from '../../store/app-slice';
 import { utilityAppsActions } from "../../store/utility-slice";
-import { windowServiceActions } from "../../store/window-service-slice";
-
 import {
     Input,
     Button
@@ -27,6 +25,7 @@ import './SearchBar.css'
 import { itemsDb } from "../../data/store";
 import { utilityAppItemsDb, utilityAppSearch } from "../UtilityAppsCanvas/utility_apps";
 import { createNavHistoryState } from "../../util/navHistory";
+import { createBrowserGroup } from "../../util/browser";
 
 function SearchBar(props: any){
     const dispatch = useDispatch();
@@ -47,7 +46,9 @@ function SearchBar(props: any){
 
     const isLocal = useSelector((state: any) => state.workspace.isLocal);
 
-    const activeBrowserWindowId = useSelector((state: any) => state.session.activeBrowserWindowId);
+    const items = useSelector((state: any) => state.workspace.items);
+
+    const browserWindows = useSelector((state: any) => state.session.browserWindows);
 
     const activeWindow = useSelector((state: any) => state.session.activeWindow);
 
@@ -144,7 +145,7 @@ function SearchBar(props: any){
         }
 
         setSearchQuery("");
-
+        props.onSearchComplete?.();
     }
 
     function openSearcWindow(_url: any){
@@ -279,66 +280,19 @@ function SearchBar(props: any){
 
     function handleSpaceBrowserSearch(queryOrUrl: any){
         log.debug("searchQuery", searchQuery);
-        let _openWindows = Object.assign({}, openWindows);
-        let _openTabs = Object.assign({}, openTabs);
-        let _windowTabs = Object.assign({}, windowTabs);
-        let _id = "browser_".concat(workspace.id);
-        if(_openWindows[_id] !== undefined){
-            let window = _openWindows[_id];
-
-            // Use WindowService to create tab (WindowService will activate the window after tab is created)
-            dispatch(windowServiceActions.openNewTab({
-                windowId: window.id,
-                url: queryOrUrl
-            }));
-
-            setSearchQuery("");
-        }else{
-            let window = {
-                workspace: workspace.id,
-                id: _id,
-                url: ":browser",
-                location: "main",
-            }
-
-            openInternalWindow(
-                window,
-                links,
-                openWindows,
-                isLocal,
-                (result: any) => {
-                    if(result === undefined || result === null){
-                        return;
-                    }
-                    let _result = Object.assign({}, result);
-                    _result.type = "browser";
-                    _result.url = queryOrUrl;
-                    _result.location = "main";
-                    _result.desktop = desktop.id;
-                    _result.workspace = workspace.id;
-
-                    log.debug("Result:"+_result);
-                    // OpenWindows
-                    _openWindows[result.id] = _result;
-                    dispatch(
-                      sessionActions.setOpenWindows({
-                      data: _openWindows,
-                    }));
-
-                    // Use WindowService to create tab
-                    dispatch(windowServiceActions.openNewTab({
-                        windowId: _result.id,
-                        url: queryOrUrl
-                    }));
-
-                    dispatch(sessionActions.setActiveWindow({data: _result}));
-
-                    dispatch(sessionActions.addBrowserWindow({data: _id}));
-                    dispatch(sessionActions.setActiveBrowserWindowId({data: _id}));
-                    setSearchQuery("");
-                },
-            );
-        }
+        // Always a new browser window — never a tab on the active group
+        createBrowserGroup(
+            openWindows,
+            items || links,
+            isLocal,
+            desktop,
+            workspace,
+            dispatch,
+            queryOrUrl,
+            (browserWindows || []).length
+        );
+        setSearchQuery("");
+        props.onSearchComplete?.();
     }
 
     return(

@@ -95,6 +95,17 @@ const sessionSlice = createSlice({
       }
       state.activeWindow = action.payload.data;
       state.activeWindowId = action.payload.data.id;
+      // Remember last browser window so Others keeps the same group after dismiss
+      const win = action.payload.data;
+      const id = win?.id;
+      if (
+        id &&
+        id !== "launchpad" &&
+        (win?.type === "browser" ||
+          (typeof id === "string" && id.startsWith("browser_")))
+      ) {
+        state.activeBrowserWindowId = id;
+      }
     },
     goBackToPreviousWindow(state, action){
       let _windowId = state.windowHistory.pop();

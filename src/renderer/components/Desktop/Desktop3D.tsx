@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { Robot, Plus } from "react-bootstrap-icons";
 
 import DateTime from "../DateTime/DateTime";
-import SearchBar from "../SearchBar/SearchBar";
 import DesktopMenu from "../DesktopMenu/DesktopMenu";
 import DesktopWindows3D from "../LaunchPad3D/DesktopWindows3D";
 import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
@@ -12,6 +11,9 @@ import Desktop3DWebViewHost from "../LaunchPad3D/Desktop3DWebViewHost";
 import Desktop3DOverlayApps from "./Desktop3DOverlayApps";
 import Desktop3DAddressBar from "../LaunchPad3D/Desktop3DAddressBar";
 import Desktop3DTabDots from "../LaunchPad3D/Desktop3DTabDots";
+import OthersWindowSwitcher from "../LaunchPad3D/OthersWindowSwitcher";
+import OverviewTabSwitcher from "../LaunchPad3D/OverviewTabSwitcher";
+import Desktop3DSearchOverlay from "../LaunchPad3D/Desktop3DSearchOverlay";
 import { getExperience } from "../LaunchPad3D/experiences/registry";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { modalActions } from "../../store/modal-slice";
@@ -44,9 +46,6 @@ function Desktop3D({
 }: Desktop3DProps) {
   const dispatch = useDispatch();
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen || false);
-  const isDesktopsEnabled = useSelector(
-    (state: any) => state.settings.isDesktopsEnabled
-  );
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
@@ -72,6 +71,9 @@ function Desktop3D({
   const overlayFocused = isDesktop3dOverlayWindow(
     activeWindowId ? openWindows?.[activeWindowId] : null,
     homeWorkspaceId
+  );
+  const deskFrontCardId = useSelector(
+    (state: any) => state.windowService.desktop3dDeskWindowId || ""
   );
   const [windowFocused, setWindowFocused] = useState(false);
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
@@ -123,10 +125,6 @@ function Desktop3D({
     dispatch(modalActions.toggleAppStoreModal());
   }
 
-  function toggleRenameDesktopModalWindow() {
-    dispatch(modalActions.toggleRenameDesktopModalWindow({}));
-  }
-
   return (
     <div
       id={id}
@@ -165,17 +163,7 @@ function Desktop3D({
         <div className="desktop-3d-overlay-top">
           {!hudFocused && !exploreMode && (
             <div className="desktop-3d-overlay-title">
-              {isDesktopsEnabled ? (
-                <button
-                  type="button"
-                  className="desktop-3d-hud-title-btn"
-                  onClick={() => toggleRenameDesktopModalWindow()}
-                >
-                  {name}
-                </button>
-              ) : (
-                <span className="desktop-3d-hud-title">{workspace?.name}</span>
-              )}
+              <Desktop3DSearchOverlay />
             </div>
           )}
           <div className="desktop-3d-overlay-center">
@@ -186,9 +174,10 @@ function Desktop3D({
             ) : (
               <>
                 <DateTime />
-                <div className="desktop-3d-overlay-search">
-                  <SearchBar id="searchBar" />
-                </div>
+                <OthersWindowSwitcher
+                  deskFrontCardId={deskFrontCardId}
+                  visible={!hudFocused && !exploreMode}
+                />
               </>
             )}
           </div>
@@ -208,7 +197,13 @@ function Desktop3D({
       />
       {sceneActive ? <Desktop3DWebViewHost /> : null}
       {sceneActive ? <Desktop3DOverlayApps /> : null}
-      {sceneActive && !exploreMode ? (
+      {sceneActive && !exploreMode && !hudFocused ? (
+        <OverviewTabSwitcher
+          deskFrontCardId={deskFrontCardId}
+          visible={!hudFocused && !exploreMode}
+        />
+      ) : null}
+      {sceneActive && !exploreMode && hudFocused ? (
         <Desktop3DTabDots focusedCardId={focusedCardId} />
       ) : null}
     </div>

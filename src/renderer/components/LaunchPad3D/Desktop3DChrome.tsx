@@ -69,38 +69,6 @@ function Desktop3DChrome({
         className
       )}
     >
-      <div
-        className="desktop-3d-chrome-group"
-        role="group"
-        aria-label="Desktop view mode"
-      >
-        <button
-          type="button"
-          className={clsx(
-            "desktop-3d-chrome-btn",
-            visualMode === "2d" && "active"
-          )}
-          onClick={() => dispatch(settingsActions.setDesktopVisualMode("2d"))}
-          title="2D Desktop"
-        >
-          2D
-        </button>
-        <button
-          type="button"
-          className={clsx(
-            "desktop-3d-chrome-btn",
-            visualMode === "3d" && "active"
-          )}
-          onClick={() => {
-            dispatch(settingsActions.setDesktopVisualMode("3d"));
-            dispatch(settingsActions.setDesktop3dLayout("scene"));
-          }}
-          title="3D Desktop"
-        >
-          3D
-        </button>
-      </div>
-
       {showLayoutControls && visualMode === "3d" && (
         <div
           className="desktop-3d-chrome-group"
@@ -155,7 +123,7 @@ function Desktop3DChrome({
         </div>
       )}
 
-      {visualMode === "3d" && onExploreModeChange && canExplore && (
+      {visualMode === "3d" && onExploreModeChange && canExplore && false &&( // TODO: remove this when explore mode is implemented
         <div
           className="desktop-3d-chrome-group"
           role="group"
@@ -178,6 +146,38 @@ function Desktop3DChrome({
           </button>
         </div>
       )}
+
+      <div
+        className="desktop-3d-chrome-group"
+        role="group"
+        aria-label="Desktop view mode"
+      >
+        <button
+          type="button"
+          className={clsx(
+            "desktop-3d-chrome-btn",
+            visualMode === "2d" && "active"
+          )}
+          onClick={() => dispatch(settingsActions.setDesktopVisualMode("2d"))}
+          title="2D Desktop"
+        >
+          2D
+        </button>
+        <button
+          type="button"
+          className={clsx(
+            "desktop-3d-chrome-btn",
+            visualMode === "3d" && "active"
+          )}
+          onClick={() => {
+            dispatch(settingsActions.setDesktopVisualMode("3d"));
+            dispatch(settingsActions.setDesktop3dLayout("scene"));
+          }}
+          title="3D Desktop"
+        >
+          3D
+        </button>
+      </div>
     </div>
   );
 }

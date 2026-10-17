@@ -11,6 +11,7 @@ import { isOnlineToolWindow } from "../../builtin";
 import { isSharedAppWindow } from "../../util/sharedApps";
 import { getWindowLiveActiveTab } from "./windowTab";
 import { getSortedTabIdsForWindow } from "../../util/browserTabGroups";
+import { getBrowserWindowIds } from "../../util/browserWindows";
 import {
   OTHERS_BROWSER_CARD_ID,
   getRepresentativeBrowserWindowId,
@@ -113,6 +114,9 @@ function Desktop3DWebViewHost() {
   const activeWindowId = useSelector(
     (state: any) => state.session.activeWindowId
   );
+  const activeBrowserWindowId = useSelector(
+    (state: any) => state.session.activeBrowserWindowId
+  );
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
@@ -204,20 +208,62 @@ function Desktop3DWebViewHost() {
         browserWindows,
         windowTabs,
         activeWindowId,
-        workspace.id
+        workspace.id,
+        activeBrowserWindowId
       );
       if (repId) {
-        const mountAll =
-          !!activeWindowId &&
-          openWindows[activeWindowId]?.type === "browser";
-        const winId = mountAll ? activeWindowId : repId;
-        const built = buildTabsForWindow(winId, mountAll);
-        if (built) {
+        // Keep every browser window's live tab mounted under Others so
+        // screenshots can be captured when switching groups (unmounting
+        // destroys webContents before TabSwitchScreenshotHub can run).
+        const browserIds = getBrowserWindowIds(
+          openWindows,
+          browserWindows,
+          windowTabs
+        ).filter((id) => openWindows[id]?.workspace === workspace.id);
+
+        const tabs: TabHost[] = [];
+        const seen = new Set<string>();
+        const addTab = (host: TabHost | null) => {
+          if (!host || seen.has(host.tabId)) return;
+          seen.add(host.tabId);
+          tabs.push(host);
+        };
+
+        browserIds.forEach((winId) => {
+          const isActiveBrowser =
+            !!activeWindowId &&
+            openWindows[activeWindowId]?.type === "browser" &&
+            activeWindowId === winId;
+          if (isActiveBrowser) {
+            // Active browser: mount all awake tabs (in-window tab switch)
+            const built = buildTabsForWindow(winId, true);
+            built?.tabs.forEach((t) => addTab(t));
+          } else {
+            // Other browsers: keep only the live active tab for previews
+            addTab(
+              tabToHost(
+                getWindowLiveActiveTab(winId, activeTabs, openTabs),
+                route,
+                user,
+                sessionState,
+                workspaceState,
+                workspace.id
+              )
+            );
+          }
+        });
+
+        if (tabs.length > 0) {
+          const preferred =
+            (activeTabs?.[repId] &&
+              tabs.find((t) => t.tabId === activeTabs[repId])?.tabId) ||
+            tabs.find((t) => openTabs[t.tabId]?.window === repId)?.tabId ||
+            tabs[0].tabId;
           entries.push({
             hostId: OTHERS_BROWSER_CARD_ID,
-            windowId: winId,
-            activeTabId: built.activeTabId,
-            tabs: built.tabs,
+            windowId: repId,
+            activeTabId: preferred,
+            tabs,
           });
         }
       }
@@ -231,6 +277,7 @@ function Desktop3DWebViewHost() {
     windowTabs,
     browserWindows,
     activeWindowId,
+    activeBrowserWindowId,
     workspace,
     homeWorkspaceId,
     user,

@@ -94,7 +94,7 @@ function windowToCard(
 
 /**
  * Scene-only 3D desktop of open windows.
- * Browser windows share one "Others" screen — switch via dock / VerticalTabBar / BrowserTabSwitcher.
+ * Browser windows share one "Others" screen — switch via OthersWindowSwitcher / dock / BrowserTabSwitcher.
  */
 function DesktopWindows3D({
   onZoomedChange,
@@ -115,6 +115,9 @@ function DesktopWindows3D({
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
   const browserWindows = useSelector(
     (state: any) => state.session.browserWindows
+  );
+  const activeBrowserWindowId = useSelector(
+    (state: any) => state.session.activeBrowserWindowId
   );
   const activeWindowId = useSelector(
     (state: any) => state.session.activeWindowId
@@ -172,7 +175,8 @@ function DesktopWindows3D({
       browserWindows,
       windowTabs,
       activeWindowId,
-      workspace?.id
+      workspace?.id,
+      activeBrowserWindowId
     );
     if (repId && openWindows[repId]) {
       appCards.push(
@@ -197,6 +201,7 @@ function DesktopWindows3D({
     windowTabs,
     browserWindows,
     activeWindowId,
+    activeBrowserWindowId,
     workspace,
     homeWorkspaceId,
     screenShotStatusVersion,
@@ -210,6 +215,10 @@ function DesktopWindows3D({
 
   // Active window (dock menu / card / session) → desk bank + HUD webview
   const cardIdsKey = cards.map((c) => c.id).join("|");
+  const externalZoomCardIdRef = useRef(externalZoomCardId);
+  externalZoomCardIdRef.current = externalZoomCardId;
+  const focusedIndexRef = useRef(focusedIndex);
+  focusedIndexRef.current = focusedIndex;
   useEffect(() => {
     if (!activeWindowId || activeWindowId === "launchpad") {
       setExternalZoomCardId(null);
@@ -223,9 +232,18 @@ function DesktopWindows3D({
     if (i < 0) return;
     // Sliding bank: put active window on the facing slot (no orbit needed)
     setFocusedIndex(i);
+    // Others window switcher: change active browser while already on Others
+    // overview — refresh the desk screen only, do not open the HUD.
+    if (
+      zoomCardId === OTHERS_BROWSER_CARD_ID &&
+      !externalZoomCardIdRef.current &&
+      cards[focusedIndexRef.current]?.id === OTHERS_BROWSER_CARD_ID
+    ) {
+      return;
+    }
     setExternalClearZoom(false);
     setExternalZoomCardId(zoomCardId);
-  }, [activeWindowId, cardIdsKey, openWindows]);
+  }, [activeWindowId, cardIdsKey, openWindows, cards]);
 
   // Dock: orbit card to desk front only — no activate / HUD
   const bringToFrontCardId = useSelector(
@@ -277,7 +295,8 @@ function DesktopWindows3D({
           browserWindows,
           windowTabs,
           activeWindowId,
-          workspace?.id
+          workspace?.id,
+          activeBrowserWindowId
         );
         const win = repId ? openWindows[repId] : null;
         if (!win) return;
@@ -294,6 +313,7 @@ function DesktopWindows3D({
       browserWindows,
       windowTabs,
       activeWindowId,
+      activeBrowserWindowId,
       workspace?.id,
     ]
   );

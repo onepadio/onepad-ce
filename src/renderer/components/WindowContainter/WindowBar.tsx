@@ -74,6 +74,7 @@ import { ArrowUpRight, Terminal } from "react-feather";
 import XAppService from "../../services/xapp";
 import { hide } from "@popperjs/core";
 import OPWebView from "./OPWebView";
+import { ScreenshotService } from "../../services/screenshot";
 
 import {
   controlsId, cornerMenuId, spinnerId, addressBarId, backButtonId, forwardButtonId, tabsNavBarId, showTabsBarButtonId, hideTabsBarButtonId,
@@ -252,19 +253,31 @@ function WindowBar(props: any) {
     dispatch(sessionActions.setOpenTabs({data: _openTabs}));
   }, [mediaPlaying]);
 
-  // Screenshot capture is now handled by ScreenshotManagerHub
-  // Components retrieve cached screenshots as needed
+  // Capture after load so new windows get a thumb without waiting on the 60s interval
   useEffect(() => {
-    if(takeScreenShot && props.location === "main"){
-      setTakeScreenShot(false);
-      // Screenshots are automatically captured by background service
-      // Trigger a version update to notify components of potential new screenshots
+    if (!takeScreenShot || props.location !== "main") return;
+    setTakeScreenShot(false);
+    const timer = setTimeout(() => {
+      const tab = openTabs[activeTabId];
+      const webContentsId =
+        typeof tab?.webContentsId === "number"
+          ? tab.webContentsId
+          : webview && typeof (webview as any).getWebContentsId === "function"
+            ? (webview as any).getWebContentsId()
+            : null;
+      if (typeof webContentsId === "number" && activeTabId) {
+        ScreenshotService.capture(
+          webContentsId,
+          activeTabId,
+          "WindowBar.did-finish-load"
+        );
+      }
       setTimeout(() => {
-        // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
         dispatch(appActions.updateScreenShotStatusVersion());
-      }, 1000);
-    }
-  }, [takeScreenShot]);
+      }, 350);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [takeScreenShot, props.location, openTabs, activeTabId, webview, dispatch]);
 
   useEffect(() => {
     const container = document.getElementById(activeTabId);

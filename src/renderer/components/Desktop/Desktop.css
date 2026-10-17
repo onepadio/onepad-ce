@@ -37,7 +37,7 @@
 }
 
 .space-top{
-    margin-top: 40px;
+    margin-top: 28px;
     width: calc(100%);
     transition: width 0.3s ease;
 }
@@ -362,11 +362,13 @@
 }
 
 .desktop-3d-overlay-center {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
     pointer-events: auto;
+    margin-top: 24px;
 }
 
 .desktop-3d-overlay-search {
@@ -435,5 +437,6 @@
 
 .desktop-3d-window-focused .desktop-3d-overlay-center {
     gap: 0;
+    margin-top: 0;
 }
 

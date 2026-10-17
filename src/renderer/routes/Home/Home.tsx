@@ -580,6 +580,8 @@ function Home() {
   }
 
   function verticalBar(){
+    // 3D desktop uses OverviewTabSwitcher / OthersWindowSwitcher overlays
+    if (is3dDesktop) return null;
     if(activeWindow && activeWindow.id !== "launchpad" && activeBar === "tabs"){
       if(shouldHideSideBars(activeWindow)){
         return <></>;

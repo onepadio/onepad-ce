@@ -16,6 +16,8 @@ import {
   applyNavigationToTabState,
   scheduleTabNavHistoryPersist,
 } from "../../util/navHistory";
+import { ScreenshotService } from "../../services/screenshot";
+import { getTabScreenshot } from "../../util/browserTabGroups";
 
 function OPWebView(props: any) {
   const dispatch = useDispatch();
@@ -679,6 +681,10 @@ function OPWebView(props: any) {
           }, 1000);
         }
         dispatch(appActions.hideSplashScreen({}));
+        // First paint / new window: grab a preview as soon as the page loads
+        if (props.location === "main") {
+          setTakeScreenShot(true);
+        }
       });
 
       webview.addEventListener("media-started-playing", (event: any) => {
@@ -812,19 +818,84 @@ function OPWebView(props: any) {
     dispatch(sessionActions.setOpenTabs({ data: _openTabs }));
   }, [mediaPlaying]);
 
-  // Screenshot capture is now handled by ScreenshotManagerHub
-  // Components retrieve cached screenshots as needed
+  // Capture after first load (and navigations) so Others / switchers get a
+  // preview without waiting for the 60s background interval or a tab switch.
+  // 3D hosts start unsized/hidden — retry until layout is ready or we give up.
   useEffect(() => {
-    if (takeScreenShot && props.location === "main") {
-      setTakeScreenShot(false);
-      // Screenshots are automatically captured by background service
-      // Trigger a version update to notify components of potential new screenshots
-      setTimeout(() => {
-        // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
+    if (!takeScreenShot || props.location !== "main") return;
+    setTakeScreenShot(false);
+
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const resolveWebContentsId = (): number | null => {
+      const tab = openTabsRef.current[props.tabId];
+      if (typeof tab?.webContentsId === "number") return tab.webContentsId;
+      if (webview && typeof (webview as any).getWebContentsId === "function") {
+        try {
+          return (webview as any).getWebContentsId();
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    };
+
+    const hostHasLayout = (): boolean => {
+      const el =
+        (webview as HTMLElement | null) ||
+        (document.getElementById(webViewId) as HTMLElement | null);
+      if (!el) return false;
+      const host = el.closest?.(
+        ".desktop-3d-webview-host, .desktop-3d-webview-tab, .webview-container"
+      ) as HTMLElement | null;
+      const target = host || el;
+      return target.offsetWidth > 8 && target.offsetHeight > 8;
+    };
+
+    const runCapture = (source: string): boolean => {
+      const webContentsId = resolveWebContentsId();
+      if (typeof webContentsId !== "number") return false;
+      ScreenshotService.capture(webContentsId, props.tabId, source);
+      return true;
+    };
+
+    const attempt = (tryIndex: number) => {
+      if (cancelled) return;
+      const missing = !getTabScreenshot(props.tabId);
+      // After first successful capture, one refresh on navigation is enough
+      if (!missing && tryIndex > 0) {
         dispatch(appActions.updateScreenShotStatusVersion());
-      }, 1000);
-    }
-  }, [takeScreenShot]);
+        return;
+      }
+      if (!hostHasLayout() && tryIndex < 8) {
+        timers.push(setTimeout(() => attempt(tryIndex + 1), 350));
+        return;
+      }
+      runCapture(
+        missing
+          ? `OPWebView.first-load-${tryIndex}`
+          : "OPWebView.did-finish-load"
+      );
+      timers.push(
+        setTimeout(() => {
+          if (cancelled) return;
+          dispatch(appActions.updateScreenShotStatusVersion());
+          // Empty captures are rejected in main — keep retrying while missing
+          if (!getTabScreenshot(props.tabId) && tryIndex < 8) {
+            attempt(tryIndex + 1);
+          }
+        }, 450)
+      );
+    };
+
+    timers.push(setTimeout(() => attempt(0), 200));
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+  }, [takeScreenShot, props.location, props.tabId, webview, webViewId, dispatch]);
 
   useEffect(() => {
     if (activeTabId === props.tabId) {
