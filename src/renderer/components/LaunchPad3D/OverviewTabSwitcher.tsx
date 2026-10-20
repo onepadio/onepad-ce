@@ -10,10 +10,10 @@ import {
   switchAppTab,
   switchBrowserTab,
   truncateTabTitle,
+  wakeSleepingTab,
 } from "../../util/browserTabGroups";
 import { newTabForActiveWindow } from "../../util/tabs";
 import { resolveIconUrl } from "./resolveIconUrl";
-import { getWindowLiveActiveTab } from "./windowTab";
 import {
   OTHERS_BROWSER_CARD_ID,
   getRepresentativeBrowserWindowId,
@@ -33,6 +33,7 @@ type TabThumb = {
   imageUrl: string | null;
   previewMode: "screenshot" | "icon";
   isActive: boolean;
+  isSleeping: boolean;
 };
 
 /**
@@ -91,7 +92,6 @@ function OverviewTabSwitcher({
     }
 
     if (!windowId || !openWindows[windowId]) return empty;
-    if (!getWindowLiveActiveTab(windowId, activeTabs, openTabs)) return empty;
 
     let ids = getSortedTabIdsForWindow(windowId, windowTabs, openTabs);
     if (ids.length === 0) {
@@ -126,6 +126,7 @@ function OverviewTabSwitcher({
         imageUrl: shot || icon,
         previewMode: shot ? ("screenshot" as const) : ("icon" as const),
         isActive: tabId === currentId,
+        isSleeping: tab?.sleeping === true,
       };
     });
 
@@ -152,6 +153,9 @@ function OverviewTabSwitcher({
       const tab = openTabs[tabId];
       const win = openWindows[windowId];
       if (!tab || !win) return;
+
+      // Wake on click so the desk / HUD can remount the webview
+      wakeSleepingTab(tabId, dispatch, openTabs, openWindows);
 
       // Already in this window — normal tab switch (may update session)
       if (activeWindowId === windowId) {
@@ -311,6 +315,7 @@ function OverviewTabSwitcher({
                 className={clsx(
                   "overview-tab-switcher-item",
                   thumb.isActive && "is-active",
+                  thumb.isSleeping && "is-sleeping",
                   (!showImg || thumb.previewMode === "icon") && "is-icon"
                 )}
                 title={thumb.title}

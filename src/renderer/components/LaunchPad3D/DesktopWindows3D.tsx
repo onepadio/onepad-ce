@@ -220,6 +220,10 @@ function DesktopWindows3D({
   const focusedIndexRef = useRef(focusedIndex);
   focusedIndexRef.current = focusedIndex;
   useEffect(() => {
+    if (!sceneActive) {
+      setExternalZoomCardId(null);
+      return;
+    }
     if (!activeWindowId || activeWindowId === "launchpad") {
       setExternalZoomCardId(null);
       return;
@@ -243,7 +247,7 @@ function DesktopWindows3D({
     }
     setExternalClearZoom(false);
     setExternalZoomCardId(zoomCardId);
-  }, [activeWindowId, cardIdsKey, openWindows, cards]);
+  }, [sceneActive, activeWindowId, cardIdsKey, openWindows, cards]);
 
   // Dock: orbit card to desk front only — no activate / HUD
   const bringToFrontCardId = useSelector(
@@ -254,6 +258,7 @@ function DesktopWindows3D({
   );
   const appliedBringTokenRef = useRef(0);
   useEffect(() => {
+    if (!sceneActive) return;
     if (!bringToFrontToken || !bringToFrontCardId) return;
     // Only apply once per dock action — re-running on cards/activate would clear HUD
     if (appliedBringTokenRef.current === bringToFrontToken) return;
@@ -277,7 +282,7 @@ function DesktopWindows3D({
     setFocusedIndex(i);
     const t = setTimeout(() => setExternalClearZoom(false), 50);
     return () => clearTimeout(t);
-  }, [bringToFrontToken, bringToFrontCardId, cards, openWindows]);
+  }, [sceneActive, bringToFrontToken, bringToFrontCardId, cards, openWindows]);
 
   useEffect(() => {
     if (!clearZoomToken) return;
@@ -333,19 +338,23 @@ function DesktopWindows3D({
     setFocusedIndex(index);
   }, []);
 
-  // Publish desk-front window so the dock can highlight which app is on the monitor
+  // Publish desk-front window so strips / dock know which card faces the seat.
+  // Only the active warm space may write — inactive keep-alives must not clear
+  // the shared id or window/tab strips disappear with multiple spaces open.
+  const sceneActiveRef = useRef(sceneActive);
+  sceneActiveRef.current = sceneActive;
+
   useEffect(() => {
-    if (!sceneActive) {
-      dispatch(windowServiceActions.setDesktop3dDeskWindowId(""));
-      return;
-    }
+    if (!sceneActive) return;
     const id = cards[focusedIndex]?.id || "";
     dispatch(windowServiceActions.setDesktop3dDeskWindowId(id));
   }, [dispatch, sceneActive, cards, focusedIndex]);
 
   useEffect(() => {
     return () => {
-      dispatch(windowServiceActions.setDesktop3dDeskWindowId(""));
+      if (sceneActiveRef.current) {
+        dispatch(windowServiceActions.setDesktop3dDeskWindowId(""));
+      }
     };
   }, [dispatch]);
 

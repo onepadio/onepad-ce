@@ -501,20 +501,33 @@ function DeskAngleBridge({
  */
 function SceneVisibilityTracker({
   cards,
+  sceneActive = true,
 }: {
   cards: LaunchPadCard[];
   focusedIndex: number;
   cameraZoomed: boolean;
+  sceneActive?: boolean;
 }) {
   const lastKey = useRef("");
 
   useFrame(() => {
+    if (!sceneActive) return;
     const ids = cards.map((c) => c.id);
     const key = ids.join("|");
     if (key === lastKey.current) return;
     lastKey.current = key;
     setVisibleSceneWindowIds(ids);
   });
+
+  // Publish immediately when this scene becomes the visible warm space so
+  // WebViewHost does not keep the previous space's ids (blank HUD).
+  const cardIdsKey = cards.map((c) => c.id).join("|");
+  useEffect(() => {
+    if (!sceneActive) return;
+    const ids = cardIdsKey ? cardIdsKey.split("|") : [];
+    lastKey.current = cardIdsKey;
+    setVisibleSceneWindowIds(ids);
+  }, [sceneActive, cardIdsKey]);
 
   return null;
 }
@@ -772,6 +785,17 @@ function SceneContent({
     if (!exploreMode) return;
     leaveZoom();
   }, [exploreMode, leaveZoom]);
+
+  // Warm keep-alive: clear HUD when this space is hidden so a later activate
+  // can re-apply externalZoom (appliedExternalZoomRef would otherwise skip).
+  useEffect(() => {
+    if (sceneActive) {
+      appliedExternalZoomRef.current = null;
+      return;
+    }
+    leaveZoom();
+    appliedExternalZoomRef.current = null;
+  }, [sceneActive, leaveZoom]);
 
   /** User dismiss: clear front frame + deactivate the app in session */
   const dismissFrontAndDeactivate = useCallback(() => {
@@ -1266,10 +1290,12 @@ function SceneContent({
               frontWebViewIndex >= 0 ? frontWebViewIndex : focusedIndex
             }
             cameraZoomed={windowFrontActive}
+            sceneActive={sceneActive}
           />
           <WebViewProjector
             interactiveId={interactiveWebViewId}
             sceneFocusedId={sceneFocusedCardId}
+            sceneActive={sceneActive}
           />
         </>
       )}
@@ -1323,6 +1349,7 @@ function SceneContent({
                 projectWebView={
                   projectWebViews && !!card.hasLiveTab
                 }
+                registerPlaneActive={sceneActive}
                 contentTransparent={
                   projectWebViews &&
                   !!card.hasLiveTab &&

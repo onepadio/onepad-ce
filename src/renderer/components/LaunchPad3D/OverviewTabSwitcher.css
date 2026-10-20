@@ -101,6 +101,11 @@
   pointer-events: none;
 }
 
+.overview-tab-switcher-item.is-sleeping .overview-tab-switcher-img {
+  filter: grayscale(100%);
+  opacity: 0.85;
+}
+
 .overview-tab-switcher-item.is-icon .overview-tab-switcher-img {
   object-fit: contain;
   padding: 14px;

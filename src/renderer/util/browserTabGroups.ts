@@ -91,6 +91,45 @@ export function getTabScreenshot(tabId: string): string | null {
 }
 
 /**
+ * Wake a sleeping tab (and its window if needed) so a webview can remount.
+ * Used by tab strips before selecting / switching.
+ */
+export function wakeSleepingTab(
+  tabId: string,
+  dispatch: any,
+  openTabs: Record<string, any>,
+  openWindows?: Record<string, any>
+) {
+  const tab = openTabs?.[tabId];
+  if (!tab) return;
+
+  let tabsChanged = false;
+  let nextTabs = openTabs;
+  if (tab.sleeping === true) {
+    nextTabs = Object.assign({}, openTabs, {
+      [tabId]: Object.assign({}, tab, { sleeping: false }),
+    });
+    tabsChanged = true;
+  }
+
+  if (tabsChanged) {
+    dispatch(sessionActions.setOpenTabs({ data: nextTabs }));
+  }
+
+  const winId = tab.window;
+  const win = winId && openWindows ? openWindows[winId] : null;
+  if (win && win.sleeping === true) {
+    dispatch(
+      sessionActions.setOpenWindows({
+        data: Object.assign({}, openWindows, {
+          [winId]: Object.assign({}, win, { sleeping: false }),
+        }),
+      })
+    );
+  }
+}
+
+/**
  * Switch to a browser tab, updating activeTabs / active window as needed.
  * Shared by BrowserVerticalTabBar and BrowserTabSwitcher.
  */

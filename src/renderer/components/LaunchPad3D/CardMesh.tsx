@@ -56,6 +56,8 @@ interface CardMeshProps {
   blockStageDrag?: boolean;
   /** Register this plane for live DOM webview projection */
   projectWebView?: boolean;
+  /** Warm keep-alive: only the visible scene may own the shared plane registry */
+  registerPlaneActive?: boolean;
   /** Hide texture (live webview drawn on top) */
   contentTransparent?: boolean;
 }
@@ -71,6 +73,7 @@ function CardMesh({
   moveDuration,
   blockStageDrag = false,
   projectWebView = false,
+  registerPlaneActive = true,
   contentTransparent = false,
 }: CardMeshProps) {
   const groupRef = useRef<THREE.Group>(null);
@@ -83,11 +86,11 @@ function CardMesh({
   const duration = moveDuration ?? (isScreen ? 0.35 : 0.45);
 
   useEffect(() => {
-    if (!projectWebView) return;
+    if (!projectWebView || !registerPlaneActive) return;
     const g = groupRef.current;
     if (g) registerPlane(card.id, g);
     return () => unregisterPlane(card.id);
-  }, [card.id, projectWebView]);
+  }, [card.id, projectWebView, registerPlaneActive]);
   const target = useRef({
     x: pose.position[0],
     y: pose.position[1],

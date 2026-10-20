@@ -189,9 +189,16 @@ function Desktop3DWebViewHost() {
       return { activeTabId: host.tabId, tabs: [host] };
     };
 
+    // visibleIds is a process-wide singleton. After a space switch it may still
+    // list the previous space (OTHERS_BROWSER_CARD_ID is shared). Only trust it
+    // when at least one of *this* workspace's app cards is present; otherwise
+    // mount the full desk slate so HUD focus can scale immediately.
+    const visibilityReady = nonBrowser.some((w) => visibleIds.has(w.id));
+
     nonBrowser.slice(0, maxNonBrowser).forEach((win) => {
-      if (!visibleIds.has(win.id)) return;
-      const mountAll = activeWindowId === win.id;
+      const forceMount = activeWindowId === win.id;
+      if (visibilityReady && !visibleIds.has(win.id) && !forceMount) return;
+      const mountAll = forceMount;
       const built = buildTabsForWindow(win.id, mountAll);
       if (!built) return;
       entries.push({
@@ -202,7 +209,11 @@ function Desktop3DWebViewHost() {
       });
     });
 
-    if (visibleIds.has(OTHERS_BROWSER_CARD_ID)) {
+    const mountOthers =
+      !visibilityReady ||
+      visibleIds.has(OTHERS_BROWSER_CARD_ID) ||
+      (!!activeWindowId && openWindows[activeWindowId]?.type === "browser");
+    if (mountOthers) {
       const repId = getRepresentativeBrowserWindowId(
         openWindows,
         browserWindows,
@@ -307,6 +318,7 @@ function Desktop3DWebViewHost() {
                   aria-hidden={!isActive}
                 >
                   <OPWebView
+                    key={`${tab.tabId}:${tab.partition}`}
                     type={tab.type}
                     windowId={host.windowId}
                     tabId={tab.tabId}

@@ -112,9 +112,16 @@ export function getFocusFramePose(originLeft = 0, originTop = 0): RectPose {
 }
 
 export function getDesktopOrigin(): { left: number; top: number } {
-  const root = document.querySelector(
-    ".desktop-3d-fullscreen.is-active, .space-desktop-warm-layer.is-active .desktop-3d-fullscreen, .desktop-3d-fullscreen"
-  ) as HTMLElement | null;
+  // Prefer the active warm space — comma selectors match document order, so a
+  // generic `.desktop-3d-fullscreen` would hit a hidden keep-alive first.
+  const root =
+    (document.querySelector(
+      ".space-desktop-warm-layer.is-active .desktop-3d-fullscreen"
+    ) as HTMLElement | null) ||
+    (document.querySelector(
+      ".desktop-3d-fullscreen:not(.desktop-3d-scene-paused)"
+    ) as HTMLElement | null) ||
+    (document.querySelector(".desktop-3d-fullscreen") as HTMLElement | null);
   if (!root) return { left: 0, top: 0 };
   const r = root.getBoundingClientRect();
   return { left: r.left, top: r.top };
@@ -248,10 +255,13 @@ function hidePose(el: HTMLElement) {
 function WebViewProjector({
   interactiveId = null,
   sceneFocusedId = null,
+  sceneActive = true,
 }: {
   interactiveId?: string | null;
   /** Show this card's webview at its ring-card position (no HUD zoom). All others hidden. */
   sceneFocusedId?: string | null;
+  /** Warm keep-alive: paused scenes must not move/hide shared webview hosts */
+  sceneActive?: boolean;
 }) {
   const { camera, gl } = useThree();
   const lastPoses = useRef(new Map<string, RectPose>());
@@ -259,6 +269,7 @@ function WebViewProjector({
   const prevInteractive = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!sceneActive) return;
     const prev = prevInteractive.current;
     prevInteractive.current = interactiveId;
     const { left: ox, top: oy } = getDesktopOrigin();
@@ -289,9 +300,12 @@ function WebViewProjector({
       };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactiveId, sceneFocusedId]);
+  }, [interactiveId, sceneFocusedId, sceneActive]);
 
   useFrame(() => {
+    // Inactive warm spaces keep a Canvas mounted; never touch hosts belonging
+    // to the visible space (shared [data-desktop3d-webview] nodes).
+    if (!sceneActive) return;
     const canvas = gl.domElement;
     const rect = canvas.getBoundingClientRect();
     const canvasW = rect.width;
@@ -320,10 +334,16 @@ function WebViewProjector({
       });
     });
 
-    // Visit every mounted host — not only registered planes. Desk worlds
-    // unregister off-front meshes; those hosts must still be hidden or they
-    // stay stuck at their last HUD size behind the active window.
-    const hosts = document.querySelectorAll(
+    // Visit hosts in the active warm desktop only — keep-alive layers can
+    // still have leftover nodes while their Canvas frameloop is paused.
+    const activeRoot =
+      (document.querySelector(
+        ".space-desktop-warm-layer.is-active .desktop-3d-fullscreen"
+      ) as HTMLElement | null) ||
+      (document.querySelector(
+        ".desktop-3d-fullscreen:not(.desktop-3d-scene-paused)"
+      ) as HTMLElement | null);
+    const hosts = (activeRoot || document).querySelectorAll(
       "[data-desktop3d-webview]"
     ) as NodeListOf<HTMLElement>;
 
