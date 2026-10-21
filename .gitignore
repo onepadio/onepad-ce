@@ -45,3 +45,6 @@ scripts/
 
 ROADMAP.md
 md/*
+
+# Local Blender source / exports (too large for GitHub; keep runtime assets under src/)
+blender/

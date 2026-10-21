@@ -38,8 +38,9 @@ export function getDeskLayout(windowCount: number): DeskLayout {
   const radius = getDeskArenaRadius();
   const frontZ = -radius;
   const camZ = 0;
-  // Circular table reaches near the screen ring so monitor stands sit on the top
-  const tableRadius = Math.max(3.2, radius - 1.15);
+  // Table must reach past monitor stand bases (stands sit ~0.2 inward from
+  // the screen ring). Too small a radius leaves stands floating over the floor.
+  const tableRadius = Math.max(3.4, radius - 0.05);
   const deskDepth = tableRadius * 2;
   const deskW = tableRadius * 2;
   const cardScale =

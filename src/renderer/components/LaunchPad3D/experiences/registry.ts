@@ -4,6 +4,7 @@ import OfficeTowerVista from "./OfficeTowerVista";
 import SpaceStationVista from "./SpaceStationVista";
 import LibraryHallVista from "./LibraryHallVista";
 import MountainLodgeVista from "./MountainLodgeVista";
+import VictorianStudyVista from "./VictorianStudyVista";
 import type {
   Desktop3dExperienceId,
   ExperienceDefinition,
@@ -46,7 +47,7 @@ export const EXPERIENCES: Record<Desktop3dExperienceId, ExperienceDefinition> =
     "office-tower": {
       id: "office-tower",
       label: "Office Building",
-      description: "City towers and cool daylight through the glass",
+      description: "Modern open-plan office with glass curtain walls",
       available: true,
       clearColor: 0x6a8498,
       cssClass: "desktop-3d-exp-office-tower",
@@ -76,7 +77,7 @@ export const EXPERIENCES: Record<Desktop3dExperienceId, ExperienceDefinition> =
     "library-hall": {
       id: "library-hall",
       label: "Library Hall",
-      description: "Warm shelves and quiet lamplight",
+      description: "Grand old library hall — sit among the stacks",
       available: true,
       clearColor: 0x3d3228,
       cssClass: "desktop-3d-exp-library-hall",
@@ -101,6 +102,21 @@ export const EXPERIENCES: Record<Desktop3dExperienceId, ExperienceDefinition> =
         idleYawAmp: 0.011,
         idlePitchAmp: 0.007,
         idlePeriodSec: 10,
+      },
+    },
+    "victorian-study": {
+      id: "victorian-study",
+      label: "Victorian Study",
+      description: "Fireplace, bookshelves, and warm lamplight",
+      available: true,
+      clearColor: 0x2a2218,
+      cssClass: "desktop-3d-exp-victorian-study",
+      Vista: VictorianStudyVista,
+      usesDeskRoom: true,
+      motion: {
+        idleYawAmp: 0.007,
+        idlePitchAmp: 0.004,
+        idlePeriodSec: 12,
       },
     },
   };

@@ -45,6 +45,8 @@ const settingsSlice = createSlice({
     desktop3dMissionZoomDistance: null as number | null,
     /** Live mirror of current space's 3D experience (not userSettings) */
     desktop3dExperience: "control-room" as string,
+    /** Scene screen / webview opacity (0.15…1) */
+    desktop3dScreenOpacity: 0.7 as number,
   },
   reducers: {
     toggleWorkspaces(state, action) {
@@ -229,6 +231,11 @@ const settingsSlice = createSlice({
       const id = action.payload;
       state.desktop3dExperience =
         typeof id === "string" && id.length > 0 ? id : "control-room";
+    },
+    setDesktop3dScreenOpacity(state, action) {
+      const n = Number(action.payload);
+      if (!Number.isFinite(n)) return;
+      state.desktop3dScreenOpacity = Math.min(1, Math.max(0.15, n));
     },
   },
 });

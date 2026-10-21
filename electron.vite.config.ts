@@ -73,7 +73,18 @@ export default defineConfig({
     define: {
       'global': 'globalThis',
     },
-    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.glb', '**/*.gltf'],
+    assetsInclude: [
+      '**/*.png',
+      '**/*.jpg',
+      '**/*.jpeg',
+      '**/*.gif',
+      '**/*.svg',
+      '**/*.webp',
+      '**/*.glb',
+      '**/*.gltf',
+      '**/*.hdr',
+      '**/*.bin',
+    ],
     css: {
       preprocessorOptions: {
         scss: {

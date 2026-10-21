@@ -340,6 +340,22 @@ function Desktop3DWebViewHost() {
               );
             })}
           </div>
+          {/* Overview only (.is-projected): focus card without webview eating the click */}
+          <div
+            className="desktop-3d-webview-click-shield"
+            role="button"
+            tabIndex={-1}
+            aria-label="Open window"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.dispatchEvent(
+                new CustomEvent("desktop3d-select-card", {
+                  detail: { cardId: host.hostId },
+                })
+              );
+            }}
+          />
         </div>
       ))}
     </div>

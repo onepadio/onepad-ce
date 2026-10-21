@@ -9,3 +9,5 @@ export type {
   ExperienceDefinition,
   ExperienceVistaProps,
 } from "./types";
+export { EXPERIENCE_HDRIS, EXPERIENCE_MODELS } from "./assetUrls";
+export { preloadExperienceModels } from "./GltfProp";

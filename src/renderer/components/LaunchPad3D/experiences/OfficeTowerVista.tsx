@@ -1,94 +1,75 @@
-import { useMemo, useRef } from "react";
+import { Suspense, useRef } from "react";
+import { Sky } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+import { ARENA_FLOOR_Y } from "../layouts/roomScreens";
+import ExperienceEnvironment from "./ExperienceEnvironment";
+import OfficeHallInterior from "./OfficeHallInterior";
 import type { ExperienceVistaProps } from "./types";
 
 /**
- * City / office exterior through the window — towers + traffic light streaks.
+ * Office Building — Blender open-plan interior with the circular desk
+ * seated in the center. Sky + city masses show through curtain glass.
  */
-export default function OfficeTowerVista({ active = true }: ExperienceVistaProps) {
-  const streaksRef = useRef<THREE.Group>(null);
-  const blinkRef = useRef<THREE.PointLight>(null);
-
-  const towers = useMemo(
-    () =>
-      [
-        [-6, 2.5, 8, 1.8, 8, 1.8],
-        [-2, 3.5, 10, 2.2, 11, 2],
-        [3, 2.8, 7, 1.6, 9, 1.6],
-        [7, 4, 11, 2.4, 13, 2.2],
-        [0, 1.8, 14, 3, 6, 3],
-      ] as [number, number, number, number, number, number][],
-    []
-  );
+function OfficeTowerVistaInner({ active = true }: ExperienceVistaProps) {
+  const lampRef = useRef<THREE.PointLight>(null);
 
   useFrame(({ clock }) => {
-    if (!active) return;
+    if (!active || !lampRef.current) return;
     const t = clock.elapsedTime;
-    if (streaksRef.current) {
-      streaksRef.current.children.forEach((child, i) => {
-        const m = child as THREE.Mesh;
-        m.position.x = ((t * (0.8 + i * 0.25) + i * 3) % 24) - 12;
-      });
-    }
-    if (blinkRef.current) {
-      blinkRef.current.intensity = 0.6 + (Math.sin(t * 3.2) > 0.4 ? 0.9 : 0);
-    }
+    lampRef.current.intensity = 0.45 + Math.sin(t * 1.1) * 0.05;
   });
 
   return (
-    <group position={[0, 0, 12]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.8, 0]}>
-        <planeGeometry args={[60, 60]} />
-        <meshStandardMaterial color="#2a3038" roughness={0.9} metalness={0.2} />
-      </mesh>
+    <group>
+      <Sky
+        sunPosition={[80, 55, -30]}
+        turbidity={1.6}
+        rayleigh={0.55}
+        mieCoefficient={0.003}
+        mieDirectionalG={0.8}
+      />
+      <ExperienceEnvironment
+        hdri="office"
+        background={false}
+        blur={0.2}
+        environmentIntensity={0.85}
+      />
 
-      {towers.map(([x, y, z, w, h, d], i) => (
-        <mesh key={i} position={[x, y - 2.8 + h / 2, z]} castShadow>
-          <boxGeometry args={[w, h, d]} />
-          <meshStandardMaterial
-            color={i % 2 === 0 ? "#5a6a7c" : "#4a5868"}
-            metalness={0.45}
-            roughness={0.4}
-            emissive="#3a80c0"
-            emissiveIntensity={0.08 + (i % 3) * 0.04}
-          />
-        </mesh>
-      ))}
+      <OfficeHallInterior />
 
-      <group ref={streaksRef} position={[0, -2.4, 4]}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <mesh key={i} position={[0, i * 0.08, -i * 0.5]}>
-            <boxGeometry args={[1.2, 0.04, 0.08]} />
-            <meshBasicMaterial
-              color={i % 2 === 0 ? "#ffaa44" : "#88ccff"}
-              transparent
-              opacity={0.75}
-            />
-          </mesh>
-        ))}
-      </group>
-
-      <mesh position={[0, 10, -15]}>
-        <sphereGeometry args={[50, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.48]} />
-        <meshBasicMaterial color="#6a8498" side={THREE.BackSide} />
-      </mesh>
-
-      <ambientLight intensity={0.5} />
-      <hemisphereLight args={["#c8d8e8", "#2a3438", 0.7]} />
+      <ambientLight intensity={0.42} color="#edf4ff" />
+      <hemisphereLight args={["#b8d4f0", "#3d4a38", 0.55]} />
       <directionalLight
-        position={[-8, 16, -4]}
-        intensity={1.2}
-        color="#e8f0ff"
+        position={[18, 28, -10]}
+        intensity={1.55}
+        color="#fff4e0"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-bias={-0.00025}
+      />
+      <directionalLight
+        position={[-8, 14, 12]}
+        intensity={0.35}
+        color="#cfe0ff"
       />
       <pointLight
-        ref={blinkRef}
-        position={[3, 4, 8]}
-        intensity={1}
-        color="#88aaff"
-        distance={30}
+        ref={lampRef}
+        position={[0, ARENA_FLOOR_Y + 4.8, 0]}
+        intensity={0.35}
+        color="#fff8f0"
+        distance={22}
+        decay={2}
       />
     </group>
+  );
+}
+
+export default function OfficeTowerVista(props: ExperienceVistaProps) {
+  return (
+    <Suspense fallback={null}>
+      <OfficeTowerVistaInner {...props} />
+    </Suspense>
   );
 }

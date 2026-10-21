@@ -692,6 +692,10 @@ function SceneContent({
   const experienceIdFromSettings = useSelector(
     (state: any) => state.settings.desktop3dExperience || "control-room"
   );
+  const screenOpacity = useSelector((state: any) => {
+    const n = Number(state.settings.desktop3dScreenOpacity);
+    return Number.isFinite(n) ? Math.min(1, Math.max(0.15, n)) : 0.7;
+  });
   const experienceId = experienceIdProp || experienceIdFromSettings;
   const experience = useMemo(
     () => getExperience(experienceId),
@@ -938,6 +942,9 @@ function SceneContent({
             ".app-tab-switcher-panel",
             ".builtin-apps-switcher-panel",
             ".shared-apps-switcher-panel",
+            ".screen-opacity-slider",
+            ".screen-settings",
+            ".launchpad-3d-card-label",
           ].join(", ")
         )
       ) {
@@ -1083,6 +1090,19 @@ function SceneContent({
     ]
   );
 
+  // Overview projected webview click-shield → focus / open HUD
+  useEffect(() => {
+    if (!projectWebViews) return;
+    const onSelectCard = (e: Event) => {
+      const cardId = (e as CustomEvent).detail?.cardId as string | undefined;
+      if (!cardId) return;
+      handleCardSelect(cardId);
+    };
+    window.addEventListener("desktop3d-select-card", onSelectCard);
+    return () =>
+      window.removeEventListener("desktop3d-select-card", onSelectCard);
+  }, [projectWebViews, handleCardSelect]);
+
   const frontWebViewIndex = frontWebViewId
     ? limited.findIndex((c) => c.id === frontWebViewId)
     : -1;
@@ -1161,8 +1181,17 @@ function SceneContent({
 
   return (
     <>
-      <ambientLight intensity={roomScene ? 0.85 : 0.65} />
-      {!roomScene && (
+      <ambientLight intensity={roomScene ? 0.38 : 0.65} />
+      {roomScene ? (
+        <directionalLight
+          position={[4, 9, 6]}
+          intensity={0.55}
+          color="#fff2e0"
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-bias={-0.00025}
+        />
+      ) : (
         <>
           <directionalLight position={[5, 8, 10]} intensity={1.15} castShadow />
           <directionalLight position={[-6, 3, -3]} intensity={0.4} />
@@ -1236,6 +1265,7 @@ function SceneContent({
               swapPulse={swapPulse}
               active={active && sceneActive}
               experienceId={experience.id}
+              screenOpacity={screenOpacity}
               focusedIndex={
                 deskSlotCount > 0
                   ? yawToNearestSlot(deskYaw, deskSlotCount)
@@ -1252,16 +1282,14 @@ function SceneContent({
               />
             );
           })()}
-          {/* Soft contact shadows look like a transparent blur on the desk surface */}
-          {!deskFixed && (
-            <ContactShadows
-              position={[0, ARENA_FLOOR_Y + 0.02, 0]}
-              opacity={0.55}
-              scale={getArenaRadius(limited.length) * 2.4}
-              blur={2.2}
-              far={14}
-            />
-          )}
+          {/* Soft contact shadows ground props on the floor / desk */}
+          <ContactShadows
+            position={[0, ARENA_FLOOR_Y + 0.02, 0]}
+            opacity={deskFixed ? 0.4 : 0.55}
+            scale={getArenaRadius(limited.length) * 2.6}
+            blur={deskFixed ? 2.6 : 2.2}
+            far={16}
+          />
           {/* Floor click returns to overview / exits explore */}
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
@@ -1296,6 +1324,11 @@ function SceneContent({
             interactiveId={interactiveWebViewId}
             sceneFocusedId={sceneFocusedCardId}
             sceneActive={sceneActive}
+            // Only the desk-front window — neighbor AABBs overlap the front
+            // plate and ghost through at translucent opacity.
+            projectNeighbors={false}
+            focusedOpacity={screenOpacity}
+            unfocusedOpacity={screenOpacity}
           />
         </>
       )}
@@ -1355,9 +1388,12 @@ function SceneContent({
                   !!card.hasLiveTab &&
                   (card.id === interactiveWebViewId ||
                     card.id === sceneFocusedCardId ||
+                    // Desk: clear plates for every visible live screen so
+                    // neighbor webviews can show through at 0.85.
                     (deskFixed &&
                       roomScene &&
-                      index === focusedIndex))
+                      !!sceneFocusedCardId &&
+                      pose.opacity >= 0.05))
                 }
                 onSelect={handleCardSelect}
                 onFocus={(id) => {
@@ -1845,7 +1881,13 @@ function LaunchPad3DStage({
     if (windowFrontActiveRef.current) return;
     // Ignore presses that start on a card label / interactive chrome
     const target = e.target as HTMLElement | null;
-    if (target?.closest?.(".launchpad-3d-card-label")) return;
+    if (
+      target?.closest?.(
+        ".launchpad-3d-card-label, .screen-opacity-slider, .screen-settings"
+      )
+    ) {
+      return;
+    }
     dragRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -2193,6 +2235,7 @@ function LaunchPad3DStage({
       onPointerLeave={handlePointerUp}
     >
       <Canvas
+        shadows
         dpr={[1, 1.75]}
         camera={{
           position: cam.position,
@@ -2215,6 +2258,8 @@ function LaunchPad3DStage({
             roomScene ? exp.clearColor : 0x000000,
             roomScene ? 1 : 0
           );
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = roomScene ? 1.05 : 1;
         }}
       >
         <SceneContent

@@ -6,7 +6,8 @@ export type Desktop3dExperienceId =
   | "office-tower"
   | "space-station"
   | "library-hall"
-  | "mountain-lodge";
+  | "mountain-lodge"
+  | "victorian-study";
 
 export type ExperienceVistaProps = {
   count: number;

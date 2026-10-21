@@ -1,0 +1,51 @@
+Victorian Study interior — asset credits
+========================================
+
+Room shell (walls, floor, window, trim):
+  blender/victorian-study/1/victorian_study.blend
+
+Sketchfab (CC-BY — attribution required)
+----------------------------------------
+- Fireplace
+  https://sketchfab.com/3d-models/fireplace-e9854400c0c1410db01c8db897ef5359
+  by bcfbox — CC Attribution
+
+- Bookshelf, Dark Wood w/ books
+  https://sketchfab.com/3d-models/bookshelf-dark-wood-w-books-38e1654d4ec5464da1734dd315c61867
+  by Tigrotto — CC Attribution
+
+- Antique wooden desk with props
+  https://sketchfab.com/3d-models/antique-wooden-desk-with-props-001ff3e097074f968f966e032c96da2b
+  by shuvalov.di — CC Attribution-ShareAlike
+
+- Green leather armchair
+  https://sketchfab.com/3d-models/green-leather-armchair-c8549b72a1fc49fb8b5cc4bba288c67a
+  by shuvalov.di — CC Attribution-ShareAlike
+
+- Persian Rug
+  https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c
+  by nrecord — CC Attribution
+
+- Antique Globe
+  https://sketchfab.com/3d-models/antique-globe-0b93e315ed034bd28b73768d0747ddbc
+  by Vamsidharan — CC Attribution
+
+Poly Haven (CC0)
+----------------
+- wood_floor — Dimitrios Savva
+  https://polyhaven.com/a/wood_floor
+- fireplace (HDRI used in Blender authoring) — Greg Zaal
+  https://polyhaven.com/a/fireplace
+- fancy_picture_frame_02 — Rico Cilliers, Rob Tuytel
+  https://polyhaven.com/a/fancy_picture_frame_02
+- hanging_picture_frame_02 — James Ray Cock
+  https://polyhaven.com/a/hanging_picture_frame_02
+- Window outside photos (tonemapped JPG from HDRIs):
+  park_parking — Andreas Mischok — https://polyhaven.com/a/park_parking
+  greenwich_park_03 — Andreas Mischok — https://polyhaven.com/a/greenwich_park_03
+  palermo_park — Andreas Mischok — https://polyhaven.com/a/palermo_park
+
+Additional furniture (CC0 Poly Haven):
+- Chinese Console Table — Kirill Sannikov — https://polyhaven.com/a/chinese_console_table
+- Vintage Cabinet 01 — Rico Cilliers — https://polyhaven.com/a/vintage_cabinet_01
+- Small Wooden Table 01 — Ulan Cabanilla — https://polyhaven.com/a/small_wooden_table_01

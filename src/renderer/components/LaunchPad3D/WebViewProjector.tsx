@@ -3,10 +3,14 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { getRegisteredPlanes } from "./planeRegistry";
+import {
+  DESK_SCREEN_PLATE_H,
+  DESK_SCREEN_PLATE_W,
+} from "./layouts/roomScreens";
 
-/** Local plane size used by CardMesh (before group scale) */
-const PLANE_W = 2.4;
-const PLANE_H = 1.5;
+/** Match DeskRoom / CardMesh plate exactly — fill the bezel opening. */
+const PLANE_W = DESK_SCREEN_PLATE_W;
+const PLANE_H = DESK_SCREEN_PLATE_H;
 
 /** Room above webview for floating address bar + gap */
 const FOCUS_TOP_INSET = 100;
@@ -205,26 +209,60 @@ function getProjectedPose(
  * For HUD overlay (projected = false):
  *   - Outer div is sized directly to pose (full resolution)
  */
+function setHostAndWebViewOpacity(el: HTMLElement, opacity: number) {
+  const o = String(opacity);
+  el.style.opacity = o;
+  // Electron <webview> is a separate compositor — parent opacity alone often
+  // does nothing; set it on the guest nodes too.
+  el.querySelectorAll("webview, .webview").forEach((node) => {
+    (node as HTMLElement).style.opacity = o;
+  });
+}
+
+function setWebViewPointerEvents(el: HTMLElement, enabled: boolean) {
+  const pe = enabled ? "auto" : "none";
+  el.querySelectorAll("webview, .webview").forEach((node) => {
+    (node as HTMLElement).style.pointerEvents = pe;
+  });
+}
+
 function applyPose(
   el: HTMLElement,
   pose: RectPose,
-  opts: { interactive: boolean; elevating: boolean; projected?: boolean }
+  opts: {
+    interactive: boolean;
+    elevating: boolean;
+    projected?: boolean;
+    opacity?: number;
+  }
 ) {
+  const opacity =
+    opts.opacity != null && Number.isFinite(opts.opacity) ? opts.opacity : 1;
   el.style.visibility = "visible";
-  el.style.opacity = "1";
+  setHostAndWebViewOpacity(el, opacity);
   el.style.position = "absolute";
   el.style.margin = "0";
   el.style.padding = "0";
   el.style.border = "none";
   el.style.overflow = "hidden";
-  el.style.borderRadius = opts.interactive || opts.elevating ? "10px" : "6px";
+  el.style.borderRadius = opts.interactive || opts.elevating ? "10px" : "14px";
+  // No wall-card shadow — it reads as overflow past the monitor bezel.
   el.style.boxShadow =
     opts.interactive || opts.elevating
       ? "0 16px 48px rgba(0, 0, 0, 0.55)"
-      : "0 8px 28px rgba(0, 0, 0, 0.35)";
-  el.style.pointerEvents = opts.interactive ? "auto" : "none";
+      : "none";
+  // Projected overview: host catches clicks (via click-shield) so Electron
+  // <webview> guests can't steal them from the 3D card underneath.
+  const projectedCatch = !!opts.projected && !opts.interactive;
+  el.style.pointerEvents =
+    opts.interactive || projectedCatch ? "auto" : "none";
   el.style.zIndex = opts.interactive || opts.elevating ? "20" : "10";
   el.classList.toggle("is-interactive", !!opts.interactive);
+  el.classList.toggle("is-projected", projectedCatch);
+  setWebViewPointerEvents(el, !!opts.interactive);
+  // Solid host fill kills see-through; clear it for translucent wall cards.
+  el.style.background =
+    opts.projected && opacity < 0.999 ? "transparent" : "#0d1118";
 
   if (opts.projected) {
     const scaleX = pose.width / NATIVE_W;
@@ -235,6 +273,7 @@ function applyPose(
     el.style.height = `${NATIVE_H}px`;
     el.style.transformOrigin = "0 0";
     el.style.transform = `scale(${scaleX}, ${scaleY})`;
+    el.style.overflow = "hidden";
   } else {
     el.style.left = `${pose.left}px`;
     el.style.top = `${pose.top}px`;
@@ -248,20 +287,32 @@ function applyPose(
 function hidePose(el: HTMLElement) {
   el.style.visibility = "hidden";
   el.style.pointerEvents = "none";
-  el.style.opacity = "0";
+  setHostAndWebViewOpacity(el, 0);
+  setWebViewPointerEvents(el, false);
   el.classList.remove("is-interactive");
+  el.classList.remove("is-projected");
 }
 
 function WebViewProjector({
   interactiveId = null,
   sceneFocusedId = null,
   sceneActive = true,
+  projectNeighbors = false,
+  focusedOpacity = 0.7,
+  unfocusedOpacity = 0.7,
 }: {
   interactiveId?: string | null;
-  /** Show this card's webview at its ring-card position (no HUD zoom). All others hidden. */
+  /** Show this card's webview at its ring-card position (no HUD zoom). */
   sceneFocusedId?: string | null;
   /** Warm keep-alive: paused scenes must not move/hide shared webview hosts */
   sceneActive?: boolean;
+  /**
+   * Desk worlds: also project other registered wall webviews (see-through).
+   * Overview (projected) uses 0.7; HUD interactive stays 1.
+   */
+  projectNeighbors?: boolean;
+  focusedOpacity?: number;
+  unfocusedOpacity?: number;
 }) {
   const { camera, gl } = useThree();
   const lastPoses = useRef(new Map<string, RectPose>());
@@ -391,13 +442,23 @@ function WebViewProjector({
         return;
       }
 
-      // Scene overview: only the front card's webview
+      // Scene overview: only the desk-front webview (translucent so the room
+      // shows through). Neighbor hosts stay hidden — their projected AABBs
+      // overlap the front plate and would ghost through at <1 opacity.
       if (sceneFocusedId != null) {
         if (id === sceneFocusedId && projected) {
           applyPose(el, projected, {
             interactive: false,
             elevating: false,
             projected: true,
+            opacity: focusedOpacity,
+          });
+        } else if (projectNeighbors && projected && planes.has(id)) {
+          applyPose(el, projected, {
+            interactive: false,
+            elevating: false,
+            projected: true,
+            opacity: unfocusedOpacity,
           });
         } else {
           hidePose(el);

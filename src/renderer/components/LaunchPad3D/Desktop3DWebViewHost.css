@@ -45,6 +45,33 @@
   pointer-events: auto;
 }
 
+/*
+ * Overview projection: Electron <webview> ignores parent pointer-events:none
+ * and blocks CardMesh clicks. A top shield catches the click to focus the card.
+ */
+.desktop-3d-webview-host.is-projected {
+  pointer-events: auto !important;
+}
+
+.desktop-3d-webview-host.is-projected webview,
+.desktop-3d-webview-host.is-projected .webview {
+  pointer-events: none !important;
+}
+
+.desktop-3d-webview-click-shield {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  cursor: pointer;
+  background: transparent;
+}
+
+.desktop-3d-webview-host.is-projected .desktop-3d-webview-click-shield {
+  display: block;
+  pointer-events: auto;
+}
+
 .desktop-3d-webview-inner .webview,
 .desktop-3d-webview-inner webview {
   position: absolute !important;
@@ -61,7 +88,8 @@
   border-radius: 0 !important;
   display: flex !important;
   box-sizing: border-box !important;
-  background: #fff !important;
+  /* Allow host opacity to composite; solid fill blocked see-through */
+  background: transparent !important;
   /* Promote a layer without rotating the guest */
   transform: translateZ(0);
 }

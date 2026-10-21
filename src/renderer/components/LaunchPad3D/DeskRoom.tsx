@@ -2,9 +2,14 @@ import { useMemo } from "react";
 import * as THREE from "three";
 
 import { getDeskLayout, getDeskTable } from "./desks";
+import DeskProps from "./experiences/DeskProps";
+import DeskSurfaceProps from "./experiences/DeskSurfaceProps";
 import {
   ARENA_FLOOR_Y,
+  DESK_FRAME_BORDER,
   DESK_FRAME_RADIUS,
+  DESK_SCREEN_PLATE_H,
+  DESK_SCREEN_PLATE_W,
   SCENE_SCREEN_H,
   SCENE_SCREEN_W,
   SCENE_SCREEN_Y,
@@ -73,6 +78,8 @@ type DeskRoomProps = {
   active?: boolean;
   experienceId?: string | null;
   focusedIndex?: number;
+  /** Matches projected webview opacity so glass doesn't fight the overlay */
+  screenOpacity?: number;
 };
 
 /**
@@ -83,6 +90,7 @@ function DeskRoom({
   exploreMode = false,
   experienceId = null,
   focusedIndex = 0,
+  screenOpacity = 0.7,
 }: DeskRoomProps) {
   const slotCount = getDeskSlotCount(count);
   const layout = useMemo(() => getDeskLayout(count), [count]);
@@ -94,62 +102,73 @@ function DeskRoom({
     [experienceId]
   );
 
+  const isLibrary = experienceId === "library-hall";
+  const isOffice = experienceId === "office-tower";
+  const isVictorian = experienceId === "victorian-study";
+  const isClassicInterior = isLibrary || isVictorian;
+  /** Full interior GLB supplies the floor */
+  const hideDeskFloor = isLibrary || isOffice || isVictorian;
+
   const floorMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: "#3a4558",
-        metalness: 0.15,
-        roughness: 0.78,
+        color: isClassicInterior ? "#4a3426" : "#3a4558",
+        metalness: isClassicInterior ? 0.04 : 0.15,
+        roughness: isClassicInterior ? 0.88 : 0.78,
       }),
-    []
+    [isClassicInterior]
   );
   const bezelMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: "#5a6a7c",
-        metalness: 0.4,
-        roughness: 0.45,
+        color: isClassicInterior ? "#5a3828" : "#5a6a7c",
+        metalness: isClassicInterior ? 0.08 : 0.4,
+        roughness: isClassicInterior ? 0.7 : 0.45,
+        envMapIntensity: isClassicInterior ? 0.25 : 1,
       }),
-    []
+    [isClassicInterior]
   );
   const standMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: "#4a5668",
-        metalness: 0.55,
-        roughness: 0.38,
+        color: isClassicInterior ? "#4a2e20" : "#4a5668",
+        metalness: isClassicInterior ? 0.06 : 0.55,
+        roughness: isClassicInterior ? 0.68 : 0.38,
+        envMapIntensity: isClassicInterior ? 0.2 : 1,
       }),
-    []
+    [isClassicInterior]
   );
   const wallMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: "#4a5568",
+        color: isClassicInterior ? "#5a4030" : "#4a5568",
         metalness: 0.08,
         roughness: 0.85,
         side: THREE.DoubleSide,
       }),
-    []
+    [isClassicInterior]
   );
 
   const frameMetrics = useMemo(() => {
     const scale =
       Math.min(SCENE_SCREEN_W / 2.4, SCENE_SCREEN_H / 1.5) * 0.98;
-    const contentW = 2.4 * 1.08 * scale;
-    const contentH = 1.5 * scale;
-    const border = 0.14;
-    const gap = 0.03;
+    // Opening == plate size used by CardMesh + WebViewProjector (flush fit).
+    const contentW = DESK_SCREEN_PLATE_W * scale;
+    const contentH = DESK_SCREEN_PLATE_H * scale;
+    const border = DESK_FRAME_BORDER;
     const outerW = contentW + border * 2;
     const outerH = contentH + border * 2;
     return {
+      contentW,
+      contentH,
       outerW,
       outerH,
       frameBottomY: SCENE_SCREEN_Y - outerH / 2,
       geo: makeRoundedFrameGeometry(
         outerW,
         outerH,
-        contentW + gap,
-        contentH + gap,
+        contentW,
+        contentH,
         DESK_FRAME_RADIUS,
         0.1
       ),
@@ -171,16 +190,21 @@ function DeskRoom({
 
   return (
     <group>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, ARENA_FLOOR_Y, 0]}
-        material={floorMat}
-        receiveShadow
-      >
-        <circleGeometry args={[radius + 2.5, 64]} />
-      </mesh>
+      {!hideDeskFloor && (
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, ARENA_FLOOR_Y, 0]}
+          material={floorMat}
+          receiveShadow
+        >
+          <circleGeometry args={[radius + 2.5, 64]} />
+        </mesh>
+      )}
 
       <DeskTable layout={layout} />
+      <DeskSurfaceProps topY={topY} />
+      {/* Modern chair/plants clash with classic interiors */}
+      {!isClassicInterior && <DeskProps />}
 
       {/* Monitor frames + stands at each desk slot */}
       {slots.map((slot, i) => {
@@ -210,27 +234,29 @@ function DeskRoom({
             >
               <boxGeometry args={[0.28, 0.07, 0.1]} />
             </mesh>
+            {/* Base plate flush on the desk top (half-height 0.03) */}
             <mesh
-              position={[0, topY - y + 0.025, standZLocal + 0.08]}
+              position={[0, topY - y + 0.03, standZLocal + 0.12]}
               material={standMat}
               castShadow
               receiveShadow
             >
-              <boxGeometry args={[0.55, 0.05, 0.32]} />
+              <boxGeometry args={[0.62, 0.06, 0.38]} />
             </mesh>
+            {/* Screen glass — same size as bezel opening / projected webview */}
             <mesh position={[0, 0, -0.02]}>
               <planeGeometry
-                args={[
-                  frameMetrics.outerW * 0.92,
-                  frameMetrics.outerH * 0.92,
-                ]}
+                args={[frameMetrics.contentW, frameMetrics.contentH]}
               />
               <meshStandardMaterial
                 color="#0d1524"
                 emissive={lit ? "#1a4a8c" : "#101828"}
-                emissiveIntensity={lit ? 0.28 : 0.08}
-                metalness={0.2}
+                emissiveIntensity={lit ? 0.12 : 0.04}
+                metalness={0.15}
                 roughness={0.55}
+                transparent
+                opacity={screenOpacity}
+                depthWrite={false}
               />
             </mesh>
           </group>
@@ -238,16 +264,16 @@ function DeskRoom({
       })}
 
       <pointLight
-        position={[0, topY + 0.35, 0]}
-        intensity={0.55}
-        color="#ffe8c8"
+        position={[0, topY + 0.45, 0]}
+        intensity={isVictorian ? 0.28 : 0.55}
+        color={isClassicInterior ? "#ffd8a0" : "#ffe8c8"}
         distance={tableRadius * 2.2}
         decay={2}
       />
       <pointLight
         position={[0, ARENA_FLOOR_Y + 3.2, 0]}
-        intensity={0.5}
-        color="#e8eef8"
+        intensity={isVictorian ? 0.18 : isClassicInterior ? 0.4 : 0.5}
+        color={isClassicInterior ? "#f0d0a0" : "#e8eef8"}
         distance={radius * 2.2}
         decay={1.2}
       />

@@ -306,6 +306,10 @@
 .desktop-3d-exp-mountain-lodge .launchpad-3d-stage-fullscreen {
     background: #4a6a48;
 }
+.desktop-3d-exp-victorian-study .launchpad-3d-root-fullscreen,
+.desktop-3d-exp-victorian-study .launchpad-3d-stage-fullscreen {
+    background: #2a2218;
+}
 
 .desktop-3d-scene-paused {
     visibility: hidden;

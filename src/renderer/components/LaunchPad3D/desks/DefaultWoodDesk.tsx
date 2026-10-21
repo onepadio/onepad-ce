@@ -1,12 +1,17 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import * as THREE from "three";
 
+import { EXPERIENCE_MODELS } from "../experiences/assetUrls";
+import GltfProp from "../experiences/GltfProp";
 import { supportHeight } from "./deskLayout";
 import type { DeskTableProps } from "./types";
 
-/** Circular wood desk top + ring of legs under the screen arena. */
+/**
+ * Circular wood desk — procedural top (monitor alignment) + Poly Haven
+ * round table as a surface accent where the seat meets the wood.
+ */
 export default function DefaultWoodDesk({ layout }: DeskTableProps) {
-  const { tableRadius, topY, topThick, deskCenterZ } = layout;
+  const { tableRadius, topY, topThick, deskCenterZ, floorY } = layout;
 
   const wood = useMemo(
     () =>
@@ -45,6 +50,18 @@ export default function DefaultWoodDesk({ layout }: DeskTableProps) {
           <cylinderGeometry args={[0.06, 0.07, legH, 8]} />
         </mesh>
       ))}
+
+      <Suspense fallback={null}>
+        {/* Realistic coffee-table scale prop near the seat */}
+        <GltfProp
+          url={EXPERIENCE_MODELS.roundWoodenTable}
+          position={[0, floorY, 1.35]}
+          rotation={[0, 0.25, 0]}
+          fitTo={1.35}
+          fitMode="width"
+          sitOnGround
+        />
+      </Suspense>
     </group>
   );
 }

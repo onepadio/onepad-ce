@@ -5,6 +5,10 @@ import * as THREE from "three";
 import gsap from "gsap";
 
 import type { CardPose, LaunchPadCard } from "./types";
+import {
+  DESK_SCREEN_PLATE_H,
+  DESK_SCREEN_PLATE_W,
+} from "./layouts/roomScreens";
 import { useCardTexture } from "./useCardTextures";
 import { registerPlane, unregisterPlane } from "./planeRegistry";
 
@@ -131,6 +135,15 @@ function CardMesh({
     });
   }, [pose, duration]);
 
+  // Icon-only: centered favicon (never stretch favicon full-bleed).
+  // DeskRoom already draws the glass screen — keep this plate invisible so
+  // we don't stack a second opaque panel behind the icon.
+  const useIconLayout = !contentTransparent && isIconPreview;
+  const skipScreenPlate =
+    isScreen && (contentTransparent || useIconLayout);
+  const plateSeeThrough =
+    skipScreenPlate || (isScreen && pose.opacity < 0.999);
+
   useFrame(() => {
     const g = groupRef.current;
     if (!g) return;
@@ -139,8 +152,11 @@ function CardMesh({
     g.rotation.set(t.rx, t.ry, t.rz);
     g.scale.setScalar(t.s);
     if (matRef.current) {
-      matRef.current.opacity = t.o;
-      matRef.current.emissiveIntensity = isScreen && focused ? 0.22 : 0;
+      const o = skipScreenPlate ? 0 : t.o;
+      matRef.current.opacity = o;
+      matRef.current.transparent = skipScreenPlate || (isScreen && o < 0.999);
+      matRef.current.depthWrite = !skipScreenPlate && !(isScreen && o < 0.999);
+      matRef.current.emissiveIntensity = 0;
     }
   });
 
@@ -156,26 +172,27 @@ function CardMesh({
     return "#cfd6e0";
   }, [card.isActive, focused, isScreen]);
 
-  // Icon-only: panel + centered favicon (never stretch favicon full-bleed)
-  const useIconLayout = !contentTransparent && isIconPreview;
   const showPlaceholder =
     !contentTransparent && useIconLayout && (!texture || failed);
   // Translucent back plates z-sort against the favicon — launchpad cards only
   const showBackPlate = !useIconLayout && !contentTransparent && !isScreen;
   const iconSize = isScreen ? ICON_SIZE_SCREEN : ICON_SIZE;
   const iconRadius = isScreen ? ICON_RADIUS_SCREEN : ICON_RADIUS;
-  // Content forward of desk bezel; icon further forward than the plate
-  const plateZ = isScreen ? 0.08 : 0;
-  const iconZ = isScreen ? 0.28 : 0.16;
-  // Screen slot is wider aspect than the card plane — nudge width so it fills the frame
-  const plateW = isScreen ? CARD_WIDTH * 1.08 : CARD_WIDTH;
+  // Content forward of monitor bezel (MonitorBank sits at local −Z); icon
+  // further forward than the plate so favicons never share depth with it.
+  const plateZ = isScreen ? 0.12 : 0;
+  const iconZ = isScreen ? 0.32 : 0.16;
+  // Screen plate matches DeskRoom bezel opening / webview projection
+  const plateW = isScreen ? DESK_SCREEN_PLATE_W : CARD_WIDTH;
+  const plateH = isScreen ? DESK_SCREEN_PLATE_H : CARD_HEIGHT;
   const plateGeo = useMemo(
     () =>
       isScreen
-        ? roundedPlaneGeometry(plateW, CARD_HEIGHT, SCREEN_PLATE_RADIUS)
+        ? roundedPlaneGeometry(plateW, plateH, SCREEN_PLATE_RADIUS)
         : null,
-    [isScreen, plateW]
+    [isScreen, plateW, plateH]
   );
+  const plateOpacity = skipScreenPlate ? 0 : pose.opacity;
 
   return (
     <group
@@ -201,38 +218,34 @@ function CardMesh({
         onBlur?.();
       }}
     >
-      <mesh
-        position={[0, 0, plateZ]}
-        {...(plateGeo ? { geometry: plateGeo } : {})}
-      >
-        {!isScreen && <planeGeometry args={[plateW, CARD_HEIGHT]} />}
-        <meshStandardMaterial
-          ref={matRef}
-          map={
-            contentTransparent || useIconLayout
-              ? undefined
-              : texture || undefined
-          }
-          color={
-            contentTransparent
-              ? "#0d1520"
-              : useIconLayout
+      {!skipScreenPlate ? (
+        <mesh
+          position={[0, 0, plateZ]}
+          {...(plateGeo ? { geometry: plateGeo } : {})}
+        >
+          {!isScreen && <planeGeometry args={[plateW, CARD_HEIGHT]} />}
+          <meshStandardMaterial
+            ref={matRef}
+            map={useIconLayout ? undefined : texture || undefined}
+            color={
+              useIconLayout
                 ? "#151c28"
                 : showPlaceholder
                   ? "#1a2433"
                   : "#ffffff"
-          }
-          transparent={!!contentTransparent}
-          opacity={contentTransparent ? 0.04 : pose.opacity}
-          roughness={isScreen ? 0.5 : 0.55}
-          metalness={isScreen ? 0.12 : 0.05}
-          emissive={useIconLayout && isScreen ? "#1a3050" : "#000000"}
-          emissiveIntensity={useIconLayout && isScreen ? 0.35 : 0}
-          side={THREE.FrontSide}
-          toneMapped={!isScreen}
-          depthWrite={!contentTransparent}
-        />
-      </mesh>
+            }
+            transparent={plateSeeThrough}
+            opacity={plateOpacity}
+            roughness={isScreen ? 0.5 : 0.55}
+            metalness={isScreen ? 0.12 : 0.05}
+            emissive="#000000"
+            emissiveIntensity={0}
+            side={THREE.FrontSide}
+            toneMapped={!isScreen}
+            depthWrite={!plateSeeThrough}
+          />
+        </mesh>
+      ) : null}
 
       {showBackPlate ? (
         <mesh position={[0, 0, -0.02]}>
@@ -253,16 +266,22 @@ function CardMesh({
           position={[0, 0, iconZ]}
           radius={iconRadius}
           transparent
+          opacity={pose.opacity}
           toneMapped={false}
           side={THREE.FrontSide}
-          depthWrite
+          depthWrite={false}
         />
       )}
 
       {showPlaceholder && (
         <mesh position={[0, 0, iconZ]}>
           <planeGeometry args={[iconSize, iconSize]} />
-          <meshBasicMaterial color="#6b778c" depthWrite />
+          <meshBasicMaterial
+            color="#6b778c"
+            transparent
+            opacity={pose.opacity}
+            depthWrite={false}
+          />
         </mesh>
       )}
 

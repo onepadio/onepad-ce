@@ -1,0 +1,37 @@
+Office Building interior — asset credits
+=======================================
+
+Original OnePad shell (walls, floor plate, desks, lighting geometry):
+  blender/office/1/build_office_interior.py
+
+Sketchfab (CC-BY — attribution required)
+----------------------------------------
+- Modular Low Poly City
+  https://sketchfab.com/3d-models/modular-low-poly-city-25aa718e35ce4953bb7cc76a5ab95430
+  by mlkjaffer — CC Attribution
+  (roads, parks, trees, buildings outside the curtain walls)
+
+- Modern Office Chair / Game Ready
+  https://sketchfab.com/3d-models/modern-office-chair-game-ready-f137cbbefa5e4dba90d1f0bd42e1fdc0
+  by RenendStudio — CC Attribution
+
+- Office chair
+  https://sketchfab.com/3d-models/office-chair-af2f07d06f6349158c1d24d87f5ceb95
+  by inven2000 — CC Attribution
+  (perimeter desk seating)
+
+- Portrait of a Professional Woman
+  https://sketchfab.com/3d-models/portrait-of-a-professional-woman-73bc1113ddcf4520888052e24c2bb6b7
+  by restore50 — CC Attribution
+  (seated workers at perimeter desks; reception desk left empty)
+
+Poly Haven (CC0)
+----------------
+- laminate_floor_02 — Charlotte Baglioni, Dario Barresi
+  https://polyhaven.com/a/laminate_floor_02
+- park_parking (world HDRI in .blend; not packed in GLB) — Andreas Mischok
+  https://polyhaven.com/a/park_parking
+- potted_plant_01 — Rico Cilliers
+  https://polyhaven.com/a/potted_plant_01
+- modern_arm_chair_01 — Vibrant Nordic
+  https://polyhaven.com/a/modern_arm_chair_01

@@ -21,6 +21,7 @@ const DESK_TABLES: Partial<
   "space-station": SpaceStationDesk,
   "library-hall": LibraryWoodDesk,
   "mountain-lodge": MountainLodgeDesk,
+  "victorian-study": LibraryWoodDesk,
 };
 
 export function getDeskTable(

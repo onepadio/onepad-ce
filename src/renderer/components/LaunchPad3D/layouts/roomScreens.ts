@@ -23,6 +23,11 @@ export const DESK_FRAME_RADIUS = 0.28;
 
 const CARD_W = 2.4;
 const CARD_H = 1.5;
+/** Screen plate is slightly wider than the card for monitor fill */
+export const DESK_SCREEN_PLATE_W = CARD_W * 1.08;
+export const DESK_SCREEN_PLATE_H = CARD_H;
+/** Bezel border around the plate (world units, after card scale) */
+export const DESK_FRAME_BORDER = 0.14;
 
 /** Circle center / floor height for the arena */
 export const ARENA_CENTER: [number, number, number] = [0, 0, 0];
@@ -241,7 +246,7 @@ export function computeDeskScreenPose(
   index: number,
   focusedIndex: number,
   count: number,
-  cameraYaw = 0,
+  _cameraYaw = 0,
   focusSlot = 0
 ): CardPose {
   const slotCount = getDeskSlotCount(count);
@@ -266,22 +271,19 @@ export function computeDeskScreenPose(
   const slot = slots[slotOfWindow];
   if (!slot) return hidden;
 
-  const facing = yawToNearestSlot(cameraYaw, slotCount);
-  const focused = index === focusedIndex;
-  const dist = Math.min(
-    (slotOfWindow - facing + slotCount) % slotCount,
-    (facing - slotOfWindow + slotCount) % slotCount
-  );
-  const opacity = focused ? 1 : dist <= 1 ? 0.85 : 0.65;
+  // Desk overview screens share the same see-through opacity (plates + icons).
+  const opacity = 0.7;
 
-  const inward = 0.08;
+  // Sit just in front of the bezel glass (same XY as the frame — no side inset).
+  const inward = 0.04;
   const nx = -Math.sin(slot.theta) * inward;
   const nz = Math.cos(slot.theta) * inward;
 
   return {
     position: [slot.position[0] + nx, slot.position[1], slot.position[2] + nz],
     rotation: slot.rotation,
-    scale: focused ? scale * 1.02 : scale,
+    // Keep scale locked to the physical frame (no focused bump — that spilled past the bezel).
+    scale,
     opacity,
   };
 }

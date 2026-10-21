@@ -90,6 +90,11 @@ const configuration: webpack.Configuration = {
         test: /\.(png|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
       },
+      // 3D experience assets (Poly Haven CC0 GLB / HDRI)
+      {
+        test: /\.(glb|gltf|hdr|bin)$/i,
+        type: 'asset/resource',
+      },
       // SVG
       {
         test: /\.svg$/,

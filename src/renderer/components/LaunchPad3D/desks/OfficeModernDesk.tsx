@@ -1,12 +1,14 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import * as THREE from "three";
 
+import { EXPERIENCE_MODELS } from "../experiences/assetUrls";
+import GltfProp from "../experiences/GltfProp";
 import { supportHeight } from "./deskLayout";
 import type { DeskTableProps } from "./types";
 
-/** Sleek circular office desk — dark laminate, chrome legs. */
+/** Sleek circular office desk — dark laminate, chrome legs + metal desk prop. */
 export default function OfficeModernDesk({ layout }: DeskTableProps) {
-  const { tableRadius, topY, topThick, deskCenterZ } = layout;
+  const { tableRadius, topY, topThick, deskCenterZ, floorY } = layout;
 
   const laminate = useMemo(
     () =>
@@ -65,6 +67,17 @@ export default function OfficeModernDesk({ layout }: DeskTableProps) {
           <cylinderGeometry args={[0.035, 0.04, legH, 12]} />
         </mesh>
       ))}
+
+      <Suspense fallback={null}>
+        <GltfProp
+          url={EXPERIENCE_MODELS.metalOfficeDesk}
+          position={[1.55, floorY, 1.1]}
+          rotation={[0, -0.85, 0]}
+          fitTo={1.5}
+          fitMode="width"
+          sitOnGround
+        />
+      </Suspense>
     </group>
   );
 }

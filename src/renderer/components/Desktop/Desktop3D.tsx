@@ -13,8 +13,13 @@ import Desktop3DAddressBar from "../LaunchPad3D/Desktop3DAddressBar";
 import Desktop3DTabDots from "../LaunchPad3D/Desktop3DTabDots";
 import OthersWindowSwitcher from "../LaunchPad3D/OthersWindowSwitcher";
 import OverviewTabSwitcher from "../LaunchPad3D/OverviewTabSwitcher";
+import ScreenOpacitySlider from "../LaunchPad3D/ScreenOpacitySlider";
 import Desktop3DSearchOverlay from "../LaunchPad3D/Desktop3DSearchOverlay";
 import { getExperience } from "../LaunchPad3D/experiences/registry";
+import {
+  EXPERIENCE_MODELS,
+  preloadExperienceModels,
+} from "../LaunchPad3D/experiences";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { modalActions } from "../../store/modal-slice";
 import { storeActions } from "../../store/store-slice";
@@ -22,6 +27,8 @@ import { isDesktop3dOverlayWindow } from "../../util/sharedApps";
 
 import "./Desktop.css";
 import "../LaunchPad3D/LaunchPad3D.css";
+
+const SHARED_MODEL_URLS = Object.values(EXPERIENCE_MODELS);
 
 interface Desktop3DProps {
   id: string;
@@ -85,6 +92,11 @@ function Desktop3D({
     if (!clearZoomToken) return;
     setLocalClearZoomToken(clearZoomToken);
   }, [clearZoomToken]);
+
+  useEffect(() => {
+    if (!sceneActive) return;
+    preloadExperienceModels(SHARED_MODEL_URLS);
+  }, [sceneActive]);
 
   useEffect(() => {
     if (!sceneActive) return;
@@ -199,6 +211,12 @@ function Desktop3D({
       {sceneActive ? <Desktop3DOverlayApps /> : null}
       {sceneActive && !exploreMode && !hudFocused ? (
         <OverviewTabSwitcher
+          deskFrontCardId={deskFrontCardId}
+          visible={!hudFocused && !exploreMode}
+        />
+      ) : null}
+      {sceneActive && !exploreMode && !hudFocused ? (
+        <ScreenOpacitySlider
           deskFrontCardId={deskFrontCardId}
           visible={!hudFocused && !exploreMode}
         />

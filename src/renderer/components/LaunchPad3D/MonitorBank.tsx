@@ -23,16 +23,23 @@ function MonitorBezel({
   const frameH = slot.height + 0.14;
   return (
     <group position={[x, y, z]} rotation={[rx, ry, rz]}>
-      {/* Frame sits slightly behind the screen plane (local -Z = into wall) */}
-      <mesh position={[0, 0, -0.04]} castShadow receiveShadow>
-        <boxGeometry args={[frameW, frameH, 0.12]} />
+      {/*
+        Keep bezel + screen well behind CardMesh plate/icon (local +Z toward
+        camera). Too close and depth precision stair-steps through icons /
+        translucent plates in the control room.
+      */}
+      <mesh position={[0, 0, -0.18]} castShadow receiveShadow>
+        <boxGeometry args={[frameW, frameH, 0.14]} />
         <meshStandardMaterial
           color={lit ? "#6a809c" : "#4a5d73"}
           metalness={0.45}
           roughness={0.4}
+          polygonOffset
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
         />
       </mesh>
-      <mesh position={[0, 0, 0.02]}>
+      <mesh position={[0, 0, -0.1]}>
         <planeGeometry args={[slot.width, slot.height]} />
         <meshStandardMaterial
           color="#0d1524"
@@ -40,6 +47,9 @@ function MonitorBezel({
           emissiveIntensity={lit ? 0.28 : 0.08}
           metalness={0.2}
           roughness={0.55}
+          polygonOffset
+          polygonOffsetFactor={4}
+          polygonOffsetUnits={4}
         />
       </mesh>
     </group>

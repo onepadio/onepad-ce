@@ -4,6 +4,7 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 import spaceDomeUrl from "../../../images/space_dome_milkyway.jpg";
+import ExperienceEnvironment from "./ExperienceEnvironment";
 import type { ExperienceVistaProps } from "./types";
 
 function SpaceStationVistaInner({ active = true }: ExperienceVistaProps) {
@@ -37,6 +38,8 @@ function SpaceStationVistaInner({ active = true }: ExperienceVistaProps) {
 
   return (
     <group position={[0, 1, 10]}>
+      {/* Night HDRI for metal reflections; keep milky-way dome as backdrop */}
+      <ExperienceEnvironment hdri="night" background={false} blur={0} />
       <mesh ref={starsRef} material={domeMat}>
         <sphereGeometry args={[22, 48, 24]} />
       </mesh>
