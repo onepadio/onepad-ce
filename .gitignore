@@ -41,7 +41,8 @@ AuthKey_*.p8
 # Keychain exports
 *.keychain
 *.keychain-db
-scripts/
+# Root-only local publish helpers (do not ignore .erb/scripts)
+/scripts/
 
 ROADMAP.md
 md/*
