@@ -23,27 +23,40 @@ env:
   CI: true
 
 jobs:
+  # Job-level `if` cannot use `matrix`; select platforms here instead.
+  prepare:
+    name: Prepare matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set platform matrix
+        id: set-matrix
+        run: |
+          set -euo pipefail
+
+          ALL='[
+            {"os":"macos-latest","platform":"mac","electron_args":"-m --x64 --arm64"},
+            {"os":"windows-latest","platform":"win","electron_args":"-w --x64"},
+            {"os":"ubuntu-22.04","platform":"linux","electron_args":"-l --x64"}
+          ]'
+
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.platforms }}" == "all" ]]; then
+            MATRIX="$ALL"
+          else
+            MATRIX="$(echo "$ALL" | jq -c --arg p "${{ inputs.platforms }}" '[.[] | select(.platform == $p)]')"
+          fi
+
+          echo "matrix=$(echo "$MATRIX" | jq -c '{include: .}')" >> "$GITHUB_OUTPUT"
+          echo "Selected matrix: $MATRIX"
+
   publish:
     name: Publish (${{ matrix.platform }})
+    needs: prepare
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            platform: mac
-            electron_args: -m --x64 --arm64
-          - os: windows-latest
-            platform: win
-            electron_args: -w --x64
-          - os: ubuntu-22.04
-            platform: linux
-            electron_args: -l --x64
-    # Skip platforms not selected on manual runs
-    if: |
-      github.event_name != 'workflow_dispatch' ||
-      inputs.platforms == 'all' ||
-      inputs.platforms == matrix.platform
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout
