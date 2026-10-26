@@ -10,6 +10,7 @@ import stationerySuppliesUrl from "../../../assets/experiences/shared/stationery
 import standingPictureFrameUrl from "../../../assets/experiences/shared/standing_picture_frame_01/standing_picture_frame_01.glb";
 import rock01Url from "../../../assets/experiences/desert-pyramids/rock_01/rock_01.glb";
 import boulder01Url from "../../../assets/experiences/desert-pyramids/boulder_01/boulder_01.glb";
+import blenderDesertPyramidsUrl from "../../../assets/experiences/desert-pyramids/blender_pyramids/desert_pyramids.glb";
 import rockMossUrl from "../../../assets/experiences/mountain-lodge/rock_moss_set_01/rock_moss_set_01.glb";
 import steelShelvesUrl from "../../../assets/experiences/library-hall/steel_frame_shelves_01/steel_frame_shelves_01.glb";
 import woodShelvesUrl from "../../../assets/experiences/library-hall/wooden_display_shelves_01/wooden_display_shelves_01.glb";
@@ -46,6 +47,8 @@ export const EXPERIENCE_MODELS = {
   standingPictureFrame: standingPictureFrameUrl,
   rock01: rock01Url,
   boulder01: boulder01Url,
+  /** Blender desert plateau + Giza pyramids (Sketchfab + Poly Haven) */
+  blenderDesertPyramids: blenderDesertPyramidsUrl,
   rockMoss: rockMossUrl,
   steelShelves: steelShelvesUrl,
   woodShelves: woodShelvesUrl,

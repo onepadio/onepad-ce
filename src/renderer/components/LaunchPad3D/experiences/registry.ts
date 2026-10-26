@@ -32,7 +32,7 @@ export const EXPERIENCES: Record<Desktop3dExperienceId, ExperienceDefinition> =
     "desert-pyramids": {
       id: "desert-pyramids",
       label: "Pyramids Region",
-      description: "Warm desert sun and pyramids on the horizon",
+      description: "Giza plateau — sand, rocks, and pyramids on the horizon",
       available: true,
       clearColor: 0xc4a574,
       cssClass: "desktop-3d-exp-desert-pyramids",

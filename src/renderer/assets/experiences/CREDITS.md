@@ -16,6 +16,9 @@ no attribution required (credit appreciated).
 - `victorian-study/blender_study` — fireplace, bookshelf, antique desk, green
   armchair, Persian rug, globe. Full links in
   `victorian-study/blender_study/LICENSE.txt`.
+- `desert-pyramids/blender_pyramids` — Giza complex, Sphinx (Chenzoss),
+  Menkaure (PolarNick239), palms, camel, obelisks. Full links in
+  `desert-pyramids/blender_pyramids/LICENSE.txt`.
 
 ## Original + mixed (OnePad shell + CC assets)
 - `office-tower/blender_office` — open-plan office shell from
@@ -24,6 +27,9 @@ no attribution required (credit appreciated).
   `office-tower/blender_office/LICENSE.txt`.
 - `victorian-study/blender_study` — room shell from Blender + Sketchfab props
   and Poly Haven wood floor. See `victorian-study/blender_study/LICENSE.txt`.
+- `desert-pyramids/blender_pyramids` — sand plate + rocks from Blender /
+  Poly Haven with Sketchfab pyramids. See
+  `desert-pyramids/blender_pyramids/LICENSE.txt`.
 
 ## Models (Poly Haven CC0)
 - `shared/metal_office_desk` — Metal Office Desk

@@ -69,6 +69,7 @@ import {
   normalizeScreenshotKey,
   isValidScreenshotDataUrl,
 } from './screenshotStore';
+import { setupMediaPermissions } from './mediaPermissions';
 
 const store = new Store();
 
@@ -79,6 +80,7 @@ const screenShots: { [key: string]: any } = {};
 let activeWindow: BrowserWindow | null = null;
 const sessions: { [key: string]: any } = {};
 const sessionsWithDownloadListeners: Set<string> = new Set();
+const sessionsWithMediaPermissions: Set<string> = new Set();
 let userId: string | null;
 let workspaceId: string | undefined = 'device';
 const profileManager: ProfileManager = new ProfileManager(store);
@@ -233,6 +235,8 @@ function switchSession() {
   if (sessions[partitionId] == null) {
     sessions[partitionId] = session.fromPartition(partitionId);
   }
+  setupMediaPermissions(sessions[partitionId]);
+  sessionsWithMediaPermissions.add(partitionId);
   console.log(`Switching session to ${partitionId}`);
   
   // Initialize download manager for the current session
@@ -299,6 +303,11 @@ app.on('web-contents-created', (e, contents) => {
     // Set up download handler for this webContents (webview) - only once per session
     // Use the session object itself as the key by converting to string
     const sessionKey = (contents.session as any).partition || 'default';
+
+    if (!sessionsWithMediaPermissions.has(sessionKey)) {
+      setupMediaPermissions(contents.session);
+      sessionsWithMediaPermissions.add(sessionKey);
+    }
     
     if (!sessionsWithDownloadListeners.has(sessionKey)) {
       console.log(`Setting up will-download listener for session partition: ${sessionKey}`);
@@ -568,7 +577,9 @@ app
       );
     }
 
-    // util.openSystemPreferences('security', 'Privacy_ScreenCapture');
+    // Camera / mic / screen-sharing for Meet, Teams, etc.
+    setupMediaPermissions(session.defaultSession);
+
     const { screen } = require('electron');
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;

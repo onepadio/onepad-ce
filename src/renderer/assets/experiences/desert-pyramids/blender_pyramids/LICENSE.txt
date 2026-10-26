@@ -1,0 +1,51 @@
+Pyramids Region — desert vista asset credits
+============================================
+
+Scene assembly (sand plate, dunes, placement, export):
+  blender/pyramids/1/desert_pyramids.blend
+
+Sketchfab (CC-BY — attribution required)
+----------------------------------------
+- The Great Pyramid of Giza Egypt
+  https://sketchfab.com/3d-models/the-great-pyramid-of-giza-egypt-99bb947b9a9f4884ba249aec1be779eb
+  by Chenzoss — CC Attribution
+  (Giza complex — three pyramids)
+
+- Pyramid of Menkaure, Giza pyramid complex, Egypt
+  https://sketchfab.com/3d-models/pyramid-of-menkaure-giza-pyramid-complex-egypt-b03835b1723c4395a50d0a8c54861c6b
+  by PolarNick239 — CC Attribution
+
+- The Great Sphinx of Giza - Egypt
+  https://sketchfab.com/3d-models/the-great-sphinx-of-giza-egypt-f169dbe7974648babe327179091e0ee3
+  by Chenzoss — CC Attribution
+
+- Low poly palm tree
+  https://sketchfab.com/3d-models/low-poly-palm-tree-1a7ffd432c99499baccd432a9791d496
+  by Adrian21 — CC Attribution
+
+- small obelisk
+  https://sketchfab.com/3d-models/small-obelisk-3b263f3a36ef4d3f9e0bed12a9e78bb9
+  by oneironauticus — CC Attribution
+
+- Camel
+  https://sketchfab.com/3d-models/camel-99af7daa5baf450ea7b809937937e6d5
+  by E.A.Cornell — CC Attribution
+
+Poly Haven (CC0)
+----------------
+- sand_03 — Charlotte Baglioni
+  https://polyhaven.com/a/sand_03
+- sand_rocks_small_01 — Rico Cilliers, Rob Tuytel
+  https://polyhaven.com/a/sand_rocks_small_01
+- boulder_01 — Rico Cilliers
+  https://polyhaven.com/a/boulder_01
+- namaqualand_boulder_03 — Dario Barresi, Jenelle van Heerden
+  https://polyhaven.com/a/namaqualand_boulder_03
+- bark_debris_01 — Greg Zaal, Jenelle van Heerden
+  https://polyhaven.com/a/bark_debris_01
+- dry_branches_medium_01 — Rico Cilliers
+  https://polyhaven.com/a/dry_branches_medium_01
+- dry_quiver_leaf — Greg Zaal, Rico Cilliers
+  https://polyhaven.com/a/dry_quiver_leaf
+- goegap (HDRI used in Blender authoring) — Greg Zaal
+  https://polyhaven.com/a/goegap
