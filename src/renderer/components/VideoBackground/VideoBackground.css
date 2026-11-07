@@ -1,18 +1,103 @@
 .video-background {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
+  top: 40px;
+  left: 60px;
+  width: calc(100% - 60px);
+  height: calc(100vh - 128px);
   z-index: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
-.volume-button {
-  position: fixed !important;
-  top: 48px !important;
-  left: 8px !important;
-  z-index: 108 !important;
+.video-background-interactive {
+  z-index: 90;
+  pointer-events: auto;
+  left: 60px;
 }
 
-/* Remove the iframe styles since we're using Tailwind classes directly on the iframe */ 
+.video-background-webview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-background-browse-hint {
+  position: fixed;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 91;
+  pointer-events: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(12, 14, 20, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.video-bg-controls {
+  position: absolute;
+  bottom: 90px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid darkgrey;
+  border-radius: 6px;
+  background: rgba(12, 14, 20, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.video-bg-url-form {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+}
+
+.video-bg-url-input {
+  width: 180px;
+  max-width: 22vw;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(12, 14, 20, 0.65);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.video-bg-url-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.video-bg-url-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(12, 14, 20, 0.8);
+}
+
+.video-bg-url-error {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #ff6b6b;
+  white-space: nowrap;
+}
+
+.video-bg-control-button:disabled,
+.video-bg-mute-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.video-bg-control-button-active {
+  background: rgba(255, 255, 255, 0.2) !important;
+}

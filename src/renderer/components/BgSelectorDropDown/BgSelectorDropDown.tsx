@@ -1,7 +1,7 @@
 // implement a dropdown menu for selecting background images
 
 import React, { useState, useEffect } from 'react';
-import { Button, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Spinner } from 'reactstrap';
+import { Button, Spinner } from 'reactstrap';
 import { createClient } from 'pexels';
 
 
@@ -36,6 +36,8 @@ const CATEGORY_QUERIES = {
     "Space": "space galaxy stars",
 };
 
+const IMAGE_CATEGORIES = ["Beach", "Nature", "Space", "Search"] as const;
+
 function BgSelectorDropDown(props: any) {
     const [activeCategory, setActiveCategory] = useState("Beach");
     const [backgroundCategories, setBackgroundCategories] = useState({
@@ -49,7 +51,6 @@ function BgSelectorDropDown(props: any) {
     const [pexelsCache, setPexelsCache] = useState<Record<string, string[]>>({});
     const [isSearching, setIsSearching] = useState(false);
     const [searchError, setSearchError] = useState(null);
-
 
     function fetchPexelsImages(query: string, category: string) {
         if (query === "") return;
@@ -128,8 +129,9 @@ function BgSelectorDropDown(props: any) {
         props.onClick(bg);
     }
 
-    function handleCategoryClick(category: any) {
+    function handleCategoryClick(category: string) {
         setActiveCategory(category);
+        setSearchError(null);
         
         // Fetch Pexels images for predefined categories if not already loaded
         if (category !== "Search" && CATEGORY_QUERIES[category] && !pexelsCache[category]) {
@@ -137,11 +139,9 @@ function BgSelectorDropDown(props: any) {
         }
     }
 
-
-
     // Load initial category Pexels images on mount
     useEffect(() => {
-        if (activeCategory !== "Search" && CATEGORY_QUERIES[activeCategory] && !pexelsCache[activeCategory]) {
+        if (CATEGORY_QUERIES[activeCategory] && !pexelsCache[activeCategory]) {
             fetchPexelsImages(CATEGORY_QUERIES[activeCategory], activeCategory);
         }
     }, []);
@@ -162,7 +162,7 @@ function BgSelectorDropDown(props: any) {
     return (
         <div className="bg-selector-container">
             <div className="categories-nav">
-                {Object.keys(backgroundCategories).map((category) => (
+                {IMAGE_CATEGORIES.map((category) => (
                     <div
                         key={category}
                         className={`category-item ${category === activeCategory ? 'active' : ''}`}
@@ -172,6 +172,7 @@ function BgSelectorDropDown(props: any) {
                     </div>
                 ))}
             </div>
+
             <div className="bg-selector-grid-container">
                 {activeCategory === "Search" && (
                     <div className="query-field-container d-flex justify-content-center align-items-center">

@@ -64,6 +64,7 @@ function Desktop3DChrome({
   return (
     <div
       className={clsx(
+        "d-none",
         "desktop-3d-chrome",
         compact && "desktop-3d-chrome-compact",
         className

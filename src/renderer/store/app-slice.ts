@@ -1,5 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import defaultBG from '../images/default_bg.jpg';
+import {
+  isYoutubeMusicSource,
+  readVideoBgEnabled,
+  readVideoBgSource,
+  writeLastWatchVideoSource,
+  writeVideoBgEnabled,
+  writeVideoBgSource,
+} from '../services/youtubeBackground';
 
 const appSlice = createSlice({
   name: "app",
@@ -12,6 +20,11 @@ const appSlice = createSlice({
     bgImage: defaultBG,
     /** Separate wallpaper used when Desktop is in 3D mode (Cover/Mission/Ring) */
     bgImage3d: defaultBG,
+    /** Global session video player — not per-space */
+    videoBgEnabled: readVideoBgEnabled(),
+    videoBgSource: readVideoBgSource(),
+    /** When true, YouTube webview accepts pointer events for browsing */
+    videoBgInteractive: false,
     platform: "",
     version: "",
     hostname: "",
@@ -78,6 +91,47 @@ const appSlice = createSlice({
     },
     setBgImage3d(state, action) {
       state.bgImage3d = action.payload.bgImage3d ?? action.payload.bgImage ?? defaultBG;
+    },
+    setVideoBgEnabled(state, action) {
+      const enabled = Boolean(action.payload?.enabled ?? action.payload);
+      state.videoBgEnabled = enabled;
+      writeVideoBgEnabled(enabled);
+    },
+    setVideoBgSource(state, action) {
+      const source = action.payload?.source ?? action.payload ?? "";
+      state.videoBgSource = source;
+      writeVideoBgSource(source);
+      if (source && !isYoutubeMusicSource(source)) {
+        writeLastWatchVideoSource(source);
+      }
+    },
+    enableVideoBg(state, action) {
+      const source = action.payload?.source ?? action.payload ?? state.videoBgSource;
+      if (!source) return;
+      // Remember last YouTube (non-Music) page so Video/Music can toggle cleanly
+      if (
+        state.videoBgSource &&
+        !isYoutubeMusicSource(state.videoBgSource) &&
+        isYoutubeMusicSource(source)
+      ) {
+        writeLastWatchVideoSource(state.videoBgSource);
+      } else if (!isYoutubeMusicSource(source)) {
+        writeLastWatchVideoSource(source);
+      }
+      state.videoBgSource = source;
+      state.videoBgEnabled = true;
+      writeVideoBgSource(source);
+      writeVideoBgEnabled(true);
+    },
+    disableVideoBg(state) {
+      state.videoBgEnabled = false;
+      state.videoBgInteractive = false;
+      writeVideoBgEnabled(false);
+    },
+    setVideoBgInteractive(state, action) {
+      state.videoBgInteractive = Boolean(
+        action.payload?.interactive ?? action.payload
+      );
     },
     setPlatform(state, action) {
       state.platform = action.payload;

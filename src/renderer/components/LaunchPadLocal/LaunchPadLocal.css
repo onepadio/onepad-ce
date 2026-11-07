@@ -20,9 +20,12 @@
     border-radius: 10px;
     width: 60%;
     height: calc(100% - 100px);
-    margin-left: 0px;
-    margin-right: 25px;
     z-index: 110 !important;
+    border: 1px solid gray;
+    padding: 10px;
+    background-color: #42444766;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .launchpad-container{

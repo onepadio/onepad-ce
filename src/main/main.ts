@@ -542,6 +542,8 @@ app.commandLine.appendSwitch('ignore-gpu-blacklist');
 app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode');
 app.commandLine.appendSwitch('enable-accelerated-video');
 app.commandLine.appendSwitch('enable-gpu-compositing');
+// Allow YouTube (and other) background video to autoplay with sound
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 app
   .whenReady()

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import clsx from "clsx";
 import { Container, Row, Col, ListGroup, ListGroupItem } from "reactstrap";
@@ -51,6 +51,8 @@ function BrowserVerticalTabBar() {
 
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [hoveredTabId, setHoveredTabId] = useState<string | null>(null);
+  const showSidebarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const SHOW_SIDEBAR_HOVER_DELAY_MS = 1000;
 
   const groups = buildGroups(
     openWindows,
@@ -61,10 +63,29 @@ function BrowserVerticalTabBar() {
   );
   const homePage = newTabUrl || "https://www.google.com/";
 
+  function clearShowSidebarTimer() {
+    if (showSidebarTimerRef.current) {
+      clearTimeout(showSidebarTimerRef.current);
+      showSidebarTimerRef.current = null;
+    }
+  }
+
+  function scheduleShowSidebar() {
+    clearShowSidebarTimer();
+    showSidebarTimerRef.current = setTimeout(() => {
+      showSidebarTimerRef.current = null;
+      dispatch(windowActions.showSideBar({}));
+    }, SHOW_SIDEBAR_HOVER_DELAY_MS);
+  }
+
   // Repair browserWindows registry when legacy windows exist but are not registered
   useEffect(() => {
     syncBrowserWindowsIfNeeded(browserWindows, openWindows, windowTabs, dispatch);
   }, [browserWindows, openWindows, windowTabs, dispatch]);
+
+  useEffect(() => {
+    return () => clearShowSidebarTimer();
+  }, []);
 
   useEffect(() => {
     const container = document.getElementById("vertical-tab-bar");
@@ -407,7 +428,8 @@ function BrowserVerticalTabBar() {
         <div
           id="vertical-tab-bar-trigger"
           className="vertical-tab-bar-trigger-zone"
-          onMouseEnter={() => dispatch(windowActions.showSideBar({}))}
+          onMouseEnter={scheduleShowSidebar}
+          onMouseLeave={clearShowSidebarTimer}
           title="Show tabs"
         >
           <div className="vertical-tab-bar-trigger-indicator" />

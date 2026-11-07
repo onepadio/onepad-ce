@@ -4,6 +4,7 @@ import log from "loglevel";
 
 import { BG_IMAGE_STORE_KEY } from "../../services/unsplash";
 import { setItem } from "../../services/persist";
+import { isYoutubeBackground } from "../../services/youtubeBackground";
 
 import { modalActions } from "../../store/modal-slice";
 
@@ -37,6 +38,8 @@ function ChangeBackgroundModalWindow(props: any) {
 
   function save(image: any) {
     if (!workspace?.id) return;
+    // Video is a global player — never store youtube sources as space wallpaper
+    if (isYoutubeBackground(image)) return;
     setItem(BG_IMAGE_STORE_KEY, image);
 
     if (is3d) {

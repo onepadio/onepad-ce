@@ -20,7 +20,13 @@ import PropTypes from "prop-types";
 import "./DesktopMenu.css";
 import defaultBG from "../../images/default_bg.jpg";
 import log from "loglevel";
-import { Gear, Image } from "react-bootstrap-icons";
+import { CameraVideoFill, Gear, Image, MusicNoteBeamed } from "react-bootstrap-icons";
+import {
+  YOUTUBE_BG_HOME_URL,
+  YOUTUBE_MUSIC_HOME_URL,
+  isYoutubeMusicSource,
+  readLastWatchVideoSource,
+} from "../../services/youtubeBackground";
 
 function DesktopMenu({
   direction,
@@ -38,6 +44,15 @@ function DesktopMenu({
 
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen);
 
+  const videoBgEnabled = useSelector((state: any) => state.app.videoBgEnabled);
+  const videoBgSource = useSelector((state: any) => state.app.videoBgSource);
+  const isImagePickerOpen = useSelector(
+    (state: any) => state.modal.isChangeBackgroundModalOpen
+  );
+  const isVideoPickerOpen = useSelector(
+    (state: any) => state.modal.isChangeVideoBackgroundModalOpen
+  );
+
   const desktopVisualMode = useSelector(
     (state: any) =>
       state.settings.desktopVisualMode ||
@@ -45,6 +60,72 @@ function DesktopMenu({
       "2d"
   );
   const is3d = desktopVisualMode === "3d";
+  const bgMode: "image" | "video" | "music" =
+    !is3d && videoBgEnabled
+      ? isYoutubeMusicSource(videoBgSource)
+        ? "music"
+        : "video"
+      : "image";
+
+  function openImagePicker() {
+    // Interactive video is a sibling of #wrapper (z-index 5) at z-index 90,
+    // so it paints above the sidebar unless browse mode is cleared first.
+    dispatch(appActions.setVideoBgInteractive({ interactive: false }));
+    if (!isImagePickerOpen) {
+      // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
+      dispatch(modalActions.toggleChangeBackgroundModal());
+    }
+  }
+
+  function openVideoPicker() {
+    dispatch(appActions.setVideoBgInteractive({ interactive: false }));
+    if (!isVideoPickerOpen) {
+      // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
+      dispatch(modalActions.toggleChangeVideoBackgroundModal());
+    }
+  }
+
+  function onImageModeClick() {
+    if (is3d) {
+      openImagePicker();
+      return;
+    }
+    // Already on image: open picker. Switching from video/music: show space wallpaper.
+    if (bgMode === "image") {
+      openImagePicker();
+      return;
+    }
+    dispatch(appActions.disableVideoBg());
+  }
+
+  function onVideoModeClick() {
+    // Already on video: open library picker
+    if (bgMode === "video") {
+      openVideoPicker();
+      return;
+    }
+    // From image or music: resume last YouTube watch page (never stay on Music)
+    let source = YOUTUBE_BG_HOME_URL;
+    if (bgMode === "music") {
+      source = readLastWatchVideoSource() || YOUTUBE_BG_HOME_URL;
+      if (isYoutubeMusicSource(source)) {
+        source = YOUTUBE_BG_HOME_URL;
+      }
+    } else if (videoBgSource && !isYoutubeMusicSource(videoBgSource)) {
+      source = videoBgSource;
+    }
+    dispatch(appActions.setVideoBgInteractive({ interactive: false }));
+    dispatch(appActions.enableVideoBg({ source }));
+  }
+
+  function onMusicModeClick() {
+    // Already on music: enter browse mode
+    if (bgMode === "music") {
+      dispatch(appActions.setVideoBgInteractive({ interactive: true }));
+      return;
+    }
+    dispatch(appActions.enableVideoBg({ source: YOUTUBE_MUSIC_HOME_URL }));
+  }
 
   const client = createClient('4Qpo6sLZ2hjfUkyERXQrQzKbcbew6EQtIr3cPQLnMp26S9urGttwX8rg');
 
@@ -134,13 +215,49 @@ function DesktopMenu({
 
   return (
     <div className={`desktopMenu ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
-      <Button color="dark" onClick={
-        () => {
-          // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
-          dispatch(modalActions.toggleChangeBackgroundModal());
-        }} data-bs-toggle="tooltip" data-bs-placement="left" title={is3d ? "Set 3D Background" : "Set Background"} data-bs-custom-className="custom-tooltip">
-        <Image size={24} color="white" />
-      </Button>
+      {is3d ? (
+        <Button
+          color="dark"
+          onClick={onImageModeClick}
+          title="Set 3D Background"
+        >
+          <Image size={24} color="white" />
+        </Button>
+      ) : (
+        <div className="desktop-bg-mode-toggle" role="group" aria-label="Background mode">
+          <button
+            type="button"
+            className={`desktop-bg-mode-btn ${bgMode === "image" ? "active" : ""}`}
+            onClick={onImageModeClick}
+            title={bgMode === "image" ? "Change background image" : "Show background image"}
+            aria-label="Image"
+          >
+            <Image size={16} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={`desktop-bg-mode-btn ${bgMode === "video" ? "active" : ""}`}
+            onClick={onVideoModeClick}
+            title={bgMode === "video" ? "Change background video" : "Play background video"}
+            aria-label="Video"
+          >
+            <CameraVideoFill size={16} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={`desktop-bg-mode-btn ${bgMode === "music" ? "active" : ""}`}
+            onClick={onMusicModeClick}
+            title={
+              bgMode === "music"
+                ? "Browse YouTube Music"
+                : "Play YouTube Music"
+            }
+            aria-label="Music"
+          >
+            <MusicNoteBeamed size={16} aria-hidden />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,22 +2,35 @@ import type { CardPose } from "../types";
 import {
   DESK_SCREEN_MAX,
   deskSlotIndexForWindow,
+  getDeskAngleStep,
   getDeskSlotCount,
 } from "./deskSlots";
 
-export { DESK_SCREEN_MAX, getDeskSlotCount } from "./deskSlots";
+export {
+  DESK_SCREEN_MAX,
+  getDeskAngleStep,
+  getDeskSlotCount,
+} from "./deskSlots";
 
 /** Soft cap — single-row ring stays readable while orbiting */
 export const SCENE_SCREEN_MAX = 128;
 
 /**
- * Physical screen size on the wall.
+ * Physical screen size on the cylindrical wall ring (non-desk layouts).
  * Large enough so that at OVERVIEW_DIST the webview fills ~70 % of screen width.
  */
 export const SCENE_SCREEN_W = 6.4;
 export const SCENE_SCREEN_H = 3.8;
 export const SCENE_SCREEN_GAP = 4.0;
 export const SCENE_SCREEN_Y = 0.5;
+
+/**
+ * Desk monitor size — fixed for every app count (do not scale with N).
+ * Smaller than SCENE_SCREEN_* so 1–3 apps don’t dominate the FOV / room.
+ */
+export const DESK_SCREEN_W = 4.0*1.25;
+export const DESK_SCREEN_H = 2.4*1.25;
+
 /** Outer frame corner radius (world units) */
 export const DESK_FRAME_RADIUS = 0.28;
 
@@ -51,20 +64,20 @@ export function getDeskArenaRadius(): number {
   return getArenaRadius(DESK_SCREEN_MAX);
 }
 
-export function getDeskSlotAngle(slotIndex: number, slotCount: number): number {
-  const n = Math.max(slotCount, 1);
-  return (slotIndex * (Math.PI * 2)) / n;
+export function getDeskSlotAngle(slotIndex: number, _slotCount?: number): number {
+  return slotIndex * getDeskAngleStep();
 }
 
 /** Nearest slot index for a camera yaw (radians). Slot 0 faces −Z. */
 export function yawToNearestSlot(yaw: number, slotCount: number): number {
   const n = Math.max(slotCount, 1);
-  const step = (Math.PI * 2) / n;
+  const step = getDeskAngleStep();
   const TWO_PI = Math.PI * 2;
   let a = ((yaw % TWO_PI) + TWO_PI) % TWO_PI;
-  // Snap relative to slot 0 at yaw 0
-  let idx = Math.round(a / step) % n;
-  if (idx < 0) idx += n;
+  // Snap relative to slot 0 at yaw 0 — indices only valid for active slots
+  let idx = Math.round(a / step) % DESK_SCREEN_MAX;
+  if (idx < 0) idx += DESK_SCREEN_MAX;
+  if (idx >= n) idx = Math.min(idx, n - 1);
   return idx;
 }
 
@@ -92,15 +105,18 @@ export function getDeskWorkCamera(yaw = 0): {
   };
 }
 
-/** Fixed screen slots for the circular desk (1…DESK_SCREEN_MAX). */
+/**
+ * Screen slots on the circular desk. Size + angles are fixed (DESK_SCREEN_* /
+ * 6-way step) so 1 app looks the same as slot 0 of a full desk.
+ */
 export function getDeskScreenSlots(slotCount: number): ScreenSlot[] {
   const n = getDeskSlotCount(slotCount);
   if (n === 0) return [];
 
   const radius = getDeskArenaRadius();
-  const angleStep = (Math.PI * 2) / n;
-  const w = SCENE_SCREEN_W;
-  const h = SCENE_SCREEN_H;
+  const angleStep = getDeskAngleStep();
+  const w = DESK_SCREEN_W;
+  const h = DESK_SCREEN_H;
   const slots: ScreenSlot[] = [];
 
   for (let i = 0; i < n; i++) {
@@ -201,6 +217,11 @@ export function getSceneScreenCardScale(slot?: ScreenSlot | null): number {
   return Math.min(w / CARD_W, h / CARD_H) * 0.98;
 }
 
+/** Card scale that fills the fixed desk monitor bezel (independent of app count). */
+export function getDeskScreenCardScale(): number {
+  return Math.min(DESK_SCREEN_W / CARD_W, DESK_SCREEN_H / CARD_H) * 0.98;
+}
+
 export function computeSceneScreenPose(
   index: number,
   focusedIndex: number,
@@ -250,7 +271,7 @@ export function computeDeskScreenPose(
   focusSlot = 0
 ): CardPose {
   const slotCount = getDeskSlotCount(count);
-  const scale = getSceneScreenCardScale(null);
+  const scale = getDeskScreenCardScale();
   const hidden: CardPose = {
     position: [0, SCENE_SCREEN_Y, -getDeskArenaRadius()],
     rotation: [0, 0, 0],

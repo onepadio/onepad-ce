@@ -1,7 +1,8 @@
 import {
   ARENA_FLOOR_Y,
-  SCENE_SCREEN_H,
-  SCENE_SCREEN_W,
+  DESK_FRAME_BORDER,
+  DESK_SCREEN_H,
+  DESK_SCREEN_W,
   SCENE_SCREEN_Y,
   getDeskArenaRadius,
   getDeskSlotCount,
@@ -44,9 +45,9 @@ export function getDeskLayout(windowCount: number): DeskLayout {
   const deskDepth = tableRadius * 2;
   const deskW = tableRadius * 2;
   const cardScale =
-    Math.min(SCENE_SCREEN_W / 2.4, SCENE_SCREEN_H / 1.5) * 0.98;
+    Math.min(DESK_SCREEN_W / 2.4, DESK_SCREEN_H / 1.5) * 0.98;
   const contentH = 1.5 * cardScale;
-  const frameBorder = 0.14;
+  const frameBorder = DESK_FRAME_BORDER;
   const topY = SCENE_SCREEN_Y - (contentH / 2 + frameBorder) - 0.5;
   const topThick = 0.14;
   const legH = Math.max(0.55, topY - ARENA_FLOOR_Y - 0.06);

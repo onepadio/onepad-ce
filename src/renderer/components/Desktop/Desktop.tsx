@@ -19,6 +19,7 @@ import { Robot } from "react-bootstrap-icons";
 import Widget from "./Widget";
 import LaunchPadBody from "../LaunchPadLocal/LaunchPadBody";
 import Desktop3DChrome from "../LaunchPad3D/Desktop3DChrome";
+import VideoBackgroundControls from "../VideoBackground/VideoBackgroundControls";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import Pages from "../Pages/Pages";
 import AppsOverlayMenu from "../NavBarApps/AppsOverlayMenu";
@@ -79,6 +80,9 @@ function Desktop(props) {
     (state: any) => state.workspace.selectedWidgetId
   );
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen || false);
+  const videoBgInteractive = useSelector(
+    (state: any) => state.app.videoBgInteractive
+  );
 
   const toggleRenameDesktopModalWindow = () => {
     dispatch(modalActions.toggleRenameDesktopModalWindow({}));
@@ -652,8 +656,10 @@ function Desktop(props) {
           className={`w-100 space-container ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}
         >
           <DesktopMenu />
+          <VideoBackgroundControls />
           <div className={`desktop-top-controls d-flex align-items-center ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
             <Desktop3DChrome showLayoutControls={false} />
+            
             <Button
               color="dark"
               onClick={() => dispatch(aiAppsActions.toggle("ai"))}
@@ -675,7 +681,7 @@ function Desktop(props) {
                 <DateTime />
               </div>
               <div className="d-flex w-100 justify-content-center">
-                {isLaunchpadActive ? (
+                {isLaunchpadActive && !videoBgInteractive ? (
                   <SearchBar id="searchBar" />
                 ) : (
                   <></>
@@ -689,7 +695,7 @@ function Desktop(props) {
             >
               <div 
                 id="launchpad-idx" 
-                className={`launchpad-desktop ${!isLaunchpadActive ? 'd-none' : ''}`}
+                className={`launchpad-desktop ${!isLaunchpadActive || videoBgInteractive ? 'd-none' : ''}`}
               >
                 <div className="container-fluid launchpad-container">
                   {isDesktopsEnabled ? (

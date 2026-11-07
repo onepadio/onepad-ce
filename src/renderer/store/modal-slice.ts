@@ -6,6 +6,7 @@ const modalSlice = createSlice({
   name: "modal",
   initialState: {
     isChangeBackgroundModalOpen: false,
+    isChangeVideoBackgroundModalOpen: false,
     isNewWorkspaceModalOpen: false,
     isRenameSpaceModalOpen: false,
     isArchiveSpaceModalOpen: false,
@@ -133,6 +134,9 @@ const modalSlice = createSlice({
     },
     toggleChangeBackgroundModal(state, action) {
       state.isChangeBackgroundModalOpen = !state.isChangeBackgroundModalOpen;
+    },
+    toggleChangeVideoBackgroundModal(state, action) {
+      state.isChangeVideoBackgroundModalOpen = !state.isChangeVideoBackgroundModalOpen;
     },
     toggleNewWorkspaceModal(state, action) {
       state.isNewWorkspaceModalOpen = !state.isNewWorkspaceModalOpen;

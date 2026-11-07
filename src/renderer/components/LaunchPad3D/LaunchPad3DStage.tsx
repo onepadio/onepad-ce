@@ -46,6 +46,7 @@ import {
 } from "./layouts/roomScreens";
 import {
   DESK_SCREEN_MAX,
+  getDeskAngleStep,
   resolveDeskOrbitSnap,
 } from "./layouts/deskSlots";
 import { setVisibleSceneWindowIds } from "./sceneVisibility";
@@ -270,7 +271,9 @@ function CameraRig({
     const slotCount = fixedDesk
       ? Math.max(getDeskSlotCount(cardCount), 1)
       : Math.max(cardCount, 1);
-    const angleStep = (Math.PI * 2) / slotCount;
+    const angleStep = fixedDesk
+      ? getDeskAngleStep()
+      : (Math.PI * 2) / slotCount;
     // Desk: look at the slot that currently holds the focused window (advances with orbit)
     const homeYaw = fixedDesk
       ? getDeskSlotAngle(deskFocusSlot, slotCount)
@@ -1921,10 +1924,9 @@ function LaunchPad3DStage({
         if (Math.abs(dx) <= dragStep) return;
         ringBrowseLockUntil.current = now + 280;
         const dir = dx < 0 ? 1 : -1;
-        const slotN = deskOrbit
-          ? Math.max(getDeskSlotCount(n), 1)
-          : n;
-        const angleStep = (Math.PI * 2) / slotN;
+        const angleStep = deskOrbit
+          ? getDeskAngleStep()
+          : (Math.PI * 2) / Math.max(n, 1);
         sceneKeyOrbitTweenRef.current?.kill();
         sceneKeyOrbitTweenRef.current = null;
         if (deskOrbit) {
@@ -2089,10 +2091,9 @@ function LaunchPad3DStage({
 
       // ArrowRight → next screen; ArrowLeft → previous
       const dir = e.key === "ArrowRight" ? 1 : -1;
-      const slotN = deskOrbit
-        ? Math.max(getDeskSlotCount(n), 1)
-        : n;
-      const angleStep = (Math.PI * 2) / slotN;
+      const angleStep = deskOrbit
+        ? getDeskAngleStep()
+        : (Math.PI * 2) / Math.max(n, 1);
       sceneKeyOrbitTweenRef.current?.kill();
       sceneKeyOrbitTweenRef.current = null;
 

@@ -1,8 +1,8 @@
 .apps-overlay-menu {
   position: fixed;
   bottom: 6px;
-  left: 64px;
-  width: calc(100vw - 128px) !important;
+  left: 170px;
+  width: calc(100vw - 340px) !important;
   z-index: 1999 !important;
   display: flex;
   justify-content: center;

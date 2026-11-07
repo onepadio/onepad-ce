@@ -1,14 +1,23 @@
 /** Max physical monitors on the circular desk */
 export const DESK_SCREEN_MAX = 6;
 
+/** How many desk screens to draw (≤ DESK_SCREEN_MAX). */
 export function getDeskSlotCount(windowCount: number): number {
   return Math.min(Math.max(0, windowCount), DESK_SCREEN_MAX);
 }
 
 /**
+ * Fixed angular step for the desk ring — always based on DESK_SCREEN_MAX so
+ * screen spacing (and perceived size) stays identical for 1…6 apps.
+ */
+export function getDeskAngleStep(): number {
+  return (Math.PI * 2) / DESK_SCREEN_MAX;
+}
+
+/**
  * Map open windows onto desk screen slots.
  *
- * - N ≤ 6: 1:1 window index → slot index.
+ * - N ≤ 6: 1:1 window index → slot index (slots use the fixed 6-way angles).
  * - N > 6: sliding consecutive bank; `focusedIndex` sits on `focusSlot`,
  *   then focused+1, focused+2, … clockwise (order preserved, push/pop).
  */
@@ -87,7 +96,7 @@ export function resolveDeskOrbitSnap(
     };
   }
 
-  const angleStep = (Math.PI * 2) / slotCount;
+  const angleStep = getDeskAngleStep();
   const steps = Math.round(angleOffset / angleStep);
   const nextFocus = ((focusedIndex + steps) % count + count) % count;
 

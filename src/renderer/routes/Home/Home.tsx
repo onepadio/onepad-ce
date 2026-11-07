@@ -105,6 +105,7 @@ import RunDockerContainerModal from "../../components/RunDockerContainerModal/Ru
 import TaskManager from "../../components/TaskManager/TaskManager";
 import MemoryDashboard from "../../components/MemoryDashboard/MemoryDashboard";
 import ChangeBackgroundModalWindow from "../../components/ChangeBackgroundModalWindow/ChangeBackgroundModalWindow";
+import ChangeVideoBackgroundModalWindow from "../../components/ChangeVideoBackgroundModalWindow/ChangeVideoBackgroundModalWindow";
 import AIAssistantsCanvas from "renderer/components/AIAssistantsCanvas/AIAssistantsCanvas";
 import DownloadManager from "../../components/DownloadManager/DownloadManager";
 import DownloadProgressToast from "../../components/DownloadProgressToast/DownloadProgressToast";
@@ -218,6 +219,7 @@ function Home() {
   const isWorkspacesEnabled = useSelector((state) => state.settings.isWorkspacesEnabled);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isChangeBackgroundModalOpen = useSelector((state) => state.modal.isChangeBackgroundModalOpen);
+  const isChangeVideoBackgroundModalOpen = useSelector((state: any) => state.modal.isChangeVideoBackgroundModalOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const importCompleted = useSelector((state) => state.app.importCompleted);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -459,7 +461,7 @@ function Home() {
       // dispatch(settingsActions.toggleWorkspaces());
       // dispatch(settingsActions.toggleDesktops());
       // dispatch(settingsActions.toggleSessions());
-      setStepsEnabled(true);
+      setStepsEnabled(false);
     }
     // setStepsEnabled(false);
     // log.debug("welcome-completed", localStorage.getItem("welcome-completed"));
@@ -761,6 +763,9 @@ function Home() {
       <DownloadProgressToast />
       {
         isChangeBackgroundModalOpen ? <ChangeBackgroundModalWindow /> : <></>
+      }
+      {
+        isChangeVideoBackgroundModalOpen ? <ChangeVideoBackgroundModalWindow /> : <></>
       }
       {
         isTaskManagerOpen ? <TaskManager /> : <></>

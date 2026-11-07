@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet } from "react-router-dom";
 import log from "loglevel";
@@ -7,14 +7,26 @@ import { appActions } from '../store/app-slice';
 
 import WorkspaceRepository from '../repository/workspace';
 import UpdateAvailableToast from './UpdateAvailableToast/UpdateAvailableToast';
+import VideoBackground from './VideoBackground/VideoBackground';
+import {
+  isYoutubeBackground,
+} from '../services/youtubeBackground';
 
 import defaultBG from '../images/default_bg.jpg';
+
+function normalizeImageBg(value: unknown): string {
+  if (typeof value !== "string" || value === "") return defaultBG;
+  if (isYoutubeBackground(value)) return defaultBG;
+  return value;
+}
 
 export function Layout() {
   const dispatch = useDispatch();
 
   const bgImage = useSelector((state: any) => state.app.bgImage);
   const bgImage3d = useSelector((state: any) => state.app.bgImage3d);
+  const videoBgEnabled = useSelector((state: any) => state.app.videoBgEnabled);
+  const videoBgSource = useSelector((state: any) => state.app.videoBgSource);
   const desktopVisualMode = useSelector(
     (state: any) =>
       state.settings.desktopVisualMode ||
@@ -26,10 +38,17 @@ export function Layout() {
 
   const location = useSelector((state: any) => state.session.location);
 
-  const activeBg =
-    desktopVisualMode === "3d"
-      ? bgImage3d || bgImage || defaultBG
-      : bgImage || defaultBG;
+  const is3d = desktopVisualMode === "3d";
+  const activeBg = is3d
+    ? normalizeImageBg(bgImage3d || bgImage)
+    : normalizeImageBg(bgImage);
+
+  // Global YouTube webview (2D launchpad only) — independent of space wallpaper
+  const showVideoBg =
+    !is3d &&
+    location === "launchpad" &&
+    videoBgEnabled &&
+    isYoutubeBackground(videoBgSource);
 
   useEffect(() => {
     if(location !== "launchpad"){
@@ -39,37 +58,44 @@ export function Layout() {
       dispatch(appActions.setBgImage3d({
         bgImage3d: defaultBG
       }));
+      // Video player stays enabled in state but is not rendered off launchpad
       return;
     }
 
-    WorkspaceRepository.get(workspace.id).then((workspace: any) => {
+    if (!workspace?.id) return;
 
-      if(workspace == null || workspace.bgImage == null || workspace.bgImage === undefined || workspace.bgImage === ""){
+    WorkspaceRepository.get(workspace.id).then((ws: any) => {
+      const rawBg = ws?.bgImage;
+      // Migrate any legacy youtube wallpaper off the space into the global player
+      if (isYoutubeBackground(rawBg)) {
+        dispatch(appActions.enableVideoBg({ source: rawBg }));
+        WorkspaceRepository.updateBackgroundImage(workspace.id, defaultBG).catch(() => {});
+        dispatch(appActions.setBgImage({ bgImage: defaultBG }));
+      } else if (rawBg == null || rawBg === undefined || rawBg === "") {
         dispatch(appActions.setBgImage({
           bgImage: defaultBG
         }));
       } else {
         dispatch(appActions.setBgImage({
-          bgImage: workspace.bgImage
+          bgImage: rawBg
         }));
       }
 
-      if (
-        workspace == null ||
-        workspace.bgImage3d == null ||
-        workspace.bgImage3d === undefined ||
-        workspace.bgImage3d === ""
+      const rawBg3d = ws?.bgImage3d;
+      if (isYoutubeBackground(rawBg3d)) {
+        WorkspaceRepository.updateBackgroundImage3d(workspace.id, defaultBG).catch(() => {});
+        dispatch(appActions.setBgImage3d({ bgImage3d: defaultBG }));
+      } else if (
+        rawBg3d == null ||
+        rawBg3d === undefined ||
+        rawBg3d === ""
       ) {
-        // Fall back to 2D wallpaper until a dedicated 3D image is set
         dispatch(appActions.setBgImage3d({
-          bgImage3d:
-            workspace?.bgImage && workspace.bgImage !== ""
-              ? workspace.bgImage
-              : defaultBG,
+          bgImage3d: normalizeImageBg(rawBg),
         }));
       } else {
         dispatch(appActions.setBgImage3d({
-          bgImage3d: workspace.bgImage3d
+          bgImage3d: rawBg3d
         }));
       }
     }).catch((error) => {
@@ -81,7 +107,7 @@ export function Layout() {
       }));
     });
 
-  }, [location, workspace, dispatch]);
+  }, [location, workspace?.id, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleKeyDown(e: any){
     if(e.key === "Tab"){
@@ -121,9 +147,17 @@ export function Layout() {
       onContextMenu={(e) => onContextMenu(e)}
       onKeyDown={(e) => handleKeyDown(e)}
     >
-      <div className="bg-image" style={{ backgroundImage: activeBg ? `url(${activeBg})` : 'none' }}  onKeyDown={(e) => handleKeyDown(e)}>
-        {" "}
-      </div>
+      {showVideoBg ? (
+        <VideoBackground source={videoBgSource} />
+      ) : (
+        <div
+          className="bg-image"
+          style={{ backgroundImage: activeBg ? `url(${activeBg})` : 'none' }}
+          onKeyDown={(e) => handleKeyDown(e)}
+        >
+          {" "}
+        </div>
+      )}
       <div id="wrapper"  onKeyDown={(e) => handleKeyDown(e)}>
         {}
         <div id="content-wrapper" className="d-flex flex-column"  onKeyDown={(e) => handleKeyDown(e)}>

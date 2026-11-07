@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import isElectron from 'is-electron';
 import { v4 as uuidv4 } from 'uuid';
@@ -89,6 +89,27 @@ function VerticalTabBar(){
     const [hoveredTabId, setHoveredTabId] = useState<string | null>(null);
     const [hoveredTabScreenshot, setHoveredTabScreenshot] = useState<string | null>(null);
     const [previewPosition, setPreviewPosition] = useState({ top: 0, left: 0 });
+    const showSidebarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const SHOW_SIDEBAR_HOVER_DELAY_MS = 150;
+
+    function clearShowSidebarTimer() {
+      if (showSidebarTimerRef.current) {
+        clearTimeout(showSidebarTimerRef.current);
+        showSidebarTimerRef.current = null;
+      }
+    }
+
+    function scheduleShowSidebar() {
+      clearShowSidebarTimer();
+      showSidebarTimerRef.current = setTimeout(() => {
+        showSidebarTimerRef.current = null;
+        dispatch(windowActions.showSideBar({}));
+      }, SHOW_SIDEBAR_HOVER_DELAY_MS);
+    }
+
+    useEffect(() => {
+      return () => clearShowSidebarTimer();
+    }, []);
 
     useEffect(() => {
       const container = document.getElementById("vertical-tab-bar");
@@ -569,7 +590,8 @@ function VerticalTabBar(){
           <div
             id="vertical-tab-bar-trigger"
             className="vertical-tab-bar-trigger-zone"
-            onMouseEnter={() => dispatch(windowActions.showSideBar({}))}
+            onMouseEnter={scheduleShowSidebar}
+            onMouseLeave={clearShowSidebarTimer}
             title="Show tabs"
           >
             <div className="vertical-tab-bar-trigger-indicator" />

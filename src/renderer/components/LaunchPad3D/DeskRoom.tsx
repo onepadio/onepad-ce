@@ -8,10 +8,10 @@ import {
   ARENA_FLOOR_Y,
   DESK_FRAME_BORDER,
   DESK_FRAME_RADIUS,
+  DESK_SCREEN_H,
   DESK_SCREEN_PLATE_H,
   DESK_SCREEN_PLATE_W,
-  SCENE_SCREEN_H,
-  SCENE_SCREEN_W,
+  DESK_SCREEN_W,
   SCENE_SCREEN_Y,
   getDeskArenaRadius,
   getDeskScreenSlots,
@@ -151,7 +151,7 @@ function DeskRoom({
 
   const frameMetrics = useMemo(() => {
     const scale =
-      Math.min(SCENE_SCREEN_W / 2.4, SCENE_SCREEN_H / 1.5) * 0.98;
+      Math.min(DESK_SCREEN_W / 2.4, DESK_SCREEN_H / 1.5) * 0.98;
     // Opening == plate size used by CardMesh + WebViewProjector (flush fit).
     const contentW = DESK_SCREEN_PLATE_W * scale;
     const contentH = DESK_SCREEN_PLATE_H * scale;

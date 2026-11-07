@@ -3,14 +3,55 @@
     bottom: 12px;
     right: 4px;
     z-index: 108;
-
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .desktopMenu.chat-assistant-open {
     right: calc(40% + 4px); /* 400px chat width + 4px original right margin */
 }
 
-.desktopMenu button{
+.desktopMenu > button{
     background-color: transparent;
     border: none;
+}
+
+.desktop-bg-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: rgba(12, 14, 20, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+}
+
+.desktop-bg-mode-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-weight: 560;
+    letter-spacing: 0.02em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.desktop-bg-mode-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-bg-mode-btn.active {
+    color: #0d1118;
+    background: rgba(255, 255, 255, 0.92);
 }
