@@ -1,77 +1,56 @@
 /**
- * Bundled Poly Haven CC0 experience assets (see assets/experiences/CREDITS.md).
+ * Experience assets live on DigitalOcean Spaces CDN and are downloaded into
+ * Electron userData on first use (see main/experienceAssets.ts).
+ * Values are paths relative to:
+ *   https://onepad.lon1.cdn.digitaloceanspaces.com/assets/experiences/
+ * (same layout as src/renderer/assets/experiences/).
  */
-import metalOfficeDeskUrl from "../../../assets/experiences/shared/metal_office_desk/metal_office_desk.glb";
-import modernArmChairUrl from "../../../assets/experiences/shared/modern_arm_chair_01/modern_arm_chair_01.glb";
-import roundWoodenTableUrl from "../../../assets/experiences/shared/round_wooden_table_01/round_wooden_table_01.glb";
-import pottedPlantUrl from "../../../assets/experiences/shared/potted_plant_01/potted_plant_01.glb";
-import binderNotebookUrl from "../../../assets/experiences/shared/binder_notebook/binder_notebook.glb";
-import stationerySuppliesUrl from "../../../assets/experiences/shared/stationery_supplies/stationery_supplies.glb";
-import standingPictureFrameUrl from "../../../assets/experiences/shared/standing_picture_frame_01/standing_picture_frame_01.glb";
-import rock01Url from "../../../assets/experiences/desert-pyramids/rock_01/rock_01.glb";
-import boulder01Url from "../../../assets/experiences/desert-pyramids/boulder_01/boulder_01.glb";
-import blenderDesertPyramidsUrl from "../../../assets/experiences/desert-pyramids/blender_pyramids/desert_pyramids.glb";
-import rockMossUrl from "../../../assets/experiences/mountain-lodge/rock_moss_set_01/rock_moss_set_01.glb";
-import steelShelvesUrl from "../../../assets/experiences/library-hall/steel_frame_shelves_01/steel_frame_shelves_01.glb";
-import woodShelvesUrl from "../../../assets/experiences/library-hall/wooden_display_shelves_01/wooden_display_shelves_01.glb";
-import woodenBookshelfWornUrl from "../../../assets/experiences/library-hall/wooden_bookshelf_worn/wooden_bookshelf_worn.glb";
-import bookEncyclopediaUrl from "../../../assets/experiences/library-hall/book_encyclopedia_set_01/book_encyclopedia_set_01.glb";
-import sketchfabLibraryUrl from "../../../assets/experiences/library-hall/sketchfab_library/library.glb";
-import blenderOfficeUrl from "../../../assets/experiences/office-tower/blender_office/office_interior.glb";
-import blenderVictorianStudyUrl from "../../../assets/experiences/victorian-study/blender_study/victorian_study.glb";
 
-import desertHdriUrl from "../../../assets/experiences/hdris/desert_1k.hdr";
-import officeHdriUrl from "../../../assets/experiences/hdris/office_1k.hdr";
-import lodgeHdriUrl from "../../../assets/experiences/hdris/lodge_1k.hdr";
-import forestHdriUrl from "../../../assets/experiences/hdris/forest_1k.hdr";
-import indoorHdriUrl from "../../../assets/experiences/hdris/indoor_1k.hdr";
-import nightHdriUrl from "../../../assets/experiences/hdris/night_1k.hdr";
-import sunsetHdriUrl from "../../../assets/experiences/hdris/sunset_1k.hdr";
-import readingRoomHdriUrl from "../../../assets/experiences/hdris/reading_room_1k.hdr";
-import oldHallHdriUrl from "../../../assets/experiences/hdris/old_hall_1k.hdr";
-
-import woodFloorDiffUrl from "../../../assets/experiences/library-hall/textures/wood_floor/wood_floor_diff_1k.jpg";
-import woodFloorNorUrl from "../../../assets/experiences/library-hall/textures/wood_floor/wood_floor_nor_gl_1k.jpg";
-import woodFloorArmUrl from "../../../assets/experiences/library-hall/textures/wood_floor/wood_floor_arm_1k.jpg";
-import clayPlasterDiffUrl from "../../../assets/experiences/library-hall/textures/clay_plaster/clay_plaster_diff_1k.jpg";
-import clayPlasterNorUrl from "../../../assets/experiences/library-hall/textures/clay_plaster/clay_plaster_nor_gl_1k.jpg";
-import clayPlasterArmUrl from "../../../assets/experiences/library-hall/textures/clay_plaster/clay_plaster_arm_1k.jpg";
+export const EXPERIENCE_CDN_BASE =
+  "https://onepad.lon1.cdn.digitaloceanspaces.com/assets/experiences";
 
 export const EXPERIENCE_MODELS = {
-  metalOfficeDesk: metalOfficeDeskUrl,
-  modernArmChair: modernArmChairUrl,
-  roundWoodenTable: roundWoodenTableUrl,
-  pottedPlant: pottedPlantUrl,
-  binderNotebook: binderNotebookUrl,
-  stationerySupplies: stationerySuppliesUrl,
-  standingPictureFrame: standingPictureFrameUrl,
-  rock01: rock01Url,
-  boulder01: boulder01Url,
+  metalOfficeDesk: "shared/metal_office_desk/metal_office_desk.glb",
+  modernArmChair: "shared/modern_arm_chair_01/modern_arm_chair_01.glb",
+  roundWoodenTable: "shared/round_wooden_table_01/round_wooden_table_01.glb",
+  pottedPlant: "shared/potted_plant_01/potted_plant_01.glb",
+  binderNotebook: "shared/binder_notebook/binder_notebook.glb",
+  stationerySupplies: "shared/stationery_supplies/stationery_supplies.glb",
+  standingPictureFrame:
+    "shared/standing_picture_frame_01/standing_picture_frame_01.glb",
+  rock01: "desert-pyramids/rock_01/rock_01.glb",
+  boulder01: "desert-pyramids/boulder_01/boulder_01.glb",
   /** Blender desert plateau + Giza pyramids (Sketchfab + Poly Haven) */
-  blenderDesertPyramids: blenderDesertPyramidsUrl,
-  rockMoss: rockMossUrl,
-  steelShelves: steelShelvesUrl,
-  woodShelves: woodShelvesUrl,
-  woodenBookshelfWorn: woodenBookshelfWornUrl,
-  bookEncyclopedia: bookEncyclopediaUrl,
+  blenderDesertPyramids:
+    "desert-pyramids/blender_pyramids/desert_pyramids.glb",
+  rockMoss: "mountain-lodge/rock_moss_set_01/rock_moss_set_01.glb",
+  steelShelves: "library-hall/steel_frame_shelves_01/steel_frame_shelves_01.glb",
+  woodShelves:
+    "library-hall/wooden_display_shelves_01/wooden_display_shelves_01.glb",
+  woodenBookshelfWorn:
+    "library-hall/wooden_bookshelf_worn/wooden_bookshelf_worn.glb",
+  bookEncyclopedia:
+    "library-hall/book_encyclopedia_set_01/book_encyclopedia_set_01.glb",
   /** Sketchfab CC-BY “library” by Pasha — full hall interior */
-  sketchfabLibrary: sketchfabLibraryUrl,
+  sketchfabLibrary: "library-hall/sketchfab_library/library.glb",
   /** Blender-built modern open-plan office for Office Building */
-  blenderOffice: blenderOfficeUrl,
+  blenderOffice: "office-tower/blender_office/office_interior.glb",
   /** Blender Victorian study (Sketchfab props + Poly Haven floor/HDRI) */
-  blenderVictorianStudy: blenderVictorianStudyUrl,
+  blenderVictorianStudy: "victorian-study/blender_study/victorian_study.glb",
 } as const;
 
+export type ExperienceModelKey = keyof typeof EXPERIENCE_MODELS;
+
 export const EXPERIENCE_HDRIS = {
-  desert: desertHdriUrl,
-  office: officeHdriUrl,
-  lodge: lodgeHdriUrl,
-  forest: forestHdriUrl,
-  indoor: indoorHdriUrl,
-  night: nightHdriUrl,
-  sunset: sunsetHdriUrl,
-  readingRoom: readingRoomHdriUrl,
-  oldHall: oldHallHdriUrl,
+  desert: "hdris/desert_1k.hdr",
+  office: "hdris/office_1k.hdr",
+  lodge: "hdris/lodge_1k.hdr",
+  forest: "hdris/forest_1k.hdr",
+  indoor: "hdris/indoor_1k.hdr",
+  night: "hdris/night_1k.hdr",
+  sunset: "hdris/sunset_1k.hdr",
+  readingRoom: "hdris/reading_room_1k.hdr",
+  oldHall: "hdris/old_hall_1k.hdr",
 } as const;
 
 export type ExperienceHdriKey = keyof typeof EXPERIENCE_HDRIS;
@@ -79,13 +58,13 @@ export type ExperienceHdriKey = keyof typeof EXPERIENCE_HDRIS;
 /** Poly Haven CC0 PBR maps for Library Hall architecture */
 export const LIBRARY_TEXTURES = {
   woodFloor: {
-    map: woodFloorDiffUrl,
-    normalMap: woodFloorNorUrl,
-    armMap: woodFloorArmUrl,
+    map: "library-hall/textures/wood_floor/wood_floor_diff_1k.jpg",
+    normalMap: "library-hall/textures/wood_floor/wood_floor_nor_gl_1k.jpg",
+    armMap: "library-hall/textures/wood_floor/wood_floor_arm_1k.jpg",
   },
   clayPlaster: {
-    map: clayPlasterDiffUrl,
-    normalMap: clayPlasterNorUrl,
-    armMap: clayPlasterArmUrl,
+    map: "library-hall/textures/clay_plaster/clay_plaster_diff_1k.jpg",
+    normalMap: "library-hall/textures/clay_plaster/clay_plaster_nor_gl_1k.jpg",
+    armMap: "library-hall/textures/clay_plaster/clay_plaster_arm_1k.jpg",
   },
 } as const;

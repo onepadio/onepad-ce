@@ -4,6 +4,7 @@ import * as THREE from "three";
 
 import { ARENA_FLOOR_Y, getDeskArenaRadius } from "../layouts/roomScreens";
 import { EXPERIENCE_MODELS } from "./assetUrls";
+import { useExperienceAssetUrl } from "./useExperienceAsset";
 
 /**
  * Blender desert / Giza vista — sand plate ~r=45 with clear desk island ~r=12.
@@ -22,7 +23,8 @@ function findAnchor(root: THREE.Object3D): THREE.Object3D | null {
 }
 
 export default function DesertPyramidsInterior() {
-  const { scene } = useGLTF(EXPERIENCE_MODELS.blenderDesertPyramids);
+  const url = useExperienceAssetUrl(EXPERIENCE_MODELS.blenderDesertPyramids);
+  const { scene } = useGLTF(url);
   const radius = getDeskArenaRadius();
 
   const root = useMemo(() => {
@@ -73,5 +75,3 @@ export default function DesertPyramidsInterior() {
 
   return <primitive object={root} position={[0, ARENA_FLOOR_Y, 0]} />;
 }
-
-useGLTF.preload(EXPERIENCE_MODELS.blenderDesertPyramids);

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, dialog } from 'electron';
+import { app, BrowserWindow, shell, dialog, session } from 'electron';
 import * as path from 'path';
 import installer from 'electron-devtools-installer';
 
@@ -6,6 +6,7 @@ import MenuBuilder from './menu';
 import { getAssetPath, getPreloadPath, resolveHtmlPath } from './util';
 import AppUpdater from './updater';
 import ProfileManager from './controller/ProfileManager';
+import { registerExperienceAssetProtocolOnSession } from './experienceAssets';
 
 export default function createMainWindow(
   ww: number,
@@ -62,6 +63,10 @@ export default function createMainWindow(
       zoomFactor,
     },
   });
+  // Partitioned sessions need their own protocol handler (CDN CORS blocks renderer fetch).
+  const partitionKey =
+    profileManager.getActiveProfile()?.partition || 'persist:main';
+  registerExperienceAssetProtocolOnSession(session.fromPartition(partitionKey));
   console.log('win', win);
 
   while (win === undefined) {

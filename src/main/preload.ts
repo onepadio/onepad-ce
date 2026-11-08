@@ -50,6 +50,7 @@ const electronHandler = {
       'device-mode-changed',
       'pty-data',
       'pty-exit',
+      'experience-asset-progress',
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, callback);
@@ -62,6 +63,7 @@ const electronHandler = {
       'device-mode-changed',
       'pty-data',
       'pty-exit',
+      'experience-asset-progress',
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeListener(channel, callback);
@@ -136,6 +138,8 @@ const electronHandler = {
       'pty-kill',
       'pty-default-cwd',
       'pty-default-shell',
+      'ensure-experience-asset',
+      'ensure-experience-asset-pack',
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

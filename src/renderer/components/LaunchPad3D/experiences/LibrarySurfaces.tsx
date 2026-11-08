@@ -3,6 +3,7 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 import { LIBRARY_TEXTURES } from "./assetUrls";
+import { useExperienceAssetUrls } from "./useExperienceAsset";
 
 function configureMaps(
   map: THREE.Texture,
@@ -26,19 +27,35 @@ function configureMaps(
  * Shared PBR materials for library architecture (Poly Haven wood + plaster).
  */
 export function useLibraryMaterials() {
+  const [
+    woodMap,
+    woodNor,
+    woodArm,
+    plasterMap,
+    plasterNor,
+    plasterArm,
+  ] = useExperienceAssetUrls([
+    LIBRARY_TEXTURES.woodFloor.map,
+    LIBRARY_TEXTURES.woodFloor.normalMap,
+    LIBRARY_TEXTURES.woodFloor.armMap,
+    LIBRARY_TEXTURES.clayPlaster.map,
+    LIBRARY_TEXTURES.clayPlaster.normalMap,
+    LIBRARY_TEXTURES.clayPlaster.armMap,
+  ]);
+
   const wood = useTexture({
-    map: LIBRARY_TEXTURES.woodFloor.map,
-    normalMap: LIBRARY_TEXTURES.woodFloor.normalMap,
-    aoMap: LIBRARY_TEXTURES.woodFloor.armMap,
-    roughnessMap: LIBRARY_TEXTURES.woodFloor.armMap,
-    metalnessMap: LIBRARY_TEXTURES.woodFloor.armMap,
+    map: woodMap,
+    normalMap: woodNor,
+    aoMap: woodArm,
+    roughnessMap: woodArm,
+    metalnessMap: woodArm,
   });
   const plaster = useTexture({
-    map: LIBRARY_TEXTURES.clayPlaster.map,
-    normalMap: LIBRARY_TEXTURES.clayPlaster.normalMap,
-    aoMap: LIBRARY_TEXTURES.clayPlaster.armMap,
-    roughnessMap: LIBRARY_TEXTURES.clayPlaster.armMap,
-    metalnessMap: LIBRARY_TEXTURES.clayPlaster.armMap,
+    map: plasterMap,
+    normalMap: plasterNor,
+    aoMap: plasterArm,
+    roughnessMap: plasterArm,
+    metalnessMap: plasterArm,
   });
 
   useLayoutEffect(() => {

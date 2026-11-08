@@ -1,0 +1,102 @@
+.desktop-3d-download-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 14, 18, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.desktop-3d-download-card {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px 28px 24px;
+  border-radius: 14px;
+  background: linear-gradient(165deg, #1c222c 0%, #14181f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  color: #e8eaed;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.desktop-3d-download-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.desktop-3d-download-subtitle {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(232, 234, 237, 0.65);
+}
+
+.desktop-3d-download-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.desktop-3d-download-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5b8def, #7eb0ff);
+  transition: width 0.2s ease-out;
+}
+
+.desktop-3d-download-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(232, 234, 237, 0.55);
+}
+
+.desktop-3d-download-file {
+  margin-top: 14px;
+  font-size: 11px;
+  color: rgba(232, 234, 237, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.desktop-3d-download-error {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: #ff8e8e;
+  line-height: 1.4;
+}
+
+.desktop-3d-download-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.desktop-3d-download-actions button {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaed;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.desktop-3d-download-actions button.primary {
+  background: #3d6fd8;
+  border-color: transparent;
+}
+
+.desktop-3d-download-actions button:hover {
+  filter: brightness(1.08);
+}

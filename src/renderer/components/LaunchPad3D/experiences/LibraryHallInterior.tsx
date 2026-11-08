@@ -4,6 +4,7 @@ import * as THREE from "three";
 
 import { ARENA_FLOOR_Y, getDeskArenaRadius } from "../layouts/roomScreens";
 import { EXPERIENCE_MODELS } from "./assetUrls";
+import { useExperienceAssetUrl } from "./useExperienceAsset";
 
 /**
  * Sketchfab hall open floor is ~35–40% of the building footprint.
@@ -16,7 +17,8 @@ const OPEN_FLOOR_RATIO = 0.36;
  * central floor without clipping pillars or shelves.
  */
 export default function LibraryHallInterior() {
-  const { scene } = useGLTF(EXPERIENCE_MODELS.sketchfabLibrary);
+  const url = useExperienceAssetUrl(EXPERIENCE_MODELS.sketchfabLibrary);
+  const { scene } = useGLTF(url);
   const radius = getDeskArenaRadius();
 
   const root = useMemo(() => {
@@ -71,5 +73,3 @@ export default function LibraryHallInterior() {
 
   return <primitive object={root} position={[0, ARENA_FLOOR_Y, 0]} />;
 }
-
-useGLTF.preload(EXPERIENCE_MODELS.sketchfabLibrary);

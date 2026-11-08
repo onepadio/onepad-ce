@@ -29,6 +29,7 @@ import {
 } from 'electron';
 import util from 'electron-util';
 import { autoUpdater } from 'electron-updater';
+import { checkForAppUpdates } from './updater';
 import log from 'electron-log';
 import Store from 'electron-store';
 import { v4 as uuidv4 } from 'uuid';
@@ -70,8 +71,18 @@ import {
   isValidScreenshotDataUrl,
 } from './screenshotStore';
 import { setupMediaPermissions } from './mediaPermissions';
+import {
+  ensureExperienceAsset,
+  ensureExperienceAssetPack,
+  registerExperienceAssetProtocol,
+  registerExperienceAssetProtocolOnSession,
+  registerExperienceAssetScheme,
+} from './experienceAssets';
 
 const store = new Store();
+
+// Must run before app ready so onepad-asset:// can use fetch / Three loaders.
+registerExperienceAssetScheme();
 
 const windows: { [key: string]: any } = {};
 const mainWindows: { [key: string]: BrowserWindow } = {};
@@ -145,7 +156,7 @@ const dockMenu = Menu.buildFromTemplate([
   {
     label: 'Check For Updates',
     click() {
-      autoUpdater.checkForUpdates();
+      checkForAppUpdates();
     },
   },
 ]);
@@ -235,6 +246,7 @@ function switchSession() {
   if (sessions[partitionId] == null) {
     sessions[partitionId] = session.fromPartition(partitionId);
   }
+  registerExperienceAssetProtocolOnSession(sessions[partitionId]);
   setupMediaPermissions(sessions[partitionId]);
   sessionsWithMediaPermissions.add(partitionId);
   console.log(`Switching session to ${partitionId}`);
@@ -548,6 +560,8 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app
   .whenReady()
   .then(() => {
+    registerExperienceAssetProtocol();
+
     // Set up asset serving for production
     if (app.isPackaged) {
       const { session } = require('electron');
@@ -770,7 +784,7 @@ ipcMain.on(
         break;
       case 'check-for-updates':
         console.log('Checking for updates...');
-        autoUpdater.checkForUpdates();
+        checkForAppUpdates();
         break;
       case 'install-update':
         console.log('Installing update...');
@@ -1121,6 +1135,27 @@ ipcMain.handle('convert-to-png', async (event, data) => {
   const img = nativeImage.createFromDataURL(data);
   return img.toPNG();
 });
+
+/** Download (if needed) a 3D experience asset from CDN into userData cache. */
+ipcMain.handle(
+  'ensure-experience-asset',
+  async (_event, relativePath: string) => {
+    return ensureExperienceAsset(relativePath);
+  }
+);
+
+/** Download a pack of experience assets; emits experience-asset-progress. */
+ipcMain.handle(
+  'ensure-experience-asset-pack',
+  async (event, relativePaths: string[]) => {
+    if (!Array.isArray(relativePaths)) {
+      throw new Error('relativePaths must be an array');
+    }
+    return ensureExperienceAssetPack(relativePaths, (progress) => {
+      event.sender.send('experience-asset-progress', progress);
+    });
+  }
+);
 
 /** Fetch a remote image in main (bypasses renderer CSP connect-src + CORS). */
 ipcMain.handle('fetch-image-data-url', async (_event, url: string) => {

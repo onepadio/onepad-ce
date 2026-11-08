@@ -11,3 +11,7 @@ export type {
 } from "./types";
 export { EXPERIENCE_HDRIS, EXPERIENCE_MODELS } from "./assetUrls";
 export { preloadExperienceModels } from "./GltfProp";
+export {
+  ensureExperienceAssetUrl,
+  preloadExperienceAsset,
+} from "./useExperienceAsset";

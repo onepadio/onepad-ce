@@ -6,7 +6,7 @@ import {
   BrowserWindow,
   MenuItemConstructorOptions,
 } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { checkForAppUpdates } from './updater';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -104,7 +104,7 @@ export default class MenuBuilder {
         {
           label: 'Check for Updates',
           click: () => {
-            autoUpdater.checkForUpdates();
+            checkForAppUpdates();
           },
         },
         {
@@ -226,7 +226,7 @@ export default class MenuBuilder {
           {
             label: 'Check for Updates',
             click: () => {
-              autoUpdater.checkForUpdates();
+              checkForAppUpdates();
             },
           },
           {

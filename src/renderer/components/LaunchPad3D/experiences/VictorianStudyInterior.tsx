@@ -4,6 +4,7 @@ import * as THREE from "three";
 
 import { ARENA_FLOOR_Y, getDeskArenaRadius } from "../layouts/roomScreens";
 import { EXPERIENCE_MODELS } from "./assetUrls";
+import { useExperienceAssetUrl } from "./useExperienceAsset";
 
 /**
  * Blender Victorian study — design clear ~4.5 m to walls.
@@ -48,7 +49,8 @@ function findAnchor(root: THREE.Object3D): THREE.Object3D | null {
 }
 
 export default function VictorianStudyInterior() {
-  const { scene } = useGLTF(EXPERIENCE_MODELS.blenderVictorianStudy);
+  const url = useExperienceAssetUrl(EXPERIENCE_MODELS.blenderVictorianStudy);
+  const { scene } = useGLTF(url);
   const radius = getDeskArenaRadius();
 
   const root = useMemo(() => {
@@ -123,5 +125,3 @@ export default function VictorianStudyInterior() {
 
   return <primitive object={root} position={[0, ARENA_FLOOR_Y, 0]} />;
 }
-
-useGLTF.preload(EXPERIENCE_MODELS.blenderVictorianStudy);

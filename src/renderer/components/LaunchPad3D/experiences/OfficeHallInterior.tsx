@@ -4,6 +4,7 @@ import * as THREE from "three";
 
 import { ARENA_FLOOR_Y, getDeskArenaRadius } from "../layouts/roomScreens";
 import { EXPERIENCE_MODELS } from "./assetUrls";
+import { useExperienceAssetUrl } from "./useExperienceAsset";
 
 /**
  * Blender open-plan office — clear carpet ~r=11.5, columns ~r=15.2.
@@ -24,7 +25,8 @@ function findAnchor(root: THREE.Object3D): THREE.Object3D | null {
 }
 
 export default function OfficeHallInterior() {
-  const { scene } = useGLTF(EXPERIENCE_MODELS.blenderOffice);
+  const url = useExperienceAssetUrl(EXPERIENCE_MODELS.blenderOffice);
+  const { scene } = useGLTF(url);
   const radius = getDeskArenaRadius();
 
   const root = useMemo(() => {
@@ -71,5 +73,3 @@ export default function OfficeHallInterior() {
 
   return <primitive object={root} position={[0, ARENA_FLOOR_Y, 0]} />;
 }
-
-useGLTF.preload(EXPERIENCE_MODELS.blenderOffice);

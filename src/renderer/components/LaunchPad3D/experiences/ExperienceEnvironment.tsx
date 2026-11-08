@@ -4,6 +4,7 @@ import {
   EXPERIENCE_HDRIS,
   type ExperienceHdriKey,
 } from "./assetUrls";
+import { useExperienceAssetUrl } from "./useExperienceAsset";
 
 type ExperienceEnvironmentProps = {
   hdri: ExperienceHdriKey;
@@ -17,7 +18,7 @@ type ExperienceEnvironmentProps = {
 
 /**
  * Per-experience HDRI lighting (Poly Haven CC0 1K).
- * Mount inside a Suspense boundary.
+ * Downloads the HDR on first use. Mount inside a Suspense boundary.
  */
 export default function ExperienceEnvironment({
   hdri,
@@ -25,9 +26,10 @@ export default function ExperienceEnvironment({
   blur = 0.35,
   environmentIntensity = 1,
 }: ExperienceEnvironmentProps) {
+  const files = useExperienceAssetUrl(EXPERIENCE_HDRIS[hdri]);
   return (
     <Environment
-      files={EXPERIENCE_HDRIS[hdri]}
+      files={files}
       background={background}
       blur={blur}
       environmentIntensity={environmentIntensity}

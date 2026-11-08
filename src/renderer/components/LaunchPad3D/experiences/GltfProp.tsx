@@ -2,9 +2,15 @@ import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
+import {
+  ensureExperienceAssetUrl,
+  useExperienceAssetUrl,
+} from "./useExperienceAsset";
+
 type FitMode = "max" | "width" | "height" | "depth";
 
 type GltfPropProps = {
+  /** Relative CDN path (EXPERIENCE_MODELS.*) or already-resolved URL */
   url: string;
   position?: [number, number, number];
   rotation?: [number, number, number];
@@ -20,8 +26,8 @@ type GltfPropProps = {
 };
 
 /**
- * Load a GLB, optionally normalize size, and render a cloned scene.
- * Safe to mount multiple instances of the same url (drei caches).
+ * Load a GLB (downloaded on demand), optionally normalize size, and render
+ * a cloned scene. Safe to mount multiple instances of the same url (drei caches).
  */
 export default function GltfProp({
   url,
@@ -34,7 +40,8 @@ export default function GltfProp({
   castShadow = true,
   receiveShadow = true,
 }: GltfPropProps) {
-  const { scene } = useGLTF(url);
+  const resolvedUrl = useExperienceAssetUrl(url);
+  const { scene } = useGLTF(resolvedUrl);
 
   const root = useMemo(() => {
     const cloned = scene.clone(true);
@@ -99,7 +106,11 @@ export default function GltfProp({
   );
 }
 
-/** Preload helpers for warm scene switches */
+/** Warm disk cache + drei loader for upcoming scene switches */
 export function preloadExperienceModels(urls: string[]) {
-  urls.forEach((u) => useGLTF.preload(u));
+  urls.forEach((u) => {
+    void ensureExperienceAssetUrl(u).then((resolved) => {
+      useGLTF.preload(resolved);
+    });
+  });
 }

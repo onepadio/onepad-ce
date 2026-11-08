@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import clsx from "clsx";
 
 import { listExperiences } from "./experiences/registry";
-import { persistDesktop3dExperienceForWorkspace } from "../../util/desktop3dExperience";
 import type { Desktop3dExperienceId } from "./experiences/types";
 
 import "./Desktop3DExperiencePicker.css";
@@ -11,6 +10,8 @@ import "./Desktop3DExperiencePicker.css";
 interface Desktop3DExperiencePickerProps {
   open: boolean;
   onClose: () => void;
+  /** Download assets for the chosen world, then persist */
+  onRequestDownload: (experienceId: Desktop3dExperienceId) => void;
 }
 
 /**
@@ -19,12 +20,9 @@ interface Desktop3DExperiencePickerProps {
 function Desktop3DExperiencePicker({
   open,
   onClose,
+  onRequestDownload,
 }: Desktop3DExperiencePickerProps) {
-  const dispatch = useDispatch();
   const panelRef = useRef<HTMLDivElement>(null);
-  const selectedWorkspace = useSelector(
-    (state: any) => state.workspace.selectedWorkspace
-  );
   const experienceId = useSelector(
     (state: any) => state.settings.desktop3dExperience || "control-room"
   );
@@ -85,12 +83,11 @@ function Desktop3DExperiencePicker({
                 aria-current={active ? "true" : undefined}
                 onClick={() => {
                   if (!exp.available) return;
-                  void persistDesktop3dExperienceForWorkspace(
-                    dispatch,
-                    selectedWorkspace,
-                    exp.id as Desktop3dExperienceId
-                  );
-                  onClose();
+                  if (exp.id === experienceId) {
+                    onClose();
+                    return;
+                  }
+                  onRequestDownload(exp.id as Desktop3dExperienceId);
                 }}
               >
                 <span className="desktop-3d-experience-picker-item-label">
