@@ -69,6 +69,9 @@ function TabSwitcher3D({
   );
   const desktop = useSelector((state: any) => state.workspace.selectedDesktop);
   const layout = useSelector(selectDesktop3dLayout);
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
   const screenShotStatusVersion = useSelector(
     (state: any) => state.app.screenShotStatusVersion
   );
@@ -273,7 +276,7 @@ function TabSwitcher3D({
       >
         <div className="tab-switcher-3d-inner">
           <div className="tab-switcher-3d-toolbar">
-            <Desktop3DChrome compact />
+            {is3dExperienceEnabled ? <Desktop3DChrome compact /> : null}
             {scope === "app" && (
               <button
                 type="button"

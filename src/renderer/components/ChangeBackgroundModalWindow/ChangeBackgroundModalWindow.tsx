@@ -24,7 +24,10 @@ function ChangeBackgroundModalWindow(props: any) {
       state.settings.launchpadVisualMode ||
       "2d"
   );
-  const is3d = desktopVisualMode === "3d";
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+  const is3d = desktopVisualMode === "3d" && is3dExperienceEnabled;
   const [bgImage, setBgImage] = useState("");
 
   const isChangeBackgroundModalOpen = useSelector(

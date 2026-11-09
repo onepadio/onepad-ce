@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { appActions } from "../../store/app-slice";
 import { modalActions } from "../../store/modal-slice";
 import { settingsActions } from "../../store/settings-slice";
 
@@ -27,6 +28,7 @@ import {
 import "./SettingsCanvas.css";
 import { Route } from "react-router-dom";
 import { sessionActions } from "../../store/session-slice";
+import { evictExperienceGpuCache } from "../LaunchPad3D/experiences/evictExperienceGpuCache";
 
 function SettingsCanvas() {
   const dispatch = useDispatch();
@@ -120,6 +122,18 @@ function SettingsCanvas() {
       "2d"
   );
 
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+
+  const isVideoMusicDesktopModesEnabled = useSelector(
+    (state: any) => !!state.settings.isVideoMusicDesktopModesEnabled
+  );
+
+  const desktop3dExperience = useSelector(
+    (state: any) => state.settings.desktop3dExperience || "control-room"
+  );
+
   const desktop3dLayout = useSelector(
     (state: any) =>
       state.settings.desktop3dLayout ||
@@ -195,6 +209,19 @@ function SettingsCanvas() {
           if (settings.isKeepActiveWindowTabsAwake !== undefined) {
             dispatch(settingsActions.setKeepActiveWindowTabsAwake(settings.isKeepActiveWindowTabsAwake));
           }
+          // Enable experimental 3D before restoring visual mode so 3d is allowed
+          if (settings.is3dExperienceEnabled !== undefined) {
+            dispatch(
+              settingsActions.set3dExperienceEnabled(settings.is3dExperienceEnabled)
+            );
+          }
+          if (settings.isVideoMusicDesktopModesEnabled !== undefined) {
+            dispatch(
+              settingsActions.setVideoMusicDesktopModesEnabled(
+                settings.isVideoMusicDesktopModesEnabled
+              )
+            );
+          }
           if (settings.desktopVisualMode !== undefined) {
             dispatch(settingsActions.setDesktopVisualMode(settings.desktopVisualMode));
           } else if (settings.launchpadVisualMode !== undefined) {
@@ -232,6 +259,8 @@ function SettingsCanvas() {
           isAdvancedBackgroundEnabled,
           isExternalWindowMode,
           isDeveloperMode,
+          is3dExperienceEnabled,
+          isVideoMusicDesktopModesEnabled,
           isTabGroupsEnabled,
           isSpaceOSEnabled,
           isSleepingTabsEnabled,
@@ -258,6 +287,8 @@ function SettingsCanvas() {
     isAdvancedBackgroundEnabled,
     isExternalWindowMode,
     isDeveloperMode,
+    is3dExperienceEnabled,
+    isVideoMusicDesktopModesEnabled,
     isTabGroupsEnabled,
     isSpaceOSEnabled,
     isSleepingTabsEnabled,
@@ -310,40 +341,6 @@ function SettingsCanvas() {
               </Row>
             </FormGroup>
 
-            <ListGroup
-              horizontal
-              className="open-windows mt-3 justify-content-start"
-            >
-              <ListGroupItem className="d-flex container">
-                <h6 className="mt-2">Desktop View</h6>
-              </ListGroupItem>
-            </ListGroup>
-            <FormGroup switch>
-              <Row>
-                <Col md={9}>
-                  <Label className="ml-1 mt-2 mb-2" check>
-                    Use 3D Desktop (apps & tab switchers)
-                  </Label>
-                </Col>
-                <Col className="container">
-                  <div className="d-flex justify-content-end">
-                    <Input
-                      type="switch"
-                      className="m-2"
-                      checked={desktopVisualMode === "3d"}
-                      onChange={() => {
-                        const next =
-                          desktopVisualMode === "3d" ? "2d" : "3d";
-                        dispatch(settingsActions.setDesktopVisualMode(next));
-                        if (next === "3d") {
-                          dispatch(settingsActions.setDesktop3dLayout("scene"));
-                        }
-                      }}
-                    />
-                  </div>
-                </Col>
-              </Row>
-            </FormGroup>
             <ListGroup
               horizontal
               className="open-windows mt-3 justify-content-start"
@@ -537,6 +534,68 @@ function SettingsCanvas() {
                 </FormGroup>
               </>
             )}
+            <ListGroup
+              horizontal
+              className="open-windows mt-3 justify-content-start"
+            >
+              <ListGroupItem className="d-flex container">
+                <h6 className="mt-2">Experimental</h6>
+              </ListGroupItem>
+            </ListGroup>
+            <FormGroup switch>
+              <Row>
+                <Col md={9}>
+                  <Label className="ml-1 mt-2 mb-2" check>
+                    3D Experience
+                  </Label>
+                  <div className="ml-1 text-muted" style={{ fontSize: 12 }}>
+                    Show the 2D/3D desktop switcher. Worlds download on demand.
+                  </div>
+                </Col>
+                <Col className="container">
+                  <div className="d-flex justify-content-end">
+                    <Input
+                      type="switch"
+                      className="m-2"
+                      checked={is3dExperienceEnabled}
+                      onChange={() => {
+                        if (is3dExperienceEnabled && desktopVisualMode === "3d") {
+                          evictExperienceGpuCache(desktop3dExperience);
+                        }
+                        dispatch(settingsActions.toggle3dExperience());
+                      }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </FormGroup>
+            <FormGroup switch>
+              <Row>
+                <Col md={9}>
+                  <Label className="ml-1 mt-2 mb-2" check>
+                    Video & Music Desktop Modes
+                  </Label>
+                  <div className="ml-1 text-muted" style={{ fontSize: 12 }}>
+                    Show video and music background controls on the desktop.
+                  </div>
+                </Col>
+                <Col className="container">
+                  <div className="d-flex justify-content-end">
+                    <Input
+                      type="switch"
+                      className="m-2"
+                      checked={isVideoMusicDesktopModesEnabled}
+                      onChange={() => {
+                        if (isVideoMusicDesktopModesEnabled) {
+                          dispatch(appActions.disableVideoBg());
+                        }
+                        dispatch(settingsActions.toggleVideoMusicDesktopModes());
+                      }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </FormGroup>
             <ListGroup
               horizontal
               className="open-windows mt-3 justify-content-start"

@@ -60,7 +60,11 @@ function Desktop(props) {
       state.settings.launchpadVisualMode ||
       "2d"
   );
-  const is3dDesktop = desktopVisualMode === "3d";
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+  const is3dDesktop =
+    desktopVisualMode === "3d" && is3dExperienceEnabled;
   const isSelectedDesktop = desktop?.id === props.id;
   const activeTabId = useSelector((state: any) => state.session.activeTabId);
   const items = useSelector((state: any) => state.workspace.items);
@@ -658,8 +662,10 @@ function Desktop(props) {
           <DesktopMenu />
           <VideoBackgroundControls />
           <div className={`desktop-top-controls d-flex align-items-center ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
-            <Desktop3DChrome showLayoutControls={false} />
-            
+            {is3dExperienceEnabled ? (
+              <Desktop3DChrome showLayoutControls={false} />
+            ) : null}
+
             <Button
               color="dark"
               onClick={() => dispatch(aiAppsActions.toggle("ai"))}

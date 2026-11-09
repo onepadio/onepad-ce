@@ -21,6 +21,7 @@ import DeskRoom, { DESK_ROOM } from "./DeskRoom";
 import MonitorBank from "./MonitorBank";
 import WebViewProjector from "./WebViewProjector";
 import { getExperience } from "./experiences/registry";
+import ExperienceReadyReporter from "./experiences/ExperienceReadyReporter";
 import {
   computeCardPose,
   getCameraTargetForLayout,
@@ -2263,6 +2264,10 @@ function LaunchPad3DStage({
           gl.toneMappingExposure = roomScene ? 1.05 : 1;
         }}
       >
+        <ExperienceReadyReporter
+          experienceId={experienceId || "control-room"}
+          enabled={sceneActive}
+        />
         <SceneContent
           cards={cards}
           layout={layout}

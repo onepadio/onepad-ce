@@ -16,10 +16,6 @@ import OverviewTabSwitcher from "../LaunchPad3D/OverviewTabSwitcher";
 import ScreenOpacitySlider from "../LaunchPad3D/ScreenOpacitySlider";
 import Desktop3DSearchOverlay from "../LaunchPad3D/Desktop3DSearchOverlay";
 import { getExperience } from "../LaunchPad3D/experiences/registry";
-import {
-  EXPERIENCE_MODELS,
-  preloadExperienceModels,
-} from "../LaunchPad3D/experiences";
 import { aiAppsActions } from "renderer/store/ai-slice";
 import { modalActions } from "../../store/modal-slice";
 import { storeActions } from "../../store/store-slice";
@@ -27,8 +23,6 @@ import { isDesktop3dOverlayWindow } from "../../util/sharedApps";
 
 import "./Desktop.css";
 import "../LaunchPad3D/LaunchPad3D.css";
-
-const SHARED_MODEL_URLS = Object.values(EXPERIENCE_MODELS);
 
 interface Desktop3DProps {
   id: string;
@@ -55,6 +49,9 @@ function Desktop3D({
   const isAIAssistantOpen = useSelector((state: any) => state.ai.isOpen || false);
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
+  );
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
   );
   const experienceIdFromSettings = useSelector(
     (state: any) => state.settings.desktop3dExperience || "control-room"
@@ -92,11 +89,6 @@ function Desktop3D({
     if (!clearZoomToken) return;
     setLocalClearZoomToken(clearZoomToken);
   }, [clearZoomToken]);
-
-  useEffect(() => {
-    if (!sceneActive) return;
-    preloadExperienceModels(SHARED_MODEL_URLS);
-  }, [sceneActive]);
 
   useEffect(() => {
     if (!sceneActive) return;
@@ -154,12 +146,14 @@ function Desktop3D({
             isAIAssistantOpen ? "chat-assistant-open" : ""
           }`}
         >
-          <Desktop3DChrome
-            showLayoutControls={false}
-            showExperienceSetup
-            exploreMode={exploreMode}
-            onExploreModeChange={setExploreMode}
-          />
+          {is3dExperienceEnabled ? (
+            <Desktop3DChrome
+              showLayoutControls={false}
+              showExperienceSetup
+              exploreMode={exploreMode}
+              onExploreModeChange={setExploreMode}
+            />
+          ) : null}
           <Button
             color="dark"
             onClick={() => dispatch(aiAppsActions.toggle("ai"))}

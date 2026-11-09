@@ -14,6 +14,23 @@ export type ExperienceAssetProgress = {
 
 type ProgressCb = (progress: ExperienceAssetProgress) => void;
 
+/** True when this world's pack is already on disk (no CDN fetch needed). */
+export async function isExperiencePackCached(
+  experienceId: string
+): Promise<boolean> {
+  const paths = getExperienceAssetPack(experienceId);
+  if (paths.length === 0) return true;
+  const api = (window as any).electronAPI;
+  if (!api?.invoke) return false;
+  try {
+    return Boolean(
+      await api.invoke("is-experience-asset-pack-cached", paths)
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Download (or verify cache for) every asset needed by an experience.
  * Emits progress via IPC from main; no-ops to resolve immediately if empty pack.

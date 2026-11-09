@@ -151,6 +151,20 @@ async function isCached(relativePath: string): Promise<boolean> {
   }
 }
 
+/** True when every relative path is already on disk (no network needed). */
+export async function isExperienceAssetPackCached(
+  relativePaths: string[]
+): Promise<boolean> {
+  if (!Array.isArray(relativePaths) || relativePaths.length === 0) {
+    return true;
+  }
+  for (const p of relativePaths) {
+    const safe = sanitizeExperienceRelativePath(p);
+    if (!(await isCached(safe))) return false;
+  }
+  return true;
+}
+
 /**
  * Binary-safe download via Node https/http (avoids Electron net.fetch
  * mangling bodies when Spaces Content-Type is text/plain).

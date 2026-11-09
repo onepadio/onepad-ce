@@ -12,6 +12,10 @@ const settingsSlice = createSlice({
     isExternalWindowMode: false,
     isDesktopStickyMode: false,
     isDeveloperMode: false,
+    /** Experimental: show 2D/3D Desktop chrome and allow 3D Experience */
+    is3dExperienceEnabled: false,
+    /** Experimental: show video and music desktop background modes */
+    isVideoMusicDesktopModesEnabled: false,
     isSharedAppsEnabled: true,
     isSpaceBrowserEnabled: true,
     isTabGroupsEnabled: true,
@@ -97,6 +101,24 @@ const settingsSlice = createSlice({
     setDeveloperMode(state, action) {
       state.isDeveloperMode = action.payload;
     },
+    toggle3dExperience(state) {
+      state.is3dExperienceEnabled = !state.is3dExperienceEnabled;
+      if (!state.is3dExperienceEnabled) {
+        state.desktopVisualMode = "2d";
+      }
+    },
+    set3dExperienceEnabled(state, action) {
+      state.is3dExperienceEnabled = !!action.payload;
+      if (!state.is3dExperienceEnabled) {
+        state.desktopVisualMode = "2d";
+      }
+    },
+    toggleVideoMusicDesktopModes(state) {
+      state.isVideoMusicDesktopModesEnabled = !state.isVideoMusicDesktopModesEnabled;
+    },
+    setVideoMusicDesktopModesEnabled(state, action) {
+      state.isVideoMusicDesktopModesEnabled = !!action.payload;
+    },
     toggleSharedApps(state, action) {
       state.isSharedAppsEnabled = !state.isSharedAppsEnabled;
     },
@@ -137,11 +159,19 @@ const settingsSlice = createSlice({
       state.isKeepActiveWindowTabsAwake = action.payload;
     },
     setDesktopVisualMode(state, action) {
+      if (action.payload === "3d" && !state.is3dExperienceEnabled) {
+        state.desktopVisualMode = "2d";
+        return;
+      }
       state.desktopVisualMode = action.payload === "3d" ? "3d" : "2d";
     },
     toggleDesktopVisualMode(state) {
-      state.desktopVisualMode =
-        state.desktopVisualMode === "3d" ? "2d" : "3d";
+      if (state.desktopVisualMode === "3d") {
+        state.desktopVisualMode = "2d";
+        return;
+      }
+      if (!state.is3dExperienceEnabled) return;
+      state.desktopVisualMode = "3d";
     },
     setDesktop3dLayout(state, action) {
       const layout = action.payload;
@@ -210,11 +240,19 @@ const settingsSlice = createSlice({
     },
     // Back-compat aliases (older launchpad* naming)
     setLaunchpadVisualMode(state, action) {
+      if (action.payload === "3d" && !state.is3dExperienceEnabled) {
+        state.desktopVisualMode = "2d";
+        return;
+      }
       state.desktopVisualMode = action.payload === "3d" ? "3d" : "2d";
     },
     toggleLaunchpadVisualMode(state) {
-      state.desktopVisualMode =
-        state.desktopVisualMode === "3d" ? "2d" : "3d";
+      if (state.desktopVisualMode === "3d") {
+        state.desktopVisualMode = "2d";
+        return;
+      }
+      if (!state.is3dExperienceEnabled) return;
+      state.desktopVisualMode = "3d";
     },
     setLaunchpad3dLayout(state, action) {
       const layout = action.payload;

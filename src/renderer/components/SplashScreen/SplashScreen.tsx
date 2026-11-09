@@ -17,7 +17,11 @@ function SplashScreen(props: any) {
             state.settings.launchpadVisualMode ||
             "2d"
     );
-    const is3dDesktop = desktopVisualMode === "3d";
+    const is3dExperienceEnabled = useSelector(
+        (state: any) => !!state.settings.is3dExperienceEnabled
+    );
+    const is3dDesktop =
+        desktopVisualMode === "3d" && is3dExperienceEnabled;
 
     const isSharedAppsEnabled = useSelector((state: any) => state.settings.isSharedAppsEnabled);
 

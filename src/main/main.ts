@@ -74,6 +74,7 @@ import { setupMediaPermissions } from './mediaPermissions';
 import {
   ensureExperienceAsset,
   ensureExperienceAssetPack,
+  isExperienceAssetPackCached,
   registerExperienceAssetProtocol,
   registerExperienceAssetProtocolOnSession,
   registerExperienceAssetScheme,
@@ -1154,6 +1155,17 @@ ipcMain.handle(
     return ensureExperienceAssetPack(relativePaths, (progress) => {
       event.sender.send('experience-asset-progress', progress);
     });
+  }
+);
+
+/** Fast disk check — used to skip the prepare modal for warm worlds. */
+ipcMain.handle(
+  'is-experience-asset-pack-cached',
+  async (_event, relativePaths: string[]) => {
+    if (!Array.isArray(relativePaths)) {
+      throw new Error('relativePaths must be an array');
+    }
+    return isExperienceAssetPackCached(relativePaths);
   }
 );
 

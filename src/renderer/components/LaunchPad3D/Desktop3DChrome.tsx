@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import clsx from "clsx";
 
@@ -7,8 +7,14 @@ import { persistDesktop3dExperienceForWorkspace } from "../../util/desktop3dExpe
 import type { Desktop3dExperienceId } from "./experiences/types";
 import type { Launchpad3dLayoutId } from "./types";
 import Desktop3DExperiencePicker from "./Desktop3DExperiencePicker";
-import Desktop3DDownloadOverlay from "./Desktop3DDownloadOverlay";
+import Desktop3DDownloadOverlay, {
+  type Desktop3DGatePhase,
+} from "./Desktop3DDownloadOverlay";
 import { getExperience } from "./experiences/registry";
+import { getExperienceAssetPack } from "./experiences/experienceAssetPacks";
+import { isExperiencePackCached } from "./experiences/downloadExperiencePack";
+import { markExperienceAssetsResolved } from "./experiences/useExperienceAsset";
+import { evictExperienceGpuCache } from "./experiences/evictExperienceGpuCache";
 
 interface Desktop3DChromeProps {
   /** Compact strip for tab-switcher overlays */
@@ -22,9 +28,10 @@ interface Desktop3DChromeProps {
   onExploreModeChange?: (explore: boolean) => void;
 }
 
-type PendingDownload = {
+type PendingGate = {
   experienceId: string;
   purpose: "enter-3d" | "switch-world";
+  phase: Desktop3DGatePhase;
 };
 
 function selectDesktopVisualMode(state: any): "2d" | "3d" {
@@ -63,10 +70,11 @@ function Desktop3DChrome({
   );
   const experience = getExperience(experienceId);
   const [experienceOpen, setExperienceOpen] = useState(false);
-  const [pendingDownload, setPendingDownload] =
-    useState<PendingDownload | null>(null);
-  const pendingDownloadRef = useRef(pendingDownload);
-  pendingDownloadRef.current = pendingDownload;
+  const [pendingGate, setPendingGate] = useState<PendingGate | null>(null);
+  const pendingGateRef = useRef(pendingGate);
+  pendingGateRef.current = pendingGate;
+  const experienceIdRef = useRef(experienceId);
+  experienceIdRef.current = experienceId;
   const canExplore = experience.usesDeskRoom !== false;
 
   const layouts: { id: Launchpad3dLayoutId; label: string; title: string }[] = [
@@ -76,34 +84,87 @@ function Desktop3DChrome({
     { id: "scene", label: "Scene", title: "Control room 3D scene" },
   ];
 
+  const applyGateTarget = useCallback(
+    (pending: PendingGate) => {
+      // Free previous world's GPU/loader cache — disk pack stays for next open.
+      const prev = experienceIdRef.current;
+      if (prev && prev !== pending.experienceId) {
+        evictExperienceGpuCache(prev);
+      }
+
+      if (pending.purpose === "enter-3d") {
+        dispatch(settingsActions.setDesktopVisualMode("3d"));
+        dispatch(settingsActions.setDesktop3dLayout("scene"));
+        return;
+      }
+      void persistDesktop3dExperienceForWorkspace(
+        dispatch,
+        selectedWorkspace,
+        pending.experienceId as Desktop3dExperienceId
+      );
+    },
+    [dispatch, selectedWorkspace]
+  );
+
+  const requestExperience = useCallback(
+    async (id: string, purpose: PendingGate["purpose"]) => {
+      const cached = await isExperiencePackCached(id);
+      if (cached) {
+        // Already on disk — skip "Preparing", show Loading only.
+        markExperienceAssetsResolved(getExperienceAssetPack(id));
+        const gate: PendingGate = {
+          experienceId: id,
+          purpose,
+          phase: "loading",
+        };
+        setPendingGate(gate);
+        applyGateTarget(gate);
+        return;
+      }
+      setPendingGate({
+        experienceId: id,
+        purpose,
+        phase: "download",
+      });
+    },
+    [applyGateTarget]
+  );
+
   const onDownloadComplete = useCallback(() => {
-    const pending = pendingDownloadRef.current;
-    if (!pending) return;
-    const { experienceId: id, purpose } = pending;
-    setPendingDownload(null);
+    const pending = pendingGateRef.current;
+    if (!pending || pending.phase !== "download") return;
+    const next: PendingGate = { ...pending, phase: "loading" };
+    setPendingGate(next);
+    applyGateTarget(next);
+  }, [applyGateTarget]);
 
-    if (purpose === "enter-3d") {
-      dispatch(settingsActions.setDesktopVisualMode("3d"));
-      dispatch(settingsActions.setDesktop3dLayout("scene"));
-      return;
-    }
+  const onGateCancel = useCallback(() => {
+    setPendingGate(null);
+  }, []);
 
-    void persistDesktop3dExperienceForWorkspace(
-      dispatch,
-      selectedWorkspace,
-      id as Desktop3dExperienceId
-    );
-  }, [dispatch, selectedWorkspace]);
-
-  const onDownloadCancel = useCallback(() => {
-    setPendingDownload(null);
+  // Dismiss overlay once Canvas reports the experience finished loading.
+  useEffect(() => {
+    const onReady = (ev: Event) => {
+      const pending = pendingGateRef.current;
+      if (!pending || pending.phase !== "loading") return;
+      const detail = (ev as CustomEvent).detail || {};
+      if (
+        detail.experienceId &&
+        detail.experienceId !== pending.experienceId
+      ) {
+        return;
+      }
+      setPendingGate(null);
+    };
+    window.addEventListener("desktop3d-experience-ready", onReady);
+    return () =>
+      window.removeEventListener("desktop3d-experience-ready", onReady);
   }, []);
 
   return (
     <>
       <div
         className={clsx(
-          "d-none",
           "desktop-3d-chrome",
           compact && "desktop-3d-chrome-compact",
           className
@@ -161,10 +222,7 @@ function Desktop3DChrome({
               onClose={() => setExperienceOpen(false)}
               onRequestDownload={(id) => {
                 setExperienceOpen(false);
-                setPendingDownload({
-                  experienceId: id,
-                  purpose: "switch-world",
-                });
+                void requestExperience(id, "switch-world");
               }}
             />
           </div>
@@ -208,7 +266,12 @@ function Desktop3DChrome({
               "desktop-3d-chrome-btn",
               visualMode === "2d" && "active"
             )}
-            onClick={() => dispatch(settingsActions.setDesktopVisualMode("2d"))}
+            onClick={() => {
+              if (visualMode === "3d") {
+                evictExperienceGpuCache(experienceId);
+              }
+              dispatch(settingsActions.setDesktopVisualMode("2d"));
+            }}
             title="2D Desktop"
           >
             2D
@@ -221,10 +284,7 @@ function Desktop3DChrome({
             )}
             onClick={() => {
               if (visualMode === "3d") return;
-              setPendingDownload({
-                experienceId,
-                purpose: "enter-3d",
-              });
+              void requestExperience(experienceId, "enter-3d");
             }}
             title="3D Desktop"
           >
@@ -233,12 +293,13 @@ function Desktop3DChrome({
         </div>
       </div>
 
-      {pendingDownload ? (
+      {pendingGate ? (
         <Desktop3DDownloadOverlay
-          key={`${pendingDownload.purpose}:${pendingDownload.experienceId}`}
-          experienceId={pendingDownload.experienceId}
-          onComplete={onDownloadComplete}
-          onCancel={onDownloadCancel}
+          key={`${pendingGate.purpose}:${pendingGate.experienceId}:${pendingGate.phase}`}
+          experienceId={pendingGate.experienceId}
+          phase={pendingGate.phase}
+          onDownloadComplete={onDownloadComplete}
+          onCancel={onGateCancel}
         />
       ) : null}
     </>

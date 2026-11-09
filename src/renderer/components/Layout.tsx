@@ -33,12 +33,18 @@ export function Layout() {
       state.settings.launchpadVisualMode ||
       "2d"
   );
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+  const isVideoMusicDesktopModesEnabled = useSelector(
+    (state: any) => !!state.settings.isVideoMusicDesktopModesEnabled
+  );
 
   const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
 
   const location = useSelector((state: any) => state.session.location);
 
-  const is3d = desktopVisualMode === "3d";
+  const is3d = desktopVisualMode === "3d" && is3dExperienceEnabled;
   const activeBg = is3d
     ? normalizeImageBg(bgImage3d || bgImage)
     : normalizeImageBg(bgImage);
@@ -46,6 +52,7 @@ export function Layout() {
   // Global YouTube webview (2D launchpad only) — independent of space wallpaper
   const showVideoBg =
     !is3d &&
+    isVideoMusicDesktopModesEnabled &&
     location === "launchpad" &&
     videoBgEnabled &&
     isYoutubeBackground(videoBgSource);
@@ -68,7 +75,9 @@ export function Layout() {
       const rawBg = ws?.bgImage;
       // Migrate any legacy youtube wallpaper off the space into the global player
       if (isYoutubeBackground(rawBg)) {
-        dispatch(appActions.enableVideoBg({ source: rawBg }));
+        if (isVideoMusicDesktopModesEnabled) {
+          dispatch(appActions.enableVideoBg({ source: rawBg }));
+        }
         WorkspaceRepository.updateBackgroundImage(workspace.id, defaultBG).catch(() => {});
         dispatch(appActions.setBgImage({ bgImage: defaultBG }));
       } else if (rawBg == null || rawBg === undefined || rawBg === "") {

@@ -11,6 +11,8 @@ export interface UserSettings {
   isAdvancedBackgroundEnabled?: boolean;
   isExternalWindowMode?: boolean;
   isDeveloperMode?: boolean;
+  is3dExperienceEnabled?: boolean;
+  isVideoMusicDesktopModesEnabled?: boolean;
   isTabGroupsEnabled?: boolean;
   isSpaceOSEnabled?: boolean;
   isSleepingTabsEnabled?: boolean;

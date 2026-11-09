@@ -59,9 +59,15 @@ function DesktopMenu({
       state.settings.launchpadVisualMode ||
       "2d"
   );
-  const is3d = desktopVisualMode === "3d";
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+  const isVideoMusicDesktopModesEnabled = useSelector(
+    (state: any) => !!state.settings.isVideoMusicDesktopModesEnabled
+  );
+  const is3d = desktopVisualMode === "3d" && is3dExperienceEnabled;
   const bgMode: "image" | "video" | "music" =
-    !is3d && videoBgEnabled
+    !is3d && isVideoMusicDesktopModesEnabled && videoBgEnabled
       ? isYoutubeMusicSource(videoBgSource)
         ? "music"
         : "video"
@@ -215,11 +221,11 @@ function DesktopMenu({
 
   return (
     <div className={`desktopMenu ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}>
-      {is3d ? (
+      {is3d || !isVideoMusicDesktopModesEnabled ? (
         <Button
           color="dark"
           onClick={onImageModeClick}
-          title="Set 3D Background"
+          title={is3d ? "Set 3D Background" : "Change background image"}
         >
           <Image size={24} color="white" />
         </Button>

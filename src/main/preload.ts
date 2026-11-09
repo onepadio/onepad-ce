@@ -140,6 +140,7 @@ const electronHandler = {
       'pty-default-shell',
       'ensure-experience-asset',
       'ensure-experience-asset-pack',
+      'is-experience-asset-pack-cached',
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

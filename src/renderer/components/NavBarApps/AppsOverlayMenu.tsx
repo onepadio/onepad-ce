@@ -19,6 +19,7 @@ import {
 } from "../../builtin";
 import { isSharedAppWindow } from "../../util/sharedApps";
 import { OTHERS_BROWSER_CARD_ID } from "../LaunchPad3D/othersBrowser";
+import { evictExperienceGpuCache } from "../LaunchPad3D/experiences/evictExperienceGpuCache";
 
 import defaultIcon from "../../images/default_icon.png";
 
@@ -102,6 +103,12 @@ function AppsOverlayMenu({
       state.settings.desktopVisualMode ||
       state.settings.launchpadVisualMode ||
       "2d"
+  );
+  const is3dExperienceEnabled = useSelector(
+    (state: any) => !!state.settings.is3dExperienceEnabled
+  );
+  const desktop3dExperience = useSelector(
+    (state: any) => state.settings.desktop3dExperience || "control-room"
   );
   const desktop3dDeskWindowId = useSelector(
     (state: any) => state.windowService.desktop3dDeskWindowId || ""
@@ -231,7 +238,7 @@ function AppsOverlayMenu({
       document.body.removeChild(menu);
     });
 
-    const is3d = desktopVisualMode === "3d";
+    const is3d = desktopVisualMode === "3d" && is3dExperienceEnabled;
     const menu = document.createElement("div");
     menu.className = "apps-overlay-context-menu context-menu";
     menu.innerHTML = `
@@ -244,9 +251,13 @@ function AppsOverlayMenu({
         </svg>
         <span>${hideMode === 'auto-hide' ? 'Auto-Hide Off' : 'Auto-Hide On'}</span>
       </div>
-      <div class="context-menu-item toggle-visual-mode">
-        <span>${is3d ? 'Switch to 2D Desktop' : 'Switch to 3D Desktop'}</span>
-      </div>
+      ${
+        is3dExperienceEnabled
+          ? `<div class="context-menu-item toggle-visual-mode">
+        <span>${is3d ? "Switch to 2D Desktop" : "Switch to 3D Desktop"}</span>
+      </div>`
+          : ""
+      }
     `;
     
     menu.style.position = "fixed";
@@ -294,6 +305,7 @@ function AppsOverlayMenu({
 
     menu.querySelector(".toggle-visual-mode")?.addEventListener("click", () => {
       if (is3d) {
+        evictExperienceGpuCache(desktop3dExperience);
         dispatch(settingsActions.setDesktopVisualMode("2d"));
       } else {
         dispatch(settingsActions.setDesktopVisualMode("3d"));
@@ -416,7 +428,8 @@ function AppsOverlayMenu({
     }
   };
 
-  const is3dDesktop = desktopVisualMode === "3d";
+  const is3dDesktop =
+    desktopVisualMode === "3d" && is3dExperienceEnabled;
   const isDeskFrontApp = (appId: string) =>
     is3dDesktop &&
     !!desktop3dDeskWindowId &&

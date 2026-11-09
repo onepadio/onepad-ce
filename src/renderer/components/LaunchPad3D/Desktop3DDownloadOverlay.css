@@ -1,6 +1,7 @@
 .desktop-3d-download-overlay {
   position: fixed;
   inset: 0;
+  /* Above launchpad overlay (1500) / .launchpad (1998) — portaled to body */
   z-index: 10050;
   display: flex;
   align-items: center;
@@ -47,6 +48,11 @@
   border-radius: 999px;
   background: linear-gradient(90deg, #5b8def, #7eb0ff);
   transition: width 0.2s ease-out;
+}
+
+.desktop-3d-download-bar-fill.is-indeterminate {
+  transition: width 0.35s ease-in-out;
+  opacity: 0.9;
 }
 
 .desktop-3d-download-meta {
