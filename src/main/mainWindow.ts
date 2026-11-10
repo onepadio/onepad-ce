@@ -169,6 +169,16 @@ export default function createMainWindow(
   });
 
   win.webContents.on('before-input-event', async (event, input) => {
+    // App switcher: Ctrl/Meta release must reach renderer even when a webview has focus
+    if (
+      input.type === 'keyUp' &&
+      (input.key === 'Control' || input.key === 'Meta')
+    ) {
+      win?.webContents.send('fromMain', {
+        action: 'ctrl-key-released',
+      });
+    }
+
     // Enable kiosk mode with Shift+Ctrl+K
     if (input.key === 'K' && input.control && !input.meta && input.shift) {
       if (!isKiosk) {

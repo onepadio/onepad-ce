@@ -98,7 +98,7 @@ import SyncHub from "../../hubs/SyncHub";
 import CloudService from "../../hubs/CloudService";
 import SpacePad from "../../components/SpacePad/SpacePad";
 import CloudPad from "../../components/LaunchPadLocal/CloudPad";
-import SaasPad from "../../components/LaunchPadLocal/SaasPad";
+import AppSwitcher from "../../components/AppSwitcher";
 import FavouritesPad from "../../components/FavouritesPad/FavouritesPad";
 import CategoryPad from "../../components/CategoryPad/CategoryPad";
 import RunDockerContainerModal from "../../components/RunDockerContainerModal/RunDockerContainerModal";
@@ -206,8 +206,6 @@ function Home() {
   const isSpacePadOpen = useSelector((state) => state.modal.isSpacePadOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isCloudPadOpen = useSelector((state) => state.modal.isCloudPadOpen);
-  // @ts-expect-error TS(2571): Object is of type 'unknown'.
-  const isSaasPadOpen = useSelector((state) => state.modal.isSaasPadOpen);
   const isFavouritesPadOpen = useSelector((state: any) => state.modal.isFavouritesPadOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isCategoryPadOpen = useSelector((state) => state.modal.isCategoryPadOpen);
@@ -643,7 +641,7 @@ function Home() {
       isLaunchPadOpen ? <LaunchPadLocal name="pad1" data-interval="false" isInEditMode={false}/> : <></>
     }
 
-    <SaasPad />
+    <AppSwitcher />
 
     {
       isFavouritesPadOpen ? <FavouritesPad /> : <></>

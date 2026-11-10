@@ -419,7 +419,7 @@ function OPWebView(props: any) {
             });
           }
           
-          log.debug("Mouse position updated:", mouseData.x, mouseData.y);
+          // log.debug("Mouse position updated:", mouseData.x, mouseData.y);
         } catch (error) {
           log.error("Error parsing mouse move event:", error);
         }
@@ -561,7 +561,7 @@ function OPWebView(props: any) {
                 pageX: event.pageX,
                 pageY: event.pageY
               };
-              console.log(JSON.stringify(mouseData));
+              // console.log(JSON.stringify(mouseData));
             };
             
             const handleMouseMove = (event) => {

@@ -308,6 +308,20 @@ app.on('web-contents-created', (e, contents) => {
       `Main window contents process id: ${mainWindowContentsProcessId}`
     );
   }
+
+  // Forward Ctrl/Meta release from webviews so app switcher can commit selection
+  contents.on('before-input-event', (_event, input) => {
+    if (
+      input.type === 'keyUp' &&
+      (input.key === 'Control' || input.key === 'Meta') &&
+      mainWindow &&
+      !mainWindow.isDestroyed()
+    ) {
+      mainWindow.webContents.send('fromMain', {
+        action: 'ctrl-key-released',
+      });
+    }
+  });
   if (contents.getProcessId() === mainWindowContentsProcessId) {
     SPShortContextMenu(contents);
   } else {
@@ -626,39 +640,49 @@ app
       }
     }
 
-    // Register global keyboard shortcut for Ctrl+Tab (app switcher)
+    // Register global keyboard shortcut for Ctrl+Tab (app switcher).
+    // Use Control+Tab explicitly — CommandOrControl is Cmd on macOS, and
+    // Cmd+Tab is reserved by the OS so it never reaches the app.
     const registerAppSwitcherShortcut = () => {
-      // Unregister first in case it's already registered
+      globalShortcut.unregister('Control+Tab');
+      globalShortcut.unregister('Control+Shift+Tab');
       globalShortcut.unregister('CommandOrControl+Tab');
+      globalShortcut.unregister('CommandOrControl+Shift+Tab');
 
-      const ret = globalShortcut.register('CommandOrControl+Tab', () => {
-        // Send message to renderer to toggle SaasPad
+      const ret = globalShortcut.register('Control+Tab', () => {
+        console.log('[app-switcher] Control+Tab pressed, mainWindow=', !!mainWindow);
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('fromMain', {
             action: 'ctrl-tab-pressed',
           });
+        } else {
+          console.log('[app-switcher] mainWindow missing/destroyed, not sending');
         }
       });
 
-      if (!ret) {
-        console.log('Ctrl+Tab registration failed');
-      }
+      console.log('[app-switcher] Control+Tab registration:', ret ? 'ok' : 'FAILED');
+
+      const retShift = globalShortcut.register('Control+Shift+Tab', () => {
+        console.log('[app-switcher] Control+Shift+Tab pressed');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('fromMain', {
+            action: 'ctrl-shift-tab-pressed',
+          });
+        }
+      });
+
+      console.log(
+        '[app-switcher] Control+Shift+Tab registration:',
+        retShift ? 'ok' : 'FAILED'
+      );
     };
 
     // Register the shortcut after window is ready
     if (mainWindow) {
       registerAppSwitcherShortcut();
+    } else {
+      console.log('[app-switcher] mainWindow not ready, skipping shortcut register');
     }
-
-    // Also handle Shift+Ctrl+Tab for reverse cycling
-    globalShortcut.register('CommandOrControl+Shift+Tab', () => {
-      // Shift+Ctrl+Tab cycles backwards through apps
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('fromMain', {
-          action: 'ctrl-shift-tab-pressed',
-        });
-      }
-    });
 
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the

@@ -61,8 +61,8 @@ const modalSlice = createSlice({
     isRemoteTaskManagerOpen: false,
     isSpacePadOpen: false,
     isCloudPadOpen: false,
-    isSaasPadOpen: false,
-    saasPadSelectedIndex: 0,
+    isAppSwitcherOpen: false,
+    appSwitcherSelectedIndex: 0,
     isFavouritesPadOpen: false,
     isRunDockerModalOpen: false,
     isDockerTaskManagerOpen: false,
@@ -277,20 +277,20 @@ const modalSlice = createSlice({
     hideCloudPad(state, action) {
       state.isCloudPadOpen = false;
     },
-    toggleSaasPad(state, action) {
-      state.isSaasPadOpen = !state.isSaasPadOpen;
+    toggleAppSwitcher(state, action) {
+      state.isAppSwitcherOpen = !state.isAppSwitcherOpen;
     },
-    showSaasPad (state, action) {
-      state.isSaasPadOpen = true;
+    showAppSwitcher(state, action) {
+      state.isAppSwitcherOpen = true;
       // Reset selected index when opening
-      state.saasPadSelectedIndex = 0;
+      state.appSwitcherSelectedIndex = 0;
     },
-    hideSaasPad(state, action) {
-      state.isSaasPadOpen = false;
-      state.saasPadSelectedIndex = 0;
+    hideAppSwitcher(state, action) {
+      state.isAppSwitcherOpen = false;
+      state.appSwitcherSelectedIndex = 0;
     },
-    setSaasPadSelectedIndex(state, action) {
-      state.saasPadSelectedIndex = action.payload;
+    setAppSwitcherSelectedIndex(state, action) {
+      state.appSwitcherSelectedIndex = action.payload;
     },
     toggleFavouritesPad(state, action) {
       state.isFavouritesPadOpen = !state.isFavouritesPadOpen;
