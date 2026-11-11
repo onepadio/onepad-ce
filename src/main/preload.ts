@@ -130,6 +130,7 @@ const electronHandler = {
       'get-all-tabs-memory',
       'fetch-website-metadata',
       'fetch-image-data-url',
+      'fetch-search-suggestions',
       'get-user-agent',
       'set-device-emulation',
       'pty-create',

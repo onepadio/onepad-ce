@@ -6,10 +6,18 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type ComponentType,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 
+import {
+  activateBuiltinApp,
+  activateOnlineTool,
+  getLauncherBuiltinApps,
+  getLauncherOnlineTools,
+  type BuiltinAppId,
+} from "../../builtin";
 import { openInternalWindow } from "../../services/window";
 import { appActions } from "../../store/app-slice";
 import { modalActions } from "../../store/modal-slice";
@@ -21,16 +29,18 @@ import {
 } from "../../util/browserTabGroups";
 import { createNavHistoryState } from "../../util/navHistory";
 import { isValidDomain4 } from "../../util/search";
+import { fetchSearchSuggestions } from "../../util/searchSuggestions";
 import { resolveIconUrl } from "../LaunchPad3D/resolveIconUrl";
 
 import "./CenterSearchOverlay.css";
 
 type SpaceSearchItem = {
   id: string;
-  type: "app" | "link";
+  type: "app" | "link" | "builtin" | "online-tool";
   title: string;
   url: string;
   icon: string;
+  DockIcon?: ComponentType<{ color?: string; size?: number | string }>;
   raw: any;
 };
 
@@ -73,12 +83,20 @@ function CenterSearchOverlay() {
   const route = useSelector((state: any) => state.session.route);
   const sessionState = useSelector((state: any) => state.session);
   const workspaceState = useSelector((state: any) => state.workspace);
+  const platform = useSelector((state: any) => state.app.platform);
+  const username = useSelector((state: any) => state.user.username);
+  const isInSession = useSelector((state: any) => state.session.isInSession);
+  const currentSession = useSelector(
+    (state: any) => state.workspace.currentSession
+  );
 
   const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const isOpenRef = useRef(isOpen);
   const lastToggleAtRef = useRef(0);
+  const suggestRequestIdRef = useRef(0);
 
   useEffect(() => {
     isOpenRef.current = isOpen;
@@ -87,6 +105,7 @@ function CenterSearchOverlay() {
   const close = useCallback(() => {
     dispatch(modalActions.hideCenterSearch());
     setQuery("");
+    setSuggestions([]);
   }, [dispatch]);
 
   const toggle = useCallback(() => {
@@ -98,10 +117,45 @@ function CenterSearchOverlay() {
     if (isOpenRef.current) {
       dispatch(modalActions.hideCenterSearch());
       setQuery("");
+      setSuggestions([]);
     } else {
       dispatch(modalActions.showCenterSearch());
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSuggestions([]);
+      return;
+    }
+
+    const raw = query.trim();
+    if (
+      !raw ||
+      raw.length < 2 ||
+      isValidDomain4(raw) ||
+      /^https?:\/\//i.test(raw)
+    ) {
+      setSuggestions([]);
+      return;
+    }
+
+    const requestId = ++suggestRequestIdRef.current;
+    const timer = setTimeout(() => {
+      fetchSearchSuggestions(raw).then((next) => {
+        if (suggestRequestIdRef.current !== requestId) return;
+        const lower = raw.toLowerCase();
+        setSuggestions(
+          next.filter((phrase) => phrase.trim().toLowerCase() !== lower)
+        );
+      });
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      suggestRequestIdRef.current += 1;
+    };
+  }, [query, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -194,8 +248,32 @@ function CenterSearchOverlay() {
       });
     });
 
+    getLauncherBuiltinApps(platform).forEach((tool) => {
+      list.push({
+        id: `builtin-${tool.id}`,
+        type: "builtin",
+        title: tool.label,
+        url: "",
+        icon: "",
+        DockIcon: tool.DockIcon,
+        raw: tool,
+      });
+    });
+
+    getLauncherOnlineTools().forEach((tool) => {
+      list.push({
+        id: `online-tool-${tool.id}`,
+        type: "online-tool",
+        title: tool.label,
+        url: tool.url || "",
+        icon: "",
+        DockIcon: tool.DockIcon,
+        raw: tool,
+      });
+    });
+
     return list;
-  }, [apps, links, profileId]);
+  }, [apps, links, profileId, platform]);
 
   const matchedItems = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -322,8 +400,86 @@ function CenterSearchOverlay() {
     }
   }
 
+  function openNewItemWindow(item: SpaceSearchItem, source: any) {
+    if (source == null) {
+      log.warn("Center search could not open item", item.id);
+      return;
+    }
+
+    const nextOpenWindows = Object.assign({}, openWindows);
+    const nextOpenTabs = Object.assign({}, openTabs);
+    const nextWindowTabs = Object.assign({}, windowTabs);
+
+    const windowRecord = Object.assign({}, source, {
+      type: item.type,
+      url: item.url,
+      location: "main",
+      desktop: desktop.id,
+      workspace: workspace.id,
+      partition: getPartitionId(item),
+    });
+
+    nextOpenWindows[item.id] = windowRecord;
+    dispatch(
+      sessionActions.setOpenWindows({
+        data: nextOpenWindows,
+      })
+    );
+
+    const tab = newItemTab(
+      item,
+      item.url,
+      source.data?.icon || item.raw?.data?.icon,
+      item.title
+    );
+    nextOpenTabs[tab.id] = tab;
+    nextWindowTabs[item.id] = [tab.id];
+
+    dispatch(
+      sessionActions.setOpenTabs({
+        data: nextOpenTabs,
+      })
+    );
+    dispatch(
+      sessionActions.setWindowTabs({
+        data: nextWindowTabs,
+      })
+    );
+    dispatch(sessionActions.setActiveWindow({ data: windowRecord }));
+    dispatch(appActions.showSplashScreen({}));
+  }
+
   function activateItem(item: SpaceSearchItem) {
     close();
+
+    if (item.type === "builtin") {
+      activateBuiltinApp(
+        item.raw.id as BuiltinAppId,
+        workspace,
+        desktop,
+        openWindows,
+        dispatch,
+        platform
+      );
+      return;
+    }
+
+    if (item.type === "online-tool") {
+      activateOnlineTool({
+        toolId: item.raw.id,
+        workspace,
+        desktop,
+        openWindows,
+        openTabs,
+        windowTabs,
+        username,
+        route,
+        isInSession,
+        currentSession,
+        dispatch,
+      });
+      return;
+    }
 
     if (openWindows?.[item.id] != null) {
       dispatch(sessionActions.setActiveWindow({ data: openWindows[item.id] }));
@@ -338,11 +494,17 @@ function CenterSearchOverlay() {
       return;
     }
 
-    const catalog = items || [...(apps || []), ...(links || [])];
-    const nextOpenWindows = Object.assign({}, openWindows);
-    const nextOpenTabs = Object.assign({}, openTabs);
-    const nextWindowTabs = Object.assign({}, windowTabs);
+    // workspace.items can be [] (truthy) and miss apps/links — always include them.
+    const catalog = [
+      ...(Array.isArray(items) ? items : []),
+      ...(apps || []),
+      ...(links || []),
+    ];
+    if (item.raw && !catalog.some((entry: any) => entry?.id === item.id)) {
+      catalog.push(item.raw);
+    }
 
+    let opened = false;
     openInternalWindow(
       {
         workspace: workspace.id,
@@ -354,52 +516,19 @@ function CenterSearchOverlay() {
       openWindows,
       isLocal,
       (result: any) => {
-        if (result == null) return;
-
-        const windowRecord = Object.assign({}, result, {
-          type: item.type,
-          url: item.url,
-          location: "main",
-          desktop: desktop.id,
-          workspace: workspace.id,
-          partition: getPartitionId(item),
-        });
-
-        nextOpenWindows[item.id] = windowRecord;
-        dispatch(
-          sessionActions.setOpenWindows({
-            data: nextOpenWindows,
-          })
-        );
-
-        const tab = newItemTab(
-          item,
-          item.url,
-          result.data?.icon || item.raw?.data?.icon,
-          item.title
-        );
-        nextOpenTabs[tab.id] = tab;
-        nextWindowTabs[item.id] = [tab.id];
-
-        dispatch(
-          sessionActions.setOpenTabs({
-            data: nextOpenTabs,
-          })
-        );
-        dispatch(
-          sessionActions.setWindowTabs({
-            data: nextWindowTabs,
-          })
-        );
-        dispatch(sessionActions.setActiveWindow({ data: windowRecord }));
-        dispatch(appActions.showSplashScreen({}));
+        opened = true;
+        openNewItemWindow(item, result || item.raw);
       }
     );
+
+    // openInternalWindow only calls back when catalog contains the id
+    if (!opened) {
+      openNewItemWindow(item, item.raw);
+    }
   }
 
-  function handleSubmit(e?: React.FormEvent) {
-    e?.preventDefault();
-    const raw = query.trim();
+  function runBrowserQuery(rawInput: string) {
+    const raw = rawInput.trim();
     if (!raw) return;
 
     const stripped = raw.replace(/^https?:\/\//i, "");
@@ -427,6 +556,15 @@ function CenterSearchOverlay() {
     close();
   }
 
+  function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    runBrowserQuery(query);
+  }
+
+  function applySuggestion(phrase: string) {
+    runBrowserQuery(phrase);
+  }
+
   if (!isOpen) return null;
 
   return (
@@ -451,7 +589,7 @@ function CenterSearchOverlay() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search apps, tabs, or enter a website address"
+            placeholder="Search apps, tools, tabs, or enter a website address"
             aria-label="Search address bar"
             autoComplete="off"
             spellCheck={false}
@@ -463,10 +601,51 @@ function CenterSearchOverlay() {
 
         {query.trim().length > 0 && (
           <div className="center-search-results-wrap">
-            {matchedTabs.length === 0 && matchedItems.length === 0 ? (
-              <div className="center-search-empty">No matching tabs or apps</div>
+            {matchedTabs.length === 0 &&
+            matchedItems.length === 0 &&
+            suggestions.length === 0 ? (
+              <div className="center-search-empty">
+                No matching apps, tools, tabs, or suggestions
+              </div>
             ) : (
               <>
+                {matchedItems.length > 0 && (
+                  <div className="center-search-section">
+                    <div className="center-search-section-title">
+                      Apps & Tools
+                    </div>
+                    <div className="center-search-results" role="listbox">
+                      {matchedItems.map((item) => {
+                        const Icon = item.DockIcon;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className="center-search-result"
+                            title={item.title}
+                            onClick={() => activateItem(item)}
+                          >
+                            {Icon ? (
+                              <span className="center-search-result-icon center-search-result-icon-tool">
+                                <Icon size={22} color="white" />
+                              </span>
+                            ) : (
+                              <img
+                                className="center-search-result-icon"
+                                src={item.icon}
+                                alt=""
+                              />
+                            )}
+                            <span className="center-search-result-label">
+                              {item.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {matchedTabs.length > 0 && (
                   <div className="center-search-section">
                     <div className="center-search-section-title">Tabs</div>
@@ -500,25 +679,25 @@ function CenterSearchOverlay() {
                   </div>
                 )}
 
-                {matchedItems.length > 0 && (
-                  <div className="center-search-section">
-                    <div className="center-search-section-title">Apps</div>
-                    <div className="center-search-results" role="listbox">
-                      {matchedItems.map((item) => (
+                {suggestions.length > 0 && (
+                  <div className="center-search-section center-search-section-suggestions">
+                    <div className="center-search-section-title">
+                      Suggestions
+                    </div>
+                    <div
+                      className="center-search-suggestion-results"
+                      role="listbox"
+                    >
+                      {suggestions.map((phrase) => (
                         <button
-                          key={item.id}
+                          key={phrase}
                           type="button"
-                          className="center-search-result"
-                          title={item.title}
-                          onClick={() => activateItem(item)}
+                          className="center-search-suggestion-result"
+                          title={phrase}
+                          onClick={() => applySuggestion(phrase)}
                         >
-                          <img
-                            className="center-search-result-icon"
-                            src={item.icon}
-                            alt=""
-                          />
-                          <span className="center-search-result-label">
-                            {item.title}
+                          <span className="center-search-suggestion-label">
+                            {phrase}
                           </span>
                         </button>
                       ))}

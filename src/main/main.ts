@@ -1212,6 +1212,58 @@ ipcMain.handle(
   }
 );
 
+/** DuckDuckGo-style autocomplete for the center search overlay. */
+ipcMain.handle(
+  'fetch-search-suggestions',
+  async (_event, query: string): Promise<string[]> => {
+    if (typeof query !== 'string') return [];
+    const q = query.trim();
+    if (!q || q.length > 120) return [];
+
+    try {
+      const url = `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}`;
+      const res = await net.fetch(url, {
+        redirect: 'follow',
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`,
+        },
+      });
+      if (!res.ok) {
+        return [];
+      }
+
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // [{"phrase":"gmail"}, ...] or ["query", ["gmail", ...]]
+        if (
+          data.length >= 2 &&
+          typeof data[0] === 'string' &&
+          Array.isArray(data[1])
+        ) {
+          return data[1]
+            .filter((item: unknown) => typeof item === 'string')
+            .slice(0, 8) as string[];
+        }
+        return data
+          .map((item: any) =>
+            typeof item === 'string'
+              ? item
+              : typeof item?.phrase === 'string'
+                ? item.phrase
+                : null
+          )
+          .filter((item: string | null): item is string => !!item)
+          .slice(0, 8);
+      }
+      return [];
+    } catch (error) {
+      console.warn('[center-search] suggestion fetch failed', error);
+      return [];
+    }
+  }
+);
+
 /** Fetch a remote image in main (bypasses renderer CSP connect-src + CORS). */
 ipcMain.handle('fetch-image-data-url', async (_event, url: string) => {
   if (
