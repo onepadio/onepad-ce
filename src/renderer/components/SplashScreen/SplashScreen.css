@@ -34,6 +34,15 @@
     border-radius: 10%;
 }
 
+.splash-screen__tool-icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    color: #fff;
+}
+
 .splash-screen.tabs-mode{
     top: 40px !important;
     height: calc(100vh - 44px) !important;

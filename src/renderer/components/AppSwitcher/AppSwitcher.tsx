@@ -6,6 +6,10 @@ import { modalActions } from "../../store/modal-slice";
 import { sessionActions } from "../../store/session-slice";
 import { appActions } from "../../store/app-slice";
 import {
+  activateBuiltinApp,
+  activateOnlineTool,
+} from "../../builtin";
+import {
   getAppSwitcherEntries,
   type AppSwitcherEntry,
 } from "../../util/appSwitcher";
@@ -35,8 +39,24 @@ function AppSwitcher() {
   const workspace = useSelector(
     (state: any) => state.workspace.selectedWorkspace
   );
+  const desktop = useSelector(
+    (state: any) => state.workspace.selectedDesktop
+  );
   const homeWorkspaceId = useSelector(
     (state: any) => state.user.homeWorkspace
+  );
+  const openModalIds = useSelector(
+    (state: any) => state.builtin?.openModalIds || []
+  );
+  const activeModalId = useSelector(
+    (state: any) => state.builtin?.activeModalId
+  );
+  const platform = useSelector((state: any) => state.app.platform);
+  const username = useSelector((state: any) => state.user.username);
+  const route = useSelector((state: any) => state.session.route);
+  const isInSession = useSelector((state: any) => state.session.isInSession);
+  const currentSession = useSelector(
+    (state: any) => state.workspace.currentSession
   );
 
   const entries = useMemo(
@@ -50,6 +70,9 @@ function AppSwitcher() {
         windowHistory,
         workspaceId: workspace?.id,
         homeWorkspaceId,
+        openModalIds,
+        activeModalId,
+        platform,
       }),
     [
       openWindows,
@@ -60,6 +83,9 @@ function AppSwitcher() {
       windowHistory,
       workspace?.id,
       homeWorkspaceId,
+      openModalIds,
+      activeModalId,
+      platform,
     ]
   );
 
@@ -69,10 +95,18 @@ function AppSwitcher() {
   const isCtrlTabActiveRef = useRef(false);
   const lastCycleAtRef = useRef(0);
   const activeWindowIdRef = useRef(activeWindowId);
+  const activeModalIdRef = useRef(activeModalId);
   const openWindowsRef = useRef(openWindows);
   const windowTabsRef = useRef(windowTabs);
   const activeTabsRef = useRef(activeTabs);
   const openTabsRef = useRef(openTabs);
+  const workspaceRef = useRef(workspace);
+  const desktopRef = useRef(desktop);
+  const platformRef = useRef(platform);
+  const usernameRef = useRef(username);
+  const routeRef = useRef(route);
+  const isInSessionRef = useRef(isInSession);
+  const currentSessionRef = useRef(currentSession);
 
   useEffect(() => {
     entriesRef.current = entries;
@@ -91,6 +125,10 @@ function AppSwitcher() {
   }, [activeWindowId]);
 
   useEffect(() => {
+    activeModalIdRef.current = activeModalId;
+  }, [activeModalId]);
+
+  useEffect(() => {
     openWindowsRef.current = openWindows;
   }, [openWindows]);
 
@@ -107,6 +145,34 @@ function AppSwitcher() {
   }, [openTabs]);
 
   useEffect(() => {
+    workspaceRef.current = workspace;
+  }, [workspace]);
+
+  useEffect(() => {
+    desktopRef.current = desktop;
+  }, [desktop]);
+
+  useEffect(() => {
+    platformRef.current = platform;
+  }, [platform]);
+
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
+
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
+
+  useEffect(() => {
+    isInSessionRef.current = isInSession;
+  }, [isInSession]);
+
+  useEffect(() => {
+    currentSessionRef.current = currentSession;
+  }, [currentSession]);
+
+  useEffect(() => {
     if (isAppSwitcherOpen) {
       const timer = setTimeout(() => setIsVisible(true), 20);
       return () => clearTimeout(timer);
@@ -116,28 +182,76 @@ function AppSwitcher() {
 
   const activateEntry = useCallback(
     (entry: AppSwitcherEntry) => {
-      const app = entry?.window || openWindowsRef.current?.[entry?.id];
       console.log("[app-switcher] activateEntry", {
         entryId: entry?.id,
-        appId: app?.id,
+        kind: entry?.kind,
+        builtinAppId: entry?.builtinAppId,
+        onlineToolId: entry?.onlineToolId,
         activeWindowId: activeWindowIdRef.current,
+        activeModalId: activeModalIdRef.current,
       });
-      if (!app) {
-        console.log("[app-switcher] activateEntry: no app found");
-        return;
-      }
+      if (!entry) return;
 
       // @ts-expect-error TS(2554): Expected 1 arguments, but got 0.
       dispatch(modalActions.hideAppSwitcher());
       isOpenRef.current = false;
       isCtrlTabActiveRef.current = false;
 
+      if (entry.kind === "builtin" && entry.builtinAppId) {
+        if (activeModalIdRef.current === entry.builtinAppId) {
+          console.log("[app-switcher] builtin modal already active, skip");
+          return;
+        }
+        if (
+          entry.window?.id &&
+          entry.window.id === activeWindowIdRef.current
+        ) {
+          console.log("[app-switcher] builtin window already active, skip");
+          return;
+        }
+        activateBuiltinApp(
+          entry.builtinAppId,
+          workspaceRef.current,
+          desktopRef.current,
+          openWindowsRef.current,
+          dispatch,
+          platformRef.current
+        );
+        return;
+      }
+
+      if (entry.kind === "online-tool" && entry.onlineToolId) {
+        if (entry.window?.id === activeWindowIdRef.current) {
+          console.log("[app-switcher] online tool already active, skip");
+          return;
+        }
+        activateOnlineTool({
+          toolId: entry.onlineToolId,
+          workspace: workspaceRef.current,
+          desktop: desktopRef.current,
+          openWindows: openWindowsRef.current || {},
+          openTabs: openTabsRef.current || {},
+          windowTabs: windowTabsRef.current || {},
+          username: usernameRef.current,
+          route: routeRef.current,
+          isInSession: isInSessionRef.current,
+          currentSession: currentSessionRef.current,
+          dispatch,
+        });
+        return;
+      }
+
+      const app = entry.window || openWindowsRef.current?.[entry.id];
+      if (!app) {
+        console.log("[app-switcher] activateEntry: no app found");
+        return;
+      }
+
       if (app.id === activeWindowIdRef.current) {
         console.log("[app-switcher] already active, skip");
         return;
       }
 
-      // Always activate — 3D DesktopWindows3D zooms HUD from activeWindowId
       console.log("[app-switcher] setActiveWindow", app.id, app.type);
       dispatch(sessionActions.setActiveWindow({ data: app }));
 

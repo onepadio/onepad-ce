@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { appActions } from "../../store/app-slice";
+import {
+  getOnlineTool,
+  isOnlineToolWindow,
+} from "../../builtin";
 
 import "./SplashScreen.css"
 
@@ -39,6 +43,18 @@ function SplashScreen(props: any) {
     const [progressValue, setProgressValue] = useState(0);
     const domId = "splash-screen-id";
     const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const activeWindow = activeWindowId ? openWindows?.[activeWindowId] : null;
+    const onlineTool = useMemo(() => {
+        if (!isOnlineToolWindow(activeWindow)) return null;
+        const toolId =
+            activeWindow?.data?.onlineToolId ||
+            (typeof activeWindowId === "string"
+                ? activeWindowId.replace(/^onlinetool_/, "").split("_")[0]
+                : null);
+        return toolId ? getOnlineTool(toolId) || null : null;
+    }, [activeWindow, activeWindowId]);
+    const OnlineToolIcon = onlineTool?.DockIcon;
 
     // 3D desktop: never show splash — clear if something still requests it
     useEffect(() => {
@@ -102,17 +118,22 @@ function SplashScreen(props: any) {
     , [isVisible, dispatch, is3dDesktop]);
 
     useEffect (() => {
+        if (onlineTool) {
+            setWindowIcon("");
+            return;
+        }
         let _window = openWindows[activeWindowId];
         if(_window){
-            if(_window.type === "app"){
-                setWindowIcon("./images/store/icon/"+_window.data.icon);
-            }else if(_window.type === "link"){
-                setWindowIcon(_window.data.icon);
+            const icon = _window.data?.icon;
+            if(_window.type === "app" && icon){
+                setWindowIcon("./images/store/icon/"+icon);
+            }else if(_window.type === "link" && icon){
+                setWindowIcon(icon);
             }else{
                 setWindowIcon("icon_128x128.png");
             }
         }
-    }, [activeWindowId, openWindows]);
+    }, [activeWindowId, openWindows, onlineTool]);
 
     if (is3dDesktop) {
         return null;
@@ -129,7 +150,13 @@ function SplashScreen(props: any) {
                 (isAIAssistantOpen ? " chat-assistant-open" : "")
             }
         >
-            <img className="splash-screen__icon" width={64} src={windowIcon} alt="logo" />
+            {OnlineToolIcon ? (
+                <span className="splash-screen__icon splash-screen__tool-icon" aria-hidden="true">
+                    <OnlineToolIcon size={64} color="white" />
+                </span>
+            ) : (
+                <img className="splash-screen__icon" width={64} src={windowIcon} alt="logo" />
+            )}
             <br/>
             <div className="splash-screen__text">Loading...</div>
             <progress value={progressValue} />

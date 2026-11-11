@@ -31,6 +31,13 @@ function AppSwitcherBody({ onActivate }: AppSwitcherBodyProps) {
   const homeWorkspaceId = useSelector(
     (state: any) => state.user.homeWorkspace
   );
+  const openModalIds = useSelector(
+    (state: any) => state.builtin?.openModalIds || []
+  );
+  const activeModalId = useSelector(
+    (state: any) => state.builtin?.activeModalId
+  );
+  const platform = useSelector((state: any) => state.app.platform);
   const selectedIndex = useSelector(
     (state: any) => state.modal.appSwitcherSelectedIndex
   );
@@ -46,6 +53,9 @@ function AppSwitcherBody({ onActivate }: AppSwitcherBodyProps) {
         windowHistory,
         workspaceId: workspace?.id,
         homeWorkspaceId,
+        openModalIds,
+        activeModalId,
+        platform,
       }),
     [
       openWindows,
@@ -56,6 +66,9 @@ function AppSwitcherBody({ onActivate }: AppSwitcherBodyProps) {
       windowHistory,
       workspace?.id,
       homeWorkspaceId,
+      openModalIds,
+      activeModalId,
+      platform,
     ]
   );
 
@@ -70,6 +83,7 @@ function AppSwitcherBody({ onActivate }: AppSwitcherBodyProps) {
       <div className="app-switcher-strip" role="listbox" aria-label="Active apps">
         {entries.map((entry, index) => {
           const isSelected = index === selectedIndex;
+          const Icon = entry.DockIcon;
           return (
             <button
               key={entry.id}
@@ -83,14 +97,20 @@ function AppSwitcherBody({ onActivate }: AppSwitcherBodyProps) {
               onClick={() => onActivate(entry)}
               title={entry.title}
             >
-              <img
-                className="app-switcher-icon"
-                src={entry.icon}
-                alt=""
-                onError={(e) => {
-                  e.currentTarget.src = defaultIcon;
-                }}
-              />
+              {Icon ? (
+                <span className="app-switcher-icon app-switcher-icon--glyph">
+                  <Icon size={32} color="white" />
+                </span>
+              ) : (
+                <img
+                  className="app-switcher-icon"
+                  src={entry.icon || defaultIcon}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.src = defaultIcon;
+                  }}
+                />
+              )}
             </button>
           );
         })}

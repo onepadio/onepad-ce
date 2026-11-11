@@ -14,8 +14,15 @@
   top: 40px;
   left: 60px;
   width: calc(100vw - 64px);
-  height: calc(100vh - 108px);
+  /* Auto-hide dock: expand to near full height */
+  height: calc(100vh - 48px);
   z-index: 107;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Always-on-top apps overlay: leave room for the bottom dock */
+body.apps-overlay-docked .builtin-window.is-fullscreen {
+  height: calc(100vh - 108px);
 }
 
 .builtin-window.is-fullscreen.chat-assistant-open {
@@ -48,6 +55,16 @@
   background: rgba(0, 0, 0, 0.28);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: default;
+}
+
+.builtin-window-chrome.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.builtin-window-chrome.is-draggable.is-dragging {
+  cursor: grabbing;
 }
 
 .builtin-window-chrome-left {
@@ -133,17 +150,25 @@
   color: #e5e7eb;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  will-change: transform;
   animation: builtinModalIn 0.16s ease-out;
+}
+
+.builtin-modal-panel.is-dragging {
+  animation: none;
+  transition: none;
+}
+
+.builtin-modal-panel.is-moved {
+  animation: none;
 }
 
 @keyframes builtinModalIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

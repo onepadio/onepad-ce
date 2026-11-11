@@ -1,12 +1,31 @@
+import type { ComponentType } from "react";
+
 import defaultIcon from "../images/default_icon.png";
 import globeIcon from "../images/globe_icon_96.png";
+import {
+  getOpenBuiltinApps,
+  getOpenOnlineTools,
+  getOnlineToolWindowId,
+  isBuiltinWindow,
+  isOnlineToolWindow,
+  type BuiltinAppId,
+} from "../builtin";
 import { isSharedAppWindow } from "./sharedApps";
+
+export type AppSwitcherEntryKind =
+  | "window"
+  | "builtin"
+  | "online-tool";
 
 export type AppSwitcherEntry = {
   id: string;
   title: string;
-  icon: string;
-  window: any;
+  kind: AppSwitcherEntryKind;
+  icon?: string | null;
+  DockIcon?: ComponentType<{ color?: string; size?: number | string }>;
+  window?: any;
+  builtinAppId?: BuiltinAppId;
+  onlineToolId?: string;
 };
 
 function resolveIcon(raw: unknown): string {
@@ -17,7 +36,14 @@ function resolveIcon(raw: unknown): string {
   try {
     const cached = localStorage.getItem(raw);
     let icon = cached == null ? raw : cached;
-    if (!(icon.startsWith("http") || icon.startsWith("data:") || icon.startsWith(".") || icon.startsWith("/"))) {
+    if (
+      !(
+        icon.startsWith("http") ||
+        icon.startsWith("data:") ||
+        icon.startsWith(".") ||
+        icon.startsWith("/")
+      )
+    ) {
       icon = "./images/store/icon/" + icon;
     }
     return icon || defaultIcon;
@@ -34,7 +60,10 @@ export function getWindowSwitcherTitle(
 ): string {
   if (!window) return "App";
 
-  if (window.type === "browser" || String(window.id || "").startsWith("browser_")) {
+  if (
+    window.type === "browser" ||
+    String(window.id || "").startsWith("browser_")
+  ) {
     const activeTabId = activeTabs?.[window.id];
     const activeTab = activeTabId ? openTabs?.[activeTabId] : null;
     if (activeTab?.state?.title) return activeTab.state.title;
@@ -48,7 +77,7 @@ export function getWindowSwitcherTitle(
     return window.data?.name || "App";
   }
 
-  return window.data?.title || window.data?.name || "App";
+  return window.data?.title || window.data?.name || window.name || "App";
 }
 
 export function getWindowSwitcherIcon(
@@ -59,7 +88,10 @@ export function getWindowSwitcherIcon(
 ): string {
   if (!window) return defaultIcon;
 
-  if (window.type === "browser" || String(window.id || "").startsWith("browser_")) {
+  if (
+    window.type === "browser" ||
+    String(window.id || "").startsWith("browser_")
+  ) {
     const activeTabId = activeTabs?.[window.id];
     const activeTab = activeTabId ? openTabs?.[activeTabId] : null;
     if (activeTab?.state?.icon) return resolveIcon(activeTab.state.icon);
@@ -72,73 +104,14 @@ export function getWindowSwitcherIcon(
   return resolveIcon(window.data?.icon);
 }
 
-/**
- * Awake open windows that still have at least one non-sleeping tab.
- * Sorted MRU: active first, then windowHistory (recent → older).
- */
-export function getAppSwitcherEntries(options: {
-  openWindows: Record<string, any> | null | undefined;
-  openTabs: Record<string, any> | null | undefined;
-  windowTabs: Record<string, any> | null | undefined;
-  activeTabs: Record<string, any> | null | undefined;
-  activeWindowId: string | null | undefined;
-  windowHistory: string[] | null | undefined;
-  workspaceId: string | null | undefined;
-  homeWorkspaceId: string | null | undefined;
-}): AppSwitcherEntry[] {
-  const {
-    openWindows,
-    openTabs,
-    windowTabs,
-    activeTabs,
-    activeWindowId,
-    windowHistory,
-    workspaceId,
-    homeWorkspaceId,
-  } = options;
-
-  if (!openWindows) return [];
-
-  const candidates = Object.values(openWindows).filter((window: any) => {
-    if (!window?.id || window.id === "launchpad") return false;
-    if (window.sleeping === true) {
-      console.log("[app-switcher] skip sleeping window", window.id);
-      return false;
-    }
-
-    const tabIds = windowTabs?.[window.id];
-    if (!Array.isArray(tabIds) || tabIds.length === 0) {
-      console.log("[app-switcher] skip window without tabs", window.id, window.type);
-      return false;
-    }
-
-    const hasAwakeTab = tabIds.some((tabId: string) => {
-      const tab = openTabs?.[tabId];
-      return tab != null && tab.sleeping !== true;
-    });
-    if (!hasAwakeTab) {
-      console.log("[app-switcher] skip window with only sleeping tabs", window.id);
-      return false;
-    }
-
-    if (window.type === "browser" || String(window.id).startsWith("browser_")) {
-      const ok = !workspaceId || window.workspace === workspaceId;
-      if (!ok) {
-        console.log("[app-switcher] skip browser other workspace", window.id);
-      }
-      return ok;
-    }
-    if (isSharedAppWindow(window, homeWorkspaceId)) return true;
-    const ok = !workspaceId || window.workspace === workspaceId;
-    if (!ok) {
-      console.log("[app-switcher] skip other workspace", window.id, window.workspace);
-    }
-    return ok;
-  });
-
-  candidates.sort((a: any, b: any) => {
-    if (a.id === activeWindowId) return -1;
-    if (b.id === activeWindowId) return 1;
+function sortEntriesByMru(
+  entries: AppSwitcherEntry[],
+  activeId: string | null | undefined,
+  windowHistory: string[] | null | undefined
+): AppSwitcherEntry[] {
+  return [...entries].sort((a, b) => {
+    if (a.id === activeId) return -1;
+    if (b.id === activeId) return 1;
 
     const history = windowHistory || [];
     const indexA = history.lastIndexOf(a.id);
@@ -149,11 +122,137 @@ export function getAppSwitcherEntries(options: {
     if (indexB !== -1) return 1;
     return 0;
   });
+}
 
-  return candidates.map((window: any) => ({
-    id: window.id,
-    title: getWindowSwitcherTitle(window, openTabs, windowTabs, activeTabs),
-    icon: getWindowSwitcherIcon(window, openTabs, windowTabs, activeTabs),
-    window,
-  }));
+/**
+ * Awake open windows with tabs, plus open Tools (builtins + online tools).
+ * Sorted MRU: current active first, then windowHistory.
+ */
+export function getAppSwitcherEntries(options: {
+  openWindows: Record<string, any> | null | undefined;
+  openTabs: Record<string, any> | null | undefined;
+  windowTabs: Record<string, any> | null | undefined;
+  activeTabs: Record<string, any> | null | undefined;
+  activeWindowId: string | null | undefined;
+  windowHistory: string[] | null | undefined;
+  workspaceId: string | null | undefined;
+  homeWorkspaceId: string | null | undefined;
+  openModalIds?: string[] | null;
+  activeModalId?: string | null;
+  platform?: string | null;
+}): AppSwitcherEntry[] {
+  const {
+    openWindows,
+    openTabs,
+    windowTabs,
+    activeTabs,
+    activeWindowId,
+    windowHistory,
+    workspaceId,
+    homeWorkspaceId,
+    openModalIds = [],
+    activeModalId = null,
+    platform = null,
+  } = options;
+
+  const entries: AppSwitcherEntry[] = [];
+
+  if (openWindows) {
+    Object.values(openWindows).forEach((window: any) => {
+      if (!window?.id || window.id === "launchpad") return;
+      // Tools are added separately (icons / no-tab builtins)
+      if (isOnlineToolWindow(window) || isBuiltinWindow(window)) return;
+      if (window.sleeping === true) return;
+
+      const tabIds = windowTabs?.[window.id];
+      if (!Array.isArray(tabIds) || tabIds.length === 0) return;
+
+      const hasAwakeTab = tabIds.some((tabId: string) => {
+        const tab = openTabs?.[tabId];
+        return tab != null && tab.sleeping !== true;
+      });
+      if (!hasAwakeTab) return;
+
+      if (
+        window.type === "browser" ||
+        String(window.id).startsWith("browser_")
+      ) {
+        if (workspaceId && window.workspace !== workspaceId) return;
+      } else if (!isSharedAppWindow(window, homeWorkspaceId)) {
+        if (workspaceId && window.workspace !== workspaceId) return;
+      }
+
+      entries.push({
+        id: window.id,
+        kind: "window",
+        title: getWindowSwitcherTitle(
+          window,
+          openTabs,
+          windowTabs,
+          activeTabs
+        ),
+        icon: getWindowSwitcherIcon(
+          window,
+          openTabs,
+          windowTabs,
+          activeTabs
+        ),
+        window,
+      });
+    });
+  }
+
+  // Open online tools (space-scoped) — match dock: open counts even if sleeping
+  // after a space switch (persisted snapshots mark windows sleeping).
+  const openOnlineTools = getOpenOnlineTools(openWindows, workspaceId);
+  openOnlineTools.forEach((tool) => {
+    if (!workspaceId) return;
+    const windowId = getOnlineToolWindowId(tool.id, workspaceId);
+    const window = openWindows?.[windowId];
+    if (!window) return;
+
+    entries.push({
+      id: windowId,
+      kind: "online-tool",
+      title: tool.label,
+      DockIcon: tool.DockIcon,
+      window,
+      onlineToolId: tool.id,
+    });
+  });
+
+  // Open builtin tools (modal overlays + fullscreen native windows)
+  const openBuiltins = getOpenBuiltinApps(
+    openWindows,
+    workspaceId,
+    openModalIds as any,
+    platform
+  );
+  openBuiltins.forEach((app) => {
+    if (!workspaceId) return;
+    const windowId = app.getWindowId(workspaceId);
+    const window =
+      app.windowMode === "fullscreen" ? openWindows?.[windowId] : null;
+
+    // Fullscreen builtins must exist in openWindows; sleeping is ok (same as dock)
+    if (app.windowMode === "fullscreen" && !window) {
+      return;
+    }
+
+    entries.push({
+      id: app.windowMode === "modal" ? `builtin-modal:${app.id}` : windowId,
+      kind: "builtin",
+      title: app.label,
+      DockIcon: app.DockIcon,
+      window: window || undefined,
+      builtinAppId: app.id,
+    });
+  });
+
+  const activeId =
+    activeModalId != null
+      ? `builtin-modal:${activeModalId}`
+      : activeWindowId;
+
+  return sortEntriesByMru(entries, activeId, windowHistory);
 }

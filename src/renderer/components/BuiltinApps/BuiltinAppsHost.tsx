@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType } from 'react';
+import { useEffect, useRef, type ComponentType } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TerminalApp from '../Terminal/TerminalApp';
@@ -29,11 +29,28 @@ function BuiltinAppsHost() {
     (state: any) => state.workspace.selectedWorkspace?.id
   );
   const platform = useSelector((state: any) => state.app.platform);
+  const activeWindowId = useSelector(
+    (state: any) => state.session.activeWindowId
+  );
+  const activeModalId = useSelector(
+    (state: any) => state.builtin?.activeModalId
+  );
+  const prevActiveWindowIdRef = useRef(activeWindowId);
 
   // Dismiss modal overlays when switching spaces
   useEffect(() => {
     dispatch(builtinActions.closeAllModals());
   }, [workspaceId, dispatch]);
+
+  // Hide notes/calculator (and other modal overlays) when switching windows
+  // or returning to launchpad — keep dock icons until explicitly closed.
+  useEffect(() => {
+    const prev = prevActiveWindowIdRef.current;
+    prevActiveWindowIdRef.current = activeWindowId;
+    if (prev === activeWindowId) return;
+    if (!activeModalId) return;
+    dispatch(builtinActions.hideModal());
+  }, [activeWindowId, activeModalId, dispatch]);
 
   return (
     <>

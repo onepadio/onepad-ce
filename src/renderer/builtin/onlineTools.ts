@@ -166,12 +166,33 @@ export function activateOnlineTool(options: {
   const existing = openWindows?.[windowId];
 
   if (existing) {
-    dispatch(sessionActions.setActiveWindow({ data: existing }));
     const tabIds = windowTabs?.[windowId] || [];
     const wakeTab = tabIds[0] ? openTabs?.[tabIds[0]] : null;
-    if (existing.sleeping === true || wakeTab?.sleeping === true) {
+    const needsWake =
+      existing.sleeping === true || wakeTab?.sleeping === true;
+
+    let focused = existing;
+    if (needsWake) {
+      focused = { ...existing, sleeping: false };
+      dispatch(
+        sessionActions.setOpenWindows({
+          data: { ...openWindows, [windowId]: focused },
+        })
+      );
+      if (wakeTab?.sleeping === true) {
+        dispatch(
+          sessionActions.setOpenTabs({
+            data: {
+              ...openTabs,
+              [wakeTab.id]: { ...wakeTab, sleeping: false },
+            },
+          })
+        );
+      }
       dispatch(appActions.showSplashScreen({}));
     }
+
+    dispatch(sessionActions.setActiveWindow({ data: focused }));
     return;
   }
 

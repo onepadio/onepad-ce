@@ -308,6 +308,13 @@ export class WorkspaceService{
                 Object.keys(workspace.state.openWindows).forEach((windowId) => {
                     // @ts-expect-error TS(2571): Object is of type 'unknown'.
                     if(workspace.state.openWindows[windowId].type !== "xapp"){
+                        // Keep warm in-memory windows awake. Persist snapshots
+                        // mark windows sleeping, which would hide tools/apps in
+                        // AppSwitcher after switching back to a warm space.
+                        const existing = _openWindows[windowId];
+                        if (existing && existing.sleeping !== true) {
+                            return;
+                        }
                         // @ts-expect-error TS(2571): Object is of type 'unknown'.
                         _openWindows[windowId] = workspace.state.openWindows[windowId];
                     }else{
@@ -335,6 +342,11 @@ export class WorkspaceService{
                     // @ts-expect-error TS(2571): Object is of type 'unknown'.
                     let _tab = Object.assign({}, workspace.state.openTabs[tabId]);
                     if(_tab.type !== "xapp" && _openWindows[_tab.window] !== undefined){
+                        // Prefer warm awake tabs over sleeping persisted copies
+                        const existingTab = _openTabs[_tab.id];
+                        if (existingTab && existingTab.sleeping !== true) {
+                            return;
+                        }
                         // Ensure created and lastAccessed fields exist
                         if (!_tab.created) {
                             // For old tabs, use lastAccessed as it's an older timestamp, or 0 if missing

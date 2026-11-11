@@ -240,10 +240,25 @@ export function getBuiltinActiveTab(window: any) {
   };
 }
 
-export function focusBuiltinWindow(dispatch: any, window: any) {
+export function focusBuiltinWindow(
+  dispatch: any,
+  window: any,
+  openWindows?: Record<string, any> | null
+) {
   if (!window) return;
-  dispatch(sessionActions.setActiveWindow({ data: window }));
-  const tab = getBuiltinActiveTab(window);
+  let focused = window;
+  if (window.sleeping === true) {
+    focused = { ...window, sleeping: false };
+    if (openWindows) {
+      dispatch(
+        sessionActions.setOpenWindows({
+          data: { ...openWindows, [window.id]: focused },
+        })
+      );
+    }
+  }
+  dispatch(sessionActions.setActiveWindow({ data: focused }));
+  const tab = getBuiltinActiveTab(focused);
   if (tab) {
     dispatch(sessionActions.setActiveTab({ data: tab }));
   }
@@ -288,7 +303,7 @@ export function activateBuiltinApp(
   const existing = openWindows?.[id];
 
   if (existing) {
-    focusBuiltinWindow(dispatch, existing);
+    focusBuiltinWindow(dispatch, existing, openWindows);
     return;
   }
 
