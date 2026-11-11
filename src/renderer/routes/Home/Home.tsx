@@ -201,8 +201,6 @@ function Home() {
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isMemoryDashboardOpen = useSelector((state) => state.modal.isMemoryDashboardOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
-  const isLaunchPadOpen = useSelector((state) => state.modal.isLaunchPadOpen);
-  // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isSpacePadOpen = useSelector((state) => state.modal.isSpacePadOpen);
   // @ts-expect-error TS(2571): Object is of type 'unknown'.
   const isCloudPadOpen = useSelector((state) => state.modal.isCloudPadOpen);
@@ -637,9 +635,9 @@ function Home() {
     <Hints enabled={hintsEnabled} hints={hints} />
     {/* @ts-expect-error TS(2322): Type '{ user: AmplifyUser; }' is not assignable to... Remove this comment to see the full error message */}
     <SPNavBar user={user}/>
-    {
-      isLaunchPadOpen ? <LaunchPadLocal name="pad1" data-interval="false" isInEditMode={false}/> : <></>
-    }
+    {/* Keep mounted and hide via LaunchPadBody so icons don't reload on reopen */}
+    <LaunchPadLocal name="pad1" data-interval="false" isInEditMode={false}/>
+   
 
     <AppSwitcher />
 

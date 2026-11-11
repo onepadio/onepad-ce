@@ -617,9 +617,12 @@ function Desktop(props) {
     <>
       {is3dDesktop && isSelectedDesktop ? (
         <>
-          {/* Desktop3D is mounted by Home warm-space layers (keep-alive) */}
-          {isLaunchpadOverlayOpen && (
-            <div className="desktop-3d-launchpad-overlay">
+          {/* Keep mounted and hide so launch icons don't reload on reopen */}
+          <div
+            className={`desktop-3d-launchpad-overlay${
+              isLaunchpadOverlayOpen ? "" : " d-none"
+            }`}
+          >
               <div
                 className="desktop-3d-launchpad-overlay-backdrop"
                 onClick={() => {
@@ -651,13 +654,14 @@ function Desktop(props) {
                 </div>
               </div>
             </div>
-          )}
         </>
       ) : (
-        activeTabId === "launchpad" && (
+        isSelectedDesktop && (
         <div
           id={props.id}
-          className={`w-100 space-container ${isAIAssistantOpen ? 'chat-assistant-open' : ''}`}
+          className={`w-100 space-container ${isAIAssistantOpen ? 'chat-assistant-open' : ''}${
+            activeTabId !== "launchpad" ? " d-none" : ""
+          }`}
         >
           <DesktopMenu />
           <VideoBackgroundControls />
