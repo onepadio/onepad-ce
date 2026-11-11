@@ -9,6 +9,7 @@ import { sessionActions } from '../../store/session-slice';
 import { launchpadActions } from "../../store/launchpad-slice";
 import { appActions } from '../../store/app-slice';
 import { utilityAppsActions } from "../../store/utility-slice";
+import { modalActions } from "../../store/modal-slice";
 import {
     Input,
     Button
@@ -29,6 +30,15 @@ import { createBrowserGroup } from "../../util/browser";
 
 function SearchBar(props: any){
     const dispatch = useDispatch();
+
+    function openCenterSearch(e?: any) {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+        // Blur so the inline field doesn't keep focus under the overlay
+        if (e?.target?.blur) e.target.blur();
+        dispatch(modalActions.showCenterSearch());
+        props.onSearchComplete?.();
+    }
 
     const workspace = useSelector((state: any) => state.workspace.selectedWorkspace);
 
@@ -299,20 +309,18 @@ function SearchBar(props: any){
         <form
             className="d-none d-sm-inline-block form-inline ml-md-3 my-2 my-md-0 mw-100 navbar-search"
             onSubmit={(e) => {
-                e.preventDefault()
-                handleSearch()
+                e.preventDefault();
+                openCenterSearch(e);
             }}
-            onKeyDown={(e) => {
-                if(e.key === "Enter"){
-                    e.preventDefault();
-                    handleSearch();
-                }
-            }}
+            onClick={openCenterSearch}
         >
-            {}
             <div className="input-group">
                 <div>
-                    <Button className="google-search-button h-100" color="dark" onClick={handleSearch}>
+                    <Button
+                        className="google-search-button h-100"
+                        color="dark"
+                        onClick={openCenterSearch}
+                    >
                         <img src={searchEngine.icon} width="20" height="20" alt="Search Engine Logo" className="rounded"/>
                     </Button>
                 </div>
@@ -323,7 +331,9 @@ function SearchBar(props: any){
                     type="text"
                     className="form-control bg-dark border-0 small text-white"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    readOnly
+                    onFocus={openCenterSearch}
+                    onClick={openCenterSearch}
                     aria-label="Search" aria-describedby="basic-addon2"
                 />
 

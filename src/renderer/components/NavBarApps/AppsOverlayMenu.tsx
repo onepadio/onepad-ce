@@ -1,4 +1,4 @@
-import { WindowStack, Tools, Grid3x3Gap, CollectionFill } from "react-bootstrap-icons";
+import { WindowStack, Tools, Grid3x3Gap, CollectionFill, Search } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import log from "loglevel";
@@ -9,6 +9,7 @@ import { windowServiceActions } from "../../store/window-service-slice";
 import { workspaceActions } from "../../store/workspace-slice";
 import { sidebarActions } from "../../store/sidebar-slice";
 import { settingsActions } from "../../store/settings-slice";
+import { modalActions } from "../../store/modal-slice";
 import DesktopService from "../../services/desktop";
 import {
   BUILTIN_APPS,
@@ -598,6 +599,24 @@ function AppsOverlayMenu({
         <div className="apps-overlay-menu-content">
           <div className="apps-overlay-menu-items">
           {/* Fixed launchers */}
+          <button
+            className="app-menu-item"
+            onClick={() => {
+              closeSidebarWindowIfOpen();
+              dispatch(modalActions.showCenterSearch());
+            }}
+            onMouseEnter={() => {
+              setHoveredApp("center-search");
+              onBrowserHoverEnd?.();
+            }}
+            onMouseLeave={() => setHoveredApp(null)}
+          >
+            <Search color="white" size={20} />
+            {hoveredApp === "center-search" && (
+              <div className="app-tooltip">Search</div>
+            )}
+          </button>
+
           <button
             className={`app-menu-item ${isLaunchpadActive ? "active" : ""}`}
             onClick={() => {
