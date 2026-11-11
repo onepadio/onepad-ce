@@ -15,6 +15,10 @@ import { appActions } from "../../store/app-slice";
 import { modalActions } from "../../store/modal-slice";
 import { sessionActions } from "../../store/session-slice";
 import { createBrowserGroup } from "../../util/browser";
+import {
+  switchAppTab,
+  switchBrowserTab,
+} from "../../util/browserTabGroups";
 import { createNavHistoryState } from "../../util/navHistory";
 import { isValidDomain4 } from "../../util/search";
 import { resolveIconUrl } from "../LaunchPad3D/resolveIconUrl";
@@ -27,6 +31,16 @@ type SpaceSearchItem = {
   title: string;
   url: string;
   icon: string;
+  raw: any;
+};
+
+type TabSearchItem = {
+  id: string;
+  title: string;
+  url: string;
+  icon: string;
+  windowId: string;
+  isBrowser: boolean;
   raw: any;
 };
 
@@ -45,6 +59,10 @@ function CenterSearchOverlay() {
   const openWindows = useSelector((state: any) => state.session.openWindows);
   const openTabs = useSelector((state: any) => state.session.openTabs);
   const windowTabs = useSelector((state: any) => state.session.windowTabs);
+  const activeTabs = useSelector((state: any) => state.session.activeTabs);
+  const activeWindowId = useSelector(
+    (state: any) => state.session.activeWindowId
+  );
   const browserWindows = useSelector(
     (state: any) => state.session.browserWindows
   );
@@ -187,6 +205,58 @@ function CenterSearchOverlay() {
       .slice(0, 24);
   }, [query, spaceItems]);
 
+  const matchedTabs: TabSearchItem[] = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+
+    const list: TabSearchItem[] = [];
+    Object.values(openTabs || {}).forEach((tab: any) => {
+      if (!tab?.id || tab.id === "launchpad") return;
+
+      const win = openWindows?.[tab.window];
+      const tabWorkspace = tab.workspace || win?.workspace;
+      if (
+        workspace?.id &&
+        tabWorkspace &&
+        tabWorkspace !== workspace.id &&
+        tabWorkspace !== "all"
+      ) {
+        return;
+      }
+
+      const title = (tab.state?.title || tab.state?.name || "").toString();
+      const url = (tab.state?.url || tab.url || "").toString();
+      const haystack = `${title} ${url}`.toLowerCase();
+      if (!haystack.includes(q)) return;
+
+      const isBrowser =
+        win?.type === "browser" ||
+        tab.type === "browser" ||
+        (typeof tab.window === "string" && tab.window.startsWith("browser_"));
+
+      list.push({
+        id: tab.id,
+        title: title || url || "Tab",
+        url,
+        icon: resolveIconUrl(
+          tab.state?.favIcon || tab.state?.icon,
+          url
+        ),
+        windowId: tab.window,
+        isBrowser,
+        raw: tab,
+      });
+    });
+
+    return list
+      .sort((a, b) => {
+        const aTs = a.raw?.lastAccessed || a.raw?.created || 0;
+        const bTs = b.raw?.lastAccessed || b.raw?.created || 0;
+        return bTs - aTs;
+      })
+      .slice(0, 16);
+  }, [query, openTabs, openWindows, workspace?.id]);
+
   function getPartitionId(item: SpaceSearchItem) {
     let partition = "";
     if (route === "authenticated") {
@@ -234,6 +304,22 @@ function CenterSearchOverlay() {
       isolated: !!item.raw?.data?.isolated,
       partition: getPartitionId(item),
     };
+  }
+
+  function activateTab(item: TabSearchItem) {
+    close();
+    const tab = item.raw;
+    if (!tab) return;
+
+    if (item.isBrowser) {
+      switchBrowserTab(tab, dispatch, openWindows, activeTabs, activeWindowId);
+    } else {
+      switchAppTab(tab, dispatch, openWindows, activeTabs, activeWindowId);
+    }
+
+    if (tab.sleeping === true || openWindows?.[item.windowId]?.sleeping) {
+      dispatch(appActions.showSplashScreen({}));
+    }
   }
 
   function activateItem(item: SpaceSearchItem) {
@@ -365,7 +451,7 @@ function CenterSearchOverlay() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search apps, or enter a website address"
+            placeholder="Search apps, tabs, or enter a website address"
             aria-label="Search address bar"
             autoComplete="off"
             spellCheck={false}
@@ -376,28 +462,70 @@ function CenterSearchOverlay() {
         </form>
 
         {query.trim().length > 0 && (
-          <div className="center-search-results" role="listbox">
-            {matchedItems.length === 0 ? (
-              <div className="center-search-empty">No matching apps</div>
+          <div className="center-search-results-wrap">
+            {matchedTabs.length === 0 && matchedItems.length === 0 ? (
+              <div className="center-search-empty">No matching tabs or apps</div>
             ) : (
-              matchedItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="center-search-result"
-                  title={item.title}
-                  onClick={() => activateItem(item)}
-                >
-                  <img
-                    className="center-search-result-icon"
-                    src={item.icon}
-                    alt=""
-                  />
-                  <span className="center-search-result-label">
-                    {item.title}
-                  </span>
-                </button>
-              ))
+              <>
+                {matchedTabs.length > 0 && (
+                  <div className="center-search-section">
+                    <div className="center-search-section-title">Tabs</div>
+                    <div className="center-search-tab-results" role="listbox">
+                      {matchedTabs.map((item) => (
+                        <button
+                          key={`tab-${item.id}`}
+                          type="button"
+                          className="center-search-tab-result"
+                          title={item.url || item.title}
+                          onClick={() => activateTab(item)}
+                        >
+                          <img
+                            className="center-search-tab-icon"
+                            src={item.icon}
+                            alt=""
+                          />
+                          <span className="center-search-tab-text">
+                            <span className="center-search-tab-title">
+                              {item.title}
+                            </span>
+                            {item.url ? (
+                              <span className="center-search-tab-url">
+                                {item.url}
+                              </span>
+                            ) : null}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {matchedItems.length > 0 && (
+                  <div className="center-search-section">
+                    <div className="center-search-section-title">Apps</div>
+                    <div className="center-search-results" role="listbox">
+                      {matchedItems.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="center-search-result"
+                          title={item.title}
+                          onClick={() => activateItem(item)}
+                        >
+                          <img
+                            className="center-search-result-icon"
+                            src={item.icon}
+                            alt=""
+                          />
+                          <span className="center-search-result-label">
+                            {item.title}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
