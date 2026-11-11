@@ -677,9 +677,28 @@ app
       );
     };
 
+    // Center search overlay — Control+Space (in-window fallback also in renderer).
+    // May conflict with OS input-source switching on some macOS setups.
+    const registerCenterSearchShortcut = () => {
+      globalShortcut.unregister('Control+Space');
+      const ret = globalShortcut.register('Control+Space', () => {
+        console.log('[center-search] Control+Space pressed, mainWindow=', !!mainWindow);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('fromMain', {
+            action: 'ctrl-space-pressed',
+          });
+        }
+      });
+      console.log(
+        '[center-search] Control+Space registration:',
+        ret ? 'ok' : 'FAILED'
+      );
+    };
+
     // Register the shortcut after window is ready
     if (mainWindow) {
       registerAppSwitcherShortcut();
+      registerCenterSearchShortcut();
     } else {
       console.log('[app-switcher] mainWindow not ready, skipping shortcut register');
     }

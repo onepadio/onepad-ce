@@ -63,6 +63,7 @@ const modalSlice = createSlice({
     isCloudPadOpen: false,
     isAppSwitcherOpen: false,
     appSwitcherSelectedIndex: 0,
+    isCenterSearchOpen: false,
     isFavouritesPadOpen: false,
     isRunDockerModalOpen: false,
     isDockerTaskManagerOpen: false,
@@ -291,6 +292,15 @@ const modalSlice = createSlice({
     },
     setAppSwitcherSelectedIndex(state, action) {
       state.appSwitcherSelectedIndex = action.payload;
+    },
+    toggleCenterSearch(state) {
+      state.isCenterSearchOpen = !state.isCenterSearchOpen;
+    },
+    showCenterSearch(state) {
+      state.isCenterSearchOpen = true;
+    },
+    hideCenterSearch(state) {
+      state.isCenterSearchOpen = false;
     },
     toggleFavouritesPad(state, action) {
       state.isFavouritesPadOpen = !state.isFavouritesPadOpen;

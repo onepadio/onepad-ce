@@ -99,6 +99,7 @@ import CloudService from "../../hubs/CloudService";
 import SpacePad from "../../components/SpacePad/SpacePad";
 import CloudPad from "../../components/LaunchPadLocal/CloudPad";
 import AppSwitcher from "../../components/AppSwitcher";
+import CenterSearchOverlay from "../../components/CenterSearchOverlay/CenterSearchOverlay";
 import FavouritesPad from "../../components/FavouritesPad/FavouritesPad";
 import CategoryPad from "../../components/CategoryPad/CategoryPad";
 import RunDockerContainerModal from "../../components/RunDockerContainerModal/RunDockerContainerModal";
@@ -640,6 +641,7 @@ function Home() {
    
 
     <AppSwitcher />
+    <CenterSearchOverlay />
 
     {
       isFavouritesPadOpen ? <FavouritesPad /> : <></>
