@@ -10,7 +10,7 @@ import { getBrowserWindowIds } from "./browserWindows";
 
 
 
-const MAX_BROWSER_GROUPS = 9;
+const MAX_BROWSER_GROUPS = 999;
 
 /**
  * Creates a new browser window (tab group) with an initial tab.
